@@ -1,0 +1,108 @@
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+\ProvidesPackage{xdoc}[2010/01/15 LaTeX package (XCore markup)]
+
+\RequirePackage{pifont}
+\RequirePackage{manfnt}
+
+% LaTeX macros for XMOS terminology
+
+% Localisation Spacing (as current LaTex 
+% system cannot properly space between
+% Roman and Asian characters
+\newcommand{\xxspace}{\ifen\xspace\fi}
+
+% Company and Brands
+\newcommand{\xmos}{XMOS\xxspace}
+\newcommand{\xcore}{XCore\xxspace}
+\newcommand{\xcores}{XCores\xxspace}
+\newcommand{\xlink}{XMOS Link\xxspace}
+\newcommand{\xlinks}{XMOS Links\xxspace}
+
+% Terms
+\newcommand{\multicore}{multicore\xspace}
+\newcommand{\multichip}{multi-chip\xspace}
+
+% Languages
+\newcommand{\xc}{\mbox{XC}\xxspace}
+\newcommand{\C}{C\xxspace}
+\newcommand{\ansic}{C\xxspace}
+\newcommand{\cpp}{\mbox{C++}\xxspace}
+\newcommand{\xn}{\mbox{XN}\xxspace}
+
+% File Formats
+\newcommand{\xe}{\mbox{XE}\xxspace}
+\newcommand{\xb}{\mbox{XB}\xxspace}
+\newcommand{\elf}{\mbox{ELF}\xxspace}
+
+% Tools
+\newcommand{\tools}{Tools\xxspace}
+\newcommand{\xtools}{\xmos tools\xxspace}
+\newcommand{\xde}{\xmos Development Environment\xxspace}
+\newcommand{\XDE}{XDE\xxspace}
+\newcommand{\xcc}{XCC\xxspace}
+\newcommand{\xas}{XAS\xxspace}
+\newcommand{\xmap}{XMAP\xxspace}
+\newcommand{\xta}{XTA\xxspace}
+\newcommand{\xgdb}{XGDB\xxspace}
+\newcommand{\xsim}{XSIM\xxspace}
+\newcommand{\xrun}{XRUN\xxspace}
+\newcommand{\xflash}{XFLASH\xxspace}
+\newcommand{\xburn}{XBURN\xxspace}
+\newcommand{\xobjdump}{XOBJDUMP\xxspace}
+\newcommand{\xvcd}{XVCD\xxspace}
+\newcommand{\libflash}{libflash\xxspace}
+
+% Development Boards
+\newcommand{\xdk}{XDK\xxspace}
+\newcommand{\XDK}{XS1-G Development Kit\xxspace}
+\newcommand{\xcard}[1]{\mbox{XC-#1}\xxspace}
+\newcommand{\XCARD}[1]{\ifthenelse{\equal{#1}{1}}{XC-1 Development Kit}{%
+                       \ifthenelse{\equal{#1}{2}}{XC-2 Ethernet Kit}{%
+                       \ifthenelse{\equal{#1}{3}}{XC-3 LED Tile Control Kit}{%
+                       \ifthenelse{\equal{#1}{5}}{XC-5 Development Kit}{%
+                       ERROR}}}}}
+\newcommand{\xk}[1]{\mbox{XK-#1}\xspace}
+\newcommand{\xtag}{XTAG\xspace}
+\newcommand{\xtagii}{XTAG-2\xspace}
+\newcommand{\xnd}[1]{X\emph{n}D#1\xspace}
+\newcommand{\xd}[1]{XD#1}
+
+% XDE Terms
+\newcommand{\projexplorer}{\textit{Project Explorer}\xspace}
+\newcommand{\fname}[1]{\emph{#1}\xspace}
+\newcommand{\button}[1]{\textsf{\textbf{#1}}\xspace}
+\newcommand{\window}[1]{\textsf{\textbf{#1}}\xspace}
+\newcommand{\menu}[1]{\textsf{\textbf{#1}}\xspace}
+\newcommand{\submenu}{\ding{228} }
+\newcommand{\icon}[1]{\textsf{\textbf{#1}}\xspace}
+\newcommand{\optionname}[1]{\textsf{\textbf{#1}}\xspace}
+\newcommand{\function}[1]{\textsf{\texttt{#1}}\xspace}
+\newcommand{\opens}{opens\xspace}
+\newcommand{\chose}{choose\xspace}
+\newcommand{\Chose}{Choose\xspace}
+\newcommand{\field}[1]{\emph{#1}}
+
+\DeclareRobustCommand{\dec}{-\mbox{-}}
+\DeclareRobustCommand{\lshift}{<\mbox{<}}
+\DeclareRobustCommand{\lshifteq}{<\mbox{<}=}
+\DeclareRobustCommand{\rshift}{>\mbox{>}}
+\DeclareRobustCommand{\rshifteq}{>\mbox{>}=}
+\newcommand{\view}[1]{\textsf{\textit{#1}} view\xspace}
+\newcommand{\tab}[1]{\textsf{\textit{#1}} tab\xspace}
+\newcommand{\perspec}[1]{\textsf{\textit{#1}} perspective\xspace}
+\newcommand{\panel}[1]{\textsf{\textit{#1}} panel\xspace}
+\newcommand{\dbox}[1]{\textsf{\textit{#1}} dialog box\xspace}
+\newcommand{\ctrl}{Ctrl (Windows) or \macsym (Mac)\xspace}
+\newcommand{\expandicon}{plus sign (Windows) or the disclosure triangle (Mac)\xspace}
+
+\newcommand{\mtxt}[1]{$\mathit{#1}$}
+\newcommand{\mtab}[1]{$\mathit{#1}$}
+\newcommand{\inst}[1]{\textsf{#1}}
+
+
+
+\newcommand{\xisodd}[2]{\strictpagechecktrue\checkoddpage\ifoddpage \textbf{#1} \else \textbf{#2} \fi}
+\newcommand{\cautionmargin}{\xisodd{\marginpar{\hfill\lhdbend}}{\marginpar{\lhdbend}}}
+\newcommand{\pencilmargin}{\xisodd{\marginpar{{\raisebox{-4mm}{\huge{\ding{46}}}}}}{\marginpar{\raggedleft{\raisebox{-4mm}{\huge{\ding{46}}}}}}}
+\newcommand{\newinxcmargin}{\xisodd{\marginpar{\hfill\newinxc}}{\marginpar{\newinxc}}}
+\newcommand{\icomargin}[1]{\xisodd{\reversemarginpar{\marginnote{\includegraphics{#1}}}}{\marginnote{\includegraphics{#1}}}}
