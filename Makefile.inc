@@ -52,6 +52,7 @@ doxygen:
 
 html: doxygen 
 	export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b html $(ALLSPHINXOPTS) . $(BUILDDIR)/html
+	@echo ".nojekyll" > _build/html/.nojekyll
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
