@@ -28,6 +28,15 @@ The documentation basically uses sphinx with the following additions:
    * Makefiles etc. to link it all together and be able to pull 
      out source/comments from source in different repositories
 
+You can find examples using this repository in:
+
+  * http://www.github.com/xcore/sc_ethernet
+  * http://www.github.com/xcore/sc_xtcp
+  * http://www.github.com/xcore/doc_tips_and_tricks
+
+In each case the doc/ directory has a Makefile which can build with
+the targets ``make html`` or ``make pdf``.
+
 Known Issues
 ============
 
