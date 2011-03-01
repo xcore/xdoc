@@ -77,7 +77,7 @@ man: doxygen
 %.pdf: %.tex xlatex
 	export TEXINPUTS=$(T):; pdflatex $<;pdflatex $<
 
-TEXROOT = $(subst $(space),_,$(call lc,$(SPHINX_PROJECT_NAME)))
+TEXROOT = $(subst /,_,$(subst $(space),_,$(call lc,$(SPHINX_PROJECT_NAME))))
 PDF_TARGET = $(TEXROOT).pdf
 
 pdf: xlatex
