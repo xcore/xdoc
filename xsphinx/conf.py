@@ -34,10 +34,12 @@ sys.path.append(xsphinx_dir + "/breathe")
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.ifconfig', 'breathe']
+extensions = ['sphinx.ext.ifconfig', 'xsphinx.ext.mathjax', 'breathe']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = [xsphinx_dir + '/_templates']
+
+mathjax_path = 'http://mathjax.connectmv.com/MathJax.js'
 
 # The suffix of source filenames.
 source_suffix = '.rst'

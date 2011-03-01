@@ -1575,5 +1575,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_system_message(self, node):
         self.body.append('\n')
 
+    def visit_math(self, node):
+        self.body.append('$'+node['latex']+'$')
+
+    def depart_math(self, node):
+        pass
+    
+
+    def visit_displaymath(self, node):
+        self.body.append('\n\n\\['+node['latex']+'\\]\n\n')
+
+    def depart_displaymath(self, node):
+        pass
+
     def unknown_visit(self, node):
         raise NotImplementedError('Unknown node: ' + node.__class__.__name__)
