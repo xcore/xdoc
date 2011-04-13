@@ -50,7 +50,10 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+if 'SPHINX_MASTER_DOC' in os.environ:
+    master_doc = os.environ['SPHINX_MASTER_DOC']
+else:
+    master_doc = 'index'
 
 # General information about the project.
 project = os.environ['SPHINX_PROJECT_NAME']
@@ -204,6 +207,10 @@ if use_xmoslatex:
 else:
     latex_docclass = 'memoir'
 
+if 'SPHINX_SECTION_NEWPAGE' in os.environ:
+    latex_section_newpage = (os.environ['SPHINX_SECTION_NEWPAGE'] == '1')
+else:
+    latex_section_newpage = True
 
 # The paper size ('letter' or 'a4').
 #latex_paper_size = 'letter'
@@ -217,7 +224,7 @@ else:
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', short_name + '.tex', os.environ['SPHINX_PROJECT_NAME'],
+  (master_doc, short_name + '.tex', os.environ['SPHINX_PROJECT_NAME'],
    u'', 'manual'),
 ]
 
@@ -271,6 +278,7 @@ def setup(app):
     app.add_config_value('include_search_dirs',[],False)
     app.add_config_value('latex_doctype',[],False)
     app.add_config_value('use_xmoslatex',[],False)
+    app.add_config_value('latex_section_newpage',[],False)
 
 # -- Options for breathe --
 

@@ -72,6 +72,7 @@ HEADER1 = r'''
 \usepackage{threeparttable}
 \usepackage{fancyvrb}
 \renewcommand\bfcode\textbf
+\renewcommand\bf\textbf
 \graphicspath{{./}{./images/}}
 \version{%(release)s}
 %(makeindex)s
@@ -494,8 +495,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             raise nodes.SkipNode
         elif isinstance(parent, nodes.section):
             try:
-                if (self.sectionlevel <= 1):
-                    self.body.append('\\clearpage\n');
+                if (self.builder.config.latex_section_newpage):
+                    if (self.sectionlevel <= 1):
+                        self.body.append('\\clearpage\n');
                 self.body.append(r'\%s{' % self.sectionnames[self.sectionlevel])
             except IndexError:
                 # just use "subparagraph", it's not numbered anyway
@@ -1084,14 +1086,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_admonition(self, node):
 #        self.body.append('\n\\begin{notice}{note}')
-        self.body.append('\n\na \cautionmargin ')
+        self.body.append('\n\na \warnmargin ')
     def depart_admonition(self, node):
 #        self.body.append('\\end{notice}\n')
         pass
 
     def _make_visit_admonition(name):
         def visit_admonition(self, node):
-           self.body.append('\n\n \\ \\hspace{-0.35cm} \cautionmargin ')
+           self.body.append('\n\n \\ \\hspace{-0.35cm} \warnmargin ')
 #            self.body.append(u'\n\\begin{notice}{%s}{%s:}' %
 #                             (name, admonitionlabels[name]))
         return visit_admonition
