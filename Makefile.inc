@@ -13,7 +13,7 @@ XDOC_DIR = $(patsubst %/Makefile.inc,%,$(XDOC_MAKEFILE))
 
 DOC_DIR = $(abspath .)
 
-T=$(XDOC_DIR)/texinput
+T=$(XDOC_DIR)/texinput:$(APPS_ROOT)/infr_docs/base
 
 
 APPS_ROOT     ?= $(abspath $(XDOC_DIR)/..)
@@ -32,7 +32,8 @@ export DOXYGEN_DIRS
 export SOURCE_INCLUDE_DIRS
 export SPHINX_LATEX_DOCTYPE
 
-PYTHONPATH_EXTRA=:$(XDOC_DIR)
+PYTHONPATH_EXTRA=:$(XDOC_DIR):$(APPS_ROOT)/infr_docs
+
 
 %.doxygen:
 	cp $(XDOC_DIR)/xsphinx/Doxyfile $*/Doxyfile
@@ -63,8 +64,8 @@ singlehtml: doxygen
 
 
 xlatex: doxygen
-	@export CURRENT_BUILDER=xlatex && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b xlatex $(ALLSPHINXOPTS) . $(BUILDDIR)/xlatex
-	cp _build/xlatex/*.tex .
+	export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX)
+	cp _build/$(XLATEX)/*.tex .
 
 man: doxygen
 	export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b man $(ALLSPHINXOPTS) . $(BUILDDIR)/man
@@ -80,9 +81,21 @@ man: doxygen
 TEXROOT = $(subst /,_,$(subst $(space),_,$(call lc,$(SPHINX_PROJECT_NAME))))
 PDF_TARGET = $(TEXROOT).pdf
 
+pdf: XLATEX=xlatex
 pdf: xlatex
 	export TEXINPUTS=$(T):; pdflatex $(TEXROOT).tex;pdflatex $(TEXROOT).tex
 	@echo "Build complete"
+
+xmospdf: XLATEX=xlatex
+xmospdf: export XMOSLATEX=1
+xmospdf: xlatex
+	export TEXINPUTS=$(T):; pdflatex $(TEXROOT).tex;pdflatex $(TEXROOT).tex
+	@echo "Build complete"
+
+
+xmoshtml: export XMOSLATEX=1
+xmoshtml: doxygen html
+	@echo 
 
 clean:
 	rm -rf _build

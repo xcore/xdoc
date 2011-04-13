@@ -62,4 +62,4 @@
   \addtolength{\py@argswidth}{\linewidth}%
   \item[#1\code{(}\py@sigparams{#2}{#3}]}
 
-\newcommand{\version}{}
+\@ifundefined{version}{\newcommand{\version}[1]{}}{}

@@ -13,6 +13,8 @@
 
 import sys, os, re
 from xsphinx.builders.xlatex import XLaTeXBuilder
+if os.environ['CURRENT_BUILDER']=='xmoslatex':
+    from xmossphinx.builders.xmoslatex import XmosLaTeXBuilder
 import xsphinx.code
 
 xsphinx_dir = os.environ['XDOC_DIR'] + "/xsphinx"
@@ -96,13 +98,20 @@ pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
+if 'XMOSLATEX' in os.environ:    
+    use_xmoslatex = (os.environ['XMOSLATEX'] == "1")
+else:
+    use_xmoslatex = False
 
 
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'xdoc'
+if use_xmoslatex:
+    html_theme = 'xmosdoc'
+else:
+    html_theme = 'xdoc'
 
 #html_theme = 'default'
 
@@ -114,7 +123,7 @@ html_theme_options = {'collapsiblesidebar':True}
 
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ["themes"]
+html_theme_path = ["themes","../../infr_docs/xmossphinx/themes"]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -184,11 +193,26 @@ htmlhelp_basename = short_name
 
 # -- Options for LaTeX output --------------------------------------------------
 
+
+try:
+    latex_doctype = os.environ['SPHINX_LATEX_DOCTYPE']
+except:
+    latex_doctype = 'article'
+
+if use_xmoslatex:
+    latex_docclass = 'xmosmodern'
+else:
+    latex_docclass = 'memoir'
+
+
 # The paper size ('letter' or 'a4').
 #latex_paper_size = 'letter'
 
 # The font size ('10pt', '11pt' or '12pt').
-latex_font_size = '12pt'
+if use_xmoslatex:
+    latex_font_size = ''
+else:
+    latex_font_size = '12pt, '
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
@@ -237,16 +261,16 @@ include_search_dirs = [x for x in include_search_dirs if x != '']
 
 #print include_search_dirs
 
-try:
-    latex_doctype = os.environ['SPHINX_LATEX_DOCTYPE']
-except:
-    latex_doctype = 'article'
+
 
 def setup(app):
     app.add_builder(XLaTeXBuilder)
+    if os.environ['CURRENT_BUILDER']=='xmoslatex':
+        app.add_builder(XmosLaTeXBuilder)
     app.add_directive('literalinclude', xsphinx.code.LiteralInclude)
     app.add_config_value('include_search_dirs',[],False)
     app.add_config_value('latex_doctype',[],False)
+    app.add_config_value('use_xmoslatex',[],False)
 
 # -- Options for breathe --
 
