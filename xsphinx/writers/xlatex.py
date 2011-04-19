@@ -500,8 +500,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
                         self.body.append('\\clearpage\n');
                 self.body.append(r'\%s{' % self.sectionnames[self.sectionlevel])
             except IndexError:
-                # just use "subparagraph", it's not numbered anyway
-                self.body.append(r'\%s{' % self.sectionnames[-1])
+                indent = ""
+                for i in range(1 + self.sectionlevel - len(self.sectionnames)):
+                    indent += "\ \ "
+                # just use "subparagraph", it's not nu mbered anyway
+                self.body.append(r'\%s{' % (self.sectionnames[-1]))
+                self.body.append(indent)
             self.context.append('}\n')
 
             if self.next_section_ids:

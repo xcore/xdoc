@@ -279,6 +279,9 @@ def setup(app):
     app.add_config_value('latex_doctype',[],False)
     app.add_config_value('use_xmoslatex',[],False)
     app.add_config_value('latex_section_newpage',[],False)
+    if os.path.exists('extraconf.py'):
+      import extraconf
+      extraconf.setup(app)
 
 # -- Options for breathe --
 
