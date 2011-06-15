@@ -32,6 +32,7 @@ class LiteralInclude(Directive):
         'end-before': directives.unchanged_required,
         'prepend': directives.unchanged_required,
         'append': directives.unchanged_required,
+        'strip-leading-whitespace': directives.flag,
     }
 
     def run(self):        
@@ -136,6 +137,21 @@ class LiteralInclude(Directive):
         if append:
            lines.append(append + '\n')
 
+        if 'strip-leading-whitespace' in self.options:
+           lead = 100;
+           for line in lines:
+               if not line.isspace():
+                   lead = min(lead, len(line) - len(line.lstrip('\t ')));
+
+           if lead > 0 :
+               res = []
+               for line in lines:
+                  if line.isspace():
+                      res.append(line);
+                  else:
+                      res.append(line[lead:]);
+               lines = res
+
         text = ''.join(lines)
         if self.options.get('tab-width'):
             text = text.expandtabs(self.options['tab-width'])
@@ -145,5 +161,6 @@ class LiteralInclude(Directive):
             retnode['language'] = self.options['language']
         if 'linenos' in self.options:
             retnode['linenos'] = True
-#        document.settings.env.note_dependency(rel_fn)
         return [retnode]
+
+
