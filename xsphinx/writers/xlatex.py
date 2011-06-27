@@ -1623,3 +1623,5 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def unknown_visit(self, node):
         raise NotImplementedError('Unknown node: ' + node.__class__.__name__)
+
+

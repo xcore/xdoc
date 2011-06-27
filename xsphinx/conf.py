@@ -12,8 +12,15 @@
 # serve to show the default.
 
 import sys, os, re
-from xsphinx.builders.xlatex import XLaTeXBuilder
-if os.environ['CURRENT_BUILDER']=='xmoslatex':
+from xsphinx.builders.xlatex import XLaTeXBuilder, xlatex_rearrange_tocs
+from xsphinx.writers.plainhtml import plainhtml_builder
+
+if 'CURRENT_BUILDER' in os.environ:
+    current_builder = os.environ['CURRENT_BUILDER']
+else:
+    current_builder = None
+
+if current_builder=='xmoslatex':
     from xmossphinx.builders.xmoslatex import XmosLaTeXBuilder
 import xsphinx.code
 
@@ -113,16 +120,21 @@ else:
 # a list of builtin themes.
 if use_xmoslatex:
     html_theme = 'xmosdoc'
+elif current_builder == 'plainhtml':
+    html_theme = 'plainhtml'
+    html_add_permalinks = False
 else:
     html_theme = 'xdoc'
 
 #html_theme = 'default'
 
 
+
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'collapsiblesidebar':True}
+html_theme_options = {}
 
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -133,7 +145,10 @@ html_theme_path = ["themes","../../infr_docs/xmossphinx/themes"]
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "%s (%s)"%(project, release)
+if current_builder=='plainhtml':
+    html_short_title = "%s"%(project)
+else:
+    html_short_title = "%s (%s)"%(project, release)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -268,17 +283,31 @@ include_search_dirs = [x for x in include_search_dirs if x != '']
 
 #print include_search_dirs
 
+if current_builder == 'plainhtml':
+#    extensions.append('xsphinx.writers.plainhtml')
+    html_translator_class = 'xsphinx.writers.plainhtml.plainhtml_translator'    
 
+
+
+if 'BREADCRUMB_PREFIX' in os.environ:
+    breadcrumb_prefix = os.environ['BREADCRUMB_PREFIX']
+else:
+    breadcrumb_prefix = ""
 
 def setup(app):
     app.add_builder(XLaTeXBuilder)
-    if os.environ['CURRENT_BUILDER']=='xmoslatex':
+    app.add_builder(plainhtml_builder)
+    if current_builder=='xmoslatex':
         app.add_builder(XmosLaTeXBuilder)
+    if current_builder in ['xlatex','xmoslatex']:
+        app.connect('doctree-resolved',xlatex_rearrange_tocs)
     app.add_directive('literalinclude', xsphinx.code.LiteralInclude)
     app.add_config_value('include_search_dirs',[],False)
     app.add_config_value('latex_doctype',[],False)
     app.add_config_value('use_xmoslatex',[],False)
     app.add_config_value('latex_section_newpage',[],False)
+    app.add_config_value('breadcrumb_prefix',[],False)
+    app.connect('html-page-context',xsphinx.writers.plainhtml.html_page_context)
     if os.path.exists('extraconf.py'):
       import extraconf
       extraconf.setup(app)
@@ -292,8 +321,8 @@ rst_prolog = '''
 .. highlight:: none
 '''
 
-if 'CURRENT_BUILDER' in os.environ:
-    if os.environ['CURRENT_BUILDER']=='xlatex':
+
+if current_builder=='xlatex':
         rst_epilog = '''
 .. |submenu| raw:: latex
  
@@ -303,7 +332,7 @@ if 'CURRENT_BUILDER' in os.environ:
 
                \\newpage
         '''
-    else:
+else:
         rst_epilog = """
 .. |submenu| replace:: **>**
 

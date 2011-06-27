@@ -251,11 +251,17 @@ div.body p, div.body dd, div.body li {
     line-height: 130%;
 }
 
+div.admonition {
+    border: 1px solid;
+    background-color: {{ theme_codebgcolor }};    
+}
+
 div.admonition p.admonition-title + p {
     display: inline;
 }
 
 div.admonition p {
+          
     margin-bottom: 5px;
 }
 
