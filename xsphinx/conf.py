@@ -23,6 +23,13 @@ else:
 if current_builder=='xmoslatex':
     from xmossphinx.builders.xmoslatex import XmosLaTeXBuilder
 import xsphinx.code
+import xcomment
+
+if 'USE_COMMENTS' in os.environ and os.environ['USE_COMMENTS']=='1':
+    enable_comments = True
+else:
+    enable_comments = False
+
 
 xsphinx_dir = os.environ['XDOC_DIR'] + "/xsphinx"
 
@@ -173,7 +180,13 @@ html_static_path = ['_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**':['globaltoc.html', 'searchbox.html']}
+
+default_sidebars = ['globaltoc.html', 'searchbox.html']
+
+if enable_comments:
+    default_sidebars.append('commentctl.html')
+
+html_sidebars = {'**':default_sidebars}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -308,6 +321,7 @@ def setup(app):
     app.add_config_value('latex_section_newpage',[],False)
     app.add_config_value('breadcrumb_prefix',[],False)
     app.connect('html-page-context',xsphinx.writers.plainhtml.html_page_context)
+    xcomment.setup(app, enable_comments)
     if os.path.exists('extraconf.py'):
       import extraconf
       extraconf.setup(app)

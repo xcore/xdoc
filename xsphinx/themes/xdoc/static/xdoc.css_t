@@ -30,6 +30,7 @@ body {
 div.document {
     background-color: {{ theme_sidebarbgcolor }};
     height: 100%;
+    margin-right: 0px;
 }
 
 div.documentwrapper {
@@ -375,3 +376,76 @@ div.figure
     margin-bottom:30px;
     padding:0px;
     }
+
+div.xcomment {
+    margin: 10px;
+    margin-left:5%;
+    margin-right: 50%;
+    padding: 5px;
+    background-color: {{ theme_codebgcolor }};
+    color: {{ theme_codetextcolor }};
+    line-height: 120%;
+    border: 1px solid #ac9;
+    display: none;
+#    border-left: 1px;
+#    border-right: 1px;
+}
+
+div.xcomment-post {
+    margin-left:5%;
+    margin-right: 50%;
+    padding: 0px;
+    display:none;                  
+}
+
+span.xcomment-slot {
+               margin-left: 5px;
+               font-size: 80%;
+}
+
+span.xcomment-post-comments {
+               margin-left: 10px;
+               font-size: 80%;
+}
+
+.xcomment p {
+    padding: 5px;
+    margin: 5px;
+} 
+
+.xcomment-header {
+  padding: 1px;
+  margin: 1px;
+  font-size: 65%;
+}
+
+a.xcomment-inline-add-link {
+  visibility: hidden;
+}
+
+p:hover a.xcomment-inline-add-link {
+  visibility: visible;
+}
+
+div.xcomment-form {
+    margin: 10px;
+    margin-left:5%;
+    margin-right: 50%;
+    padding: 5px;
+    background-color: #eeffcc;
+    color: #111111;
+    line-height: 120%;
+    border: 1px solid #ac9;     
+    display: none;
+#    border-left: 1px;
+#    border-right: 1px;
+}
+
+div.xcomment-form th {
+   background-color: #eeffcc;
+}
+
+
+div.xcomment-insert-point {
+                          display:none;
+}

@@ -36,6 +36,7 @@ export SPHINX_LATEX_DOCTYPE
 export SPHINX_MASTER_DOC
 export SPHINX_SECTION_NEWPAGE
 export BREADCRUMB_PREFIX
+export USE_COMMENTS
 
 PYTHONPATH_EXTRA=:$(XDOC_DIR):$(APPS_ROOT)/infr_docs
 
@@ -70,7 +71,7 @@ plainhtml: doxygen
 
 
 singlehtml: doxygen
-	export CURRENT_BUILDER=singlehtml && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b singlehtml $(ALLSPHINXOPTS) . $(BUILDDIR)/singlehtml
+	export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b singlehtml $(ALLSPHINXOPTS) . $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/singlehtml."
 
