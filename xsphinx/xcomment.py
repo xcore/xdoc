@@ -77,7 +77,10 @@ def depart_paragraph(self, node, parent_fn):
         parent_fn(self, node)
         return
 
-    slot = node.comment_slot
+    if hasattr(node,'comment_slot'):
+        slot = node.comment_slot
+    else:
+        slot = None
 
     if slot: 
         num_comments = len(slot.comments)

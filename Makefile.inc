@@ -63,7 +63,7 @@ html: doxygen
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 singlehtml: doxygen
-	export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b singlehtml $(ALLSPHINXOPTS) . $(BUILDDIR)/singlehtml
+	export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b singlehtml $(ALLSPHINXOPTS) . $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/singlehtml."
 
