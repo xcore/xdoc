@@ -13,7 +13,7 @@ XDOC_DIR = $(patsubst %/Makefile.inc,%,$(XDOC_MAKEFILE))
 
 DOC_DIR = $(abspath .)
 
-T=$(XDOC_DIR)/texinput:$(APPS_ROOT)/infr_docs/base
+T:=$(XDOC_DIR)/texinput
 
 
 APPS_ROOT     ?= $(abspath $(XDOC_DIR)/..)
@@ -37,8 +37,9 @@ export SPHINX_MASTER_DOC
 export SPHINX_SECTION_NEWPAGE
 export BREADCRUMB_PREFIX
 export USE_COMMENTS
+export EXTRACONF
 
-PYTHONPATH_EXTRA=:$(XDOC_DIR):$(APPS_ROOT)/infr_docs
+PYTHONPATH_EXTRA:=:$(XDOC_DIR)
 
 
 %.doxygen:
@@ -63,11 +64,6 @@ html: doxygen
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-plainhtml: doxygen 
-	export CURRENT_BUILDER=plainhtml && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b plainhtml $(ALLSPHINXOPTS) . $(BUILDDIR)/plainhtml
-	@echo ".nojekyll" > _build/plainhtml/.nojekyll
-	@echo
-	@echo "Build finished. The HTML pages are in $(BUILDDIR)/plainhtml."
 
 
 singlehtml: doxygen
@@ -99,20 +95,10 @@ pdf: xlatex
 	export TEXINPUTS=$(T):; pdflatex $(TEXROOT).tex;pdflatex $(TEXROOT).tex
 	@echo "Build complete"
 
-xmospdf: XLATEX=xlatex
-xmospdf: export XMOSLATEX=1
-xmospdf: xlatex
-	export TEXINPUTS=$(T):; pdflatex $(TEXROOT).tex;pdflatex $(TEXROOT).tex
-	@echo "Build complete"
-
 
 latex_to_pdf:
 	export TEXINPUTS=$(T):; pdflatex $(TEXROOT).tex;pdflatex $(TEXROOT).tex
 	@echo "Build complete"
-
-xmoshtml: export XMOSLATEX=1
-xmoshtml: doxygen html
-	@echo 
 
 clean:
 	rm -rf _build
@@ -123,3 +109,5 @@ clean:
 	-rm -f $(TEXROOT).log
 	-rm -f $(TEXROOT).out
 	-rm -f $(TEXROOT).aux
+
+include $(APPS_ROOT)/infr_docs/Makefile.xdoc_extras
