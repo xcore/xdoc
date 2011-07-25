@@ -333,7 +333,7 @@ def setup(app):
         else:
             conf = Configurator()
             extra_setup = getattr(mod, 'setup')
-            extra_setup(app, conf)
+            extra_setup(app, conf, tags)
             conf.set()
 
 # -- Options for breathe --

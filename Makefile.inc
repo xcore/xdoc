@@ -3,7 +3,7 @@ LATEX_CMD = latex
 
 lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(subst G,g,$(subst H,h,$(subst I,i,$(subst J,j,$(subst K,k,$(subst L,l,$(subst M,m,$(subst N,n,$(subst O,o,$(subst P,p,$(subst Q,q,$(subst R,r,$(subst S,s,$(subst T,t,$(subst U,u,$(subst V,v,$(subst W,w,$(subst X,x,$(subst Y,y,$(subst Z,z,$1))))))))))))))))))))))))))
 
-space :=	
+space :=
 space +=
 
 
@@ -28,7 +28,7 @@ SPHINX_SECTION_NEWPAGE ?= 1
 
 export XDOC_DIR
 export SPHINX_PROJECT_NAME
-export VERSION 
+export VERSION
 export DOC_DIR
 export DOXYGEN_DIRS
 export SOURCE_INCLUDE_DIRS
@@ -38,6 +38,7 @@ export SPHINX_SECTION_NEWPAGE
 export BREADCRUMB_PREFIX
 export USE_COMMENTS
 export EXTRACONF
+export
 
 PYTHONPATH_EXTRA:=:$(XDOC_DIR)
 
@@ -48,17 +49,17 @@ PYTHONPATH_EXTRA:=:$(XDOC_DIR)
 	mkdir -p $(DOC_DIR)/_build/doxygen/$*
 	cp -r $*/_doxygen_xml $(DOC_DIR)/_build/doxygen/$*/xml
 	rm -rf $*/_doxygen_xml
-	rm $*/Doxyfile 
+	rm $*/Doxyfile
 
-doxygen: 
+doxygen:
 	@echo "Running Doxygen"
 	@cp $(XDOC_DIR)/xsphinx/Doxyfile $(DOC_DIR)/Doxyfile
 	@sed -i -e 's/--INPUT--/$(subst /,\/,$(DOXYGEN_DIRS))/g' Doxyfile
 	@mkdir -p $(DOC_DIR)/_build/doxygen
 	@export PATH=$(PATH):/tools/doxygen/doxygen-1.5.8/bin/ && cd $(DOC_DIR) && doxygen 2>&1 | grep -v "REFERENCE" ; echo "Done"
-	@rm $(DOC_DIR)/Doxyfile 
+	@rm $(DOC_DIR)/Doxyfile
 
-html: doxygen 
+html: doxygen
 	export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b html $(ALLSPHINXOPTS) . $(BUILDDIR)/html
 	@echo ".nojekyll" > _build/html/.nojekyll
 	@echo
