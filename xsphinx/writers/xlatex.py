@@ -1049,6 +1049,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         for id in self.next_figure_ids:
             ids += self.hypertarget(id, anchor=False)
         self.next_figure_ids.clear()
+        if not node.has_key('width'):
+            node['width'] = '100%'
         if node.has_key('width') and node.get('align', '') in ('left', 'right'):
             self.body.append('\\begin{wrapfigure}{%s}{%s}\n\\centering' %
                              (node['align'] == 'right' and 'r' or 'l',
@@ -1096,8 +1098,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def _make_visit_admonition(name):
-        def visit_admonition(self, node):
-           self.body.append('\n\n \\ \\hspace{-0.35cm} \warnmargin ')
+        def visit_admonition(self, node):            
+           self.body.append('\n\n \\ \\hspace{-0.35cm} \%smarginraise '%name)
 #            self.body.append(u'\n\\begin{notice}{%s}{%s:}' %
 #                             (name, admonitionlabels[name]))
         return visit_admonition
@@ -1105,23 +1107,23 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body.append('\\end{notice}\n')
         pass
 
-    visit_attention = _make_visit_admonition('attention')
+    visit_attention = _make_visit_admonition('warn')
     depart_attention = _depart_named_admonition
-    visit_caution = _make_visit_admonition('caution')
+    visit_caution = _make_visit_admonition('warn')
     depart_caution = _depart_named_admonition
-    visit_danger = _make_visit_admonition('danger')
+    visit_danger = _make_visit_admonition('warn')
     depart_danger = _depart_named_admonition
-    visit_error = _make_visit_admonition('error')
+    visit_error = _make_visit_admonition('warn')
     depart_error = _depart_named_admonition
-    visit_hint = _make_visit_admonition('hint')
+    visit_hint = _make_visit_admonition('info')
     depart_hint = _depart_named_admonition
-    visit_important = _make_visit_admonition('important')
+    visit_important = _make_visit_admonition('info')
     depart_important = _depart_named_admonition
-    visit_note = _make_visit_admonition('note')
+    visit_note = _make_visit_admonition('info')
     depart_note = _depart_named_admonition
-    visit_tip = _make_visit_admonition('tip')
+    visit_tip = _make_visit_admonition('info')
     depart_tip = _depart_named_admonition
-    visit_warning = _make_visit_admonition('warning')
+    visit_warning = _make_visit_admonition('warn')
     depart_warning = _depart_named_admonition
 
     def visit_versionmodified(self, node):
@@ -1623,3 +1625,5 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def unknown_visit(self, node):
         raise NotImplementedError('Unknown node: ' + node.__class__.__name__)
+
+

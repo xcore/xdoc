@@ -6,7 +6,7 @@
     :license: BSD, see LICENSE for details.
 #}
 {%- if pagename != "search" %}
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
   <h3>{{ _('Search') }}</h3>
     <form class="search" action="{{ pathto('search') }}" method="get">
       <input type="text" name="q" size="18" />

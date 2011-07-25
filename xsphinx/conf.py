@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# xmos/sphinx documentation build configuration file, created by
+# xsphinx documentation build configuration file, created by
 # sphinx-quickstart on Sun Oct 10 07:04:01 2010.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -12,10 +12,25 @@
 # serve to show the default.
 
 import sys, os, re
-from xsphinx.builders.xlatex import XLaTeXBuilder
-if os.environ['CURRENT_BUILDER']=='xmoslatex':
-    from xmossphinx.builders.xmoslatex import XmosLaTeXBuilder
+from xsphinx.builders.xlatex import XLaTeXBuilder, xlatex_rearrange_tocs
 import xsphinx.code
+import xsphinx.images
+import xcomment, srcfile
+import docutils
+
+if 'CURRENT_BUILDER' in os.environ:
+    current_builder = os.environ['CURRENT_BUILDER']
+else:
+    current_builder = None
+
+
+
+
+if 'USE_COMMENTS' in os.environ and os.environ['USE_COMMENTS']=='1':
+    enable_comments = True
+else:
+    enable_comments = False
+
 
 xsphinx_dir = os.environ['XDOC_DIR'] + "/xsphinx"
 
@@ -101,32 +116,27 @@ pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
-if 'XMOSLATEX' in os.environ:    
-    use_xmoslatex = (os.environ['XMOSLATEX'] == "1")
-else:
-    use_xmoslatex = False
 
 
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-if use_xmoslatex:
-    html_theme = 'xmosdoc'
-else:
-    html_theme = 'xdoc'
-
+ 
+html_theme = 'xdoc'
 #html_theme = 'default'
+
+
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'collapsiblesidebar':True}
+html_theme_options = {}
 
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ["themes","../../infr_docs/xmossphinx/themes"]
+html_theme_path = ["themes"]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -158,7 +168,13 @@ html_static_path = ['_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**':['globaltoc.html', 'searchbox.html']}
+
+default_sidebars = ['globaltoc.html', 'searchbox.html']
+
+if enable_comments:
+    default_sidebars.append('commentctl.html')
+
+html_sidebars = {'**':default_sidebars}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -202,10 +218,6 @@ try:
 except:
     latex_doctype = 'article'
 
-if use_xmoslatex:
-    latex_docclass = 'xmosmodern'
-else:
-    latex_docclass = 'memoir'
 
 if 'SPHINX_SECTION_NEWPAGE' in os.environ:
     latex_section_newpage = (os.environ['SPHINX_SECTION_NEWPAGE'] == '1')
@@ -216,10 +228,6 @@ else:
 #latex_paper_size = 'letter'
 
 # The font size ('10pt', '11pt' or '12pt').
-if use_xmoslatex:
-    latex_font_size = ''
-else:
-    latex_font_size = '12pt, '
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
@@ -268,20 +276,65 @@ include_search_dirs = [x for x in include_search_dirs if x != '']
 
 #print include_search_dirs
 
+class C:
+    pass
+
+
+
+if 'BREADCRUMB_PREFIX' in os.environ:
+    breadcrumb_prefix = os.environ['BREADCRUMB_PREFIX']
+else:
+    breadcrumb_prefix = ""
+
+if 'EXTRACONF' in os.environ:
+    extraconf_modules = ['extraconf'] + re.split('\W+',os.environ['EXTRACONF'].strip())
+else:
+    extraconf_modules = ['extraconf']
+
+
+class Configurator(object):
+    def __init__(self):
+        self._settings = {}
+
+    def set_value(self, name, val):
+        self._settings[name] = val
+
+    def set(self):
+        for key, val in self._settings.items():                        
+            if isinstance(val,str):
+                cmd = "global %s;%s = '%s'" % (key, key, val) 
+            else:
+                cmd = "global %s;%s = %s" % (key, key, val) 
+            exec(cmd)
+        
 
 
 def setup(app):
     app.add_builder(XLaTeXBuilder)
-    if os.environ['CURRENT_BUILDER']=='xmoslatex':
-        app.add_builder(XmosLaTeXBuilder)
+    if current_builder in ['xlatex']:
+        app.connect('doctree-resolved',xlatex_rearrange_tocs)
     app.add_directive('literalinclude', xsphinx.code.LiteralInclude)
+    app.add_directive('figure', xsphinx.images.Figure)
+    app.add_directive('image', xsphinx.images.Image)
     app.add_config_value('include_search_dirs',[],False)
     app.add_config_value('latex_doctype',[],False)
-    app.add_config_value('use_xmoslatex',[],False)
     app.add_config_value('latex_section_newpage',[],False)
-    if os.path.exists('extraconf.py'):
-      import extraconf
-      extraconf.setup(app)
+    app.add_config_value('breadcrumb_prefix',[],False)
+#    app.add_generic_role('srcfile',srcfile.srcfile)
+    app.add_generic_role('srcfile',docutils.nodes.literal)
+    xcomment.setup(app, enable_comments) 
+    import xmosconf
+    for mod in extraconf_modules:
+        mod = mod.strip()
+        try:
+            mod = __import__(mod)
+        except ImportError:
+            pass
+        else:
+            conf = Configurator()
+            extra_setup = getattr(mod, 'setup')
+            extra_setup(app, conf, tags)
+            conf.set()
 
 # -- Options for breathe --
 
@@ -292,8 +345,8 @@ rst_prolog = '''
 .. highlight:: none
 '''
 
-if 'CURRENT_BUILDER' in os.environ:
-    if os.environ['CURRENT_BUILDER']=='xlatex':
+
+if current_builder=='xlatex':
         rst_epilog = '''
 .. |submenu| raw:: latex
  
@@ -303,7 +356,7 @@ if 'CURRENT_BUILDER' in os.environ:
 
                \\newpage
         '''
-    else:
+else:
         rst_epilog = """
 .. |submenu| replace:: **>**
 

@@ -26,7 +26,7 @@ from sphinx.util.nodes import inline_all_toctrees
 from sphinx.util.osutil import SEP, copyfile
 from sphinx.util.console import bold, darkgreen
 from xsphinx.writers.xlatex import XLaTeXWriter
-
+from sphinx import addnodes
 
 class XLaTeXBuilder(Builder):
     """
@@ -183,3 +183,16 @@ class XLaTeXBuilder(Builder):
                 copyfile(path.join(staticdirname, filename),
                          path.join(self.outdir, filename))
         self.info('done')
+
+def xlatex_rearrange_tocs(app, doctree, fromdocname):
+    current_file = doctree.traverse(nodes.section)[0]
+    for node in doctree.traverse(lambda n: isinstance(n,addnodes.start_of_file)
+                                           or
+                                           isinstance(n,nodes.compound)):
+        if isinstance(node, addnodes.start_of_file):
+            current_file = node.traverse(nodes.section)[0]
+        else:
+            if node.get('classes')==['toctree-wrapper']:
+                node.parent.remove(node)
+                current_file.append(node)
+
