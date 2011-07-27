@@ -322,19 +322,19 @@ def setup(app):
     app.add_config_value('breadcrumb_prefix',[],False)
 #    app.add_generic_role('srcfile',srcfile.srcfile)
     app.add_generic_role('srcfile',docutils.nodes.literal)
-    xcomment.setup(app, enable_comments) 
-    import xmosconf
+    xcomment.setup(app, enable_comments)
     for mod in extraconf_modules:
         mod = mod.strip()
-        try:
-            mod = __import__(mod)
-        except ImportError:
-            pass
-        else:
-            conf = Configurator()
-            extra_setup = getattr(mod, 'setup')
-            extra_setup(app, conf, tags)
-            conf.set()
+        if len(mod) > 0:
+            try:
+                mod = __import__(mod)
+            except ImportError:
+                pass
+            else:
+                conf = Configurator()
+                extra_setup = getattr(mod, 'setup')
+                extra_setup(app, conf, tags)
+                conf.set()
 
 # -- Options for breathe --
 

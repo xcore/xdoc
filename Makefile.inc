@@ -111,4 +111,4 @@ clean:
 	-rm -f $(TEXROOT).out
 	-rm -f $(TEXROOT).aux
 
-include $(APPS_ROOT)/infr_docs/Makefile.xdoc_extras
+-include $(APPS_ROOT)/infr_docs/Makefile.xdoc_extras
