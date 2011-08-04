@@ -84,6 +84,11 @@ man: doxygen
 	@echo "Build finished. The man pages are in $(BUILDDIR)/man."
 
 
+.SUFFIXES: .tex .pdf .svg .jpg
+
+%.jpg: %.svg
+	inkscape -z -f $*.svg -d 300 -e $*.png
+	convert $*.png $*.jpg
 
 
 %.pdf: %.tex xlatex
@@ -112,4 +117,5 @@ clean:
 	-rm -f $(TEXROOT).out
 	-rm -f $(TEXROOT).aux
 
-include $(APPS_ROOT)/infr_docs/Makefile.xdoc_extras
+
+-include $(APPS_ROOT)/infr_docs/Makefile.xdoc_extras

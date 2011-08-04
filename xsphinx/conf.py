@@ -327,15 +327,17 @@ def setup(app):
     xcomment.setup(app, enable_comments)
     for mod in extraconf_modules:
         mod = mod.strip()
-        try:
-            mod = __import__(mod)
-        except ImportError:
-            pass
-        else:
-            conf = Configurator()
-            extra_setup = getattr(mod, 'setup')
-            extra_setup(app, conf, tags)
-            conf.set()
+        if len(mod) > 0:
+            try:
+                mod = __import__(mod)
+            except ImportError:
+                pass
+            else:
+                conf = Configurator()
+                extra_setup = getattr(mod, 'setup')
+                extra_setup(app, conf, tags)
+                conf.set()
+
 # -- Options for breathe --
 
 breathe_projects = { 'auto_doxygen' : '_build/doxygen/xml' }

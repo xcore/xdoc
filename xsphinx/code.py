@@ -161,6 +161,9 @@ class LiteralInclude(Directive):
             retnode['language'] = self.options['language']
         if 'linenos' in self.options:
             retnode['linenos'] = True
+
+        retnode['iscode'] = True
+
         return [retnode]
 
 

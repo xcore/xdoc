@@ -45,12 +45,13 @@ None
 Requirements
 ============
 
-You need the following installed to build the documentation:
+You need the following installed to build the documentation (the versions in brackets are know to work):
 
-  * Python (http://www.python.org/)
-  * Sphinx (http://sphinx.pocoo.org/)
-  * Doxygen (http://www.stack.nl/~dimitri/doxygen/index.html)
-  * LaTeX, if you want to build PDFs (http://www.latex-project.org/)
+  * Python (http://www.python.org/)  (2.6.5)
+  * Sphinx (http://sphinx.pocoo.org/) (1.0.7)
+  * Docutils (http://docutils.sourceforge.net/) (0.6)
+  * Doxygen (http://www.stack.nl/~dimitri/doxygen/index.html) (1.6.3)
+  * LaTeX, if you want to build PDFs (http://www.latex-project.org/) 
   * Gnu Make (xmake will work)
 
 You do not need to install breathe since an adapted version is
