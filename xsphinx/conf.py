@@ -319,11 +319,12 @@ def setup(app):
     app.add_config_value('include_search_dirs',[],False)
     app.add_config_value('latex_doctype',[],False)
     app.add_config_value('latex_section_newpage',[],False)
+    app.add_config_value('latex_section_numbers',[],True)
     app.add_config_value('breadcrumb_prefix',[],False)
 #    app.add_generic_role('srcfile',srcfile.srcfile)
     app.add_generic_role('srcfile',docutils.nodes.literal)
-    xcomment.setup(app, enable_comments) 
-    import xmosconf
+    latex_doctype='article'
+    xcomment.setup(app, enable_comments)
     for mod in extraconf_modules:
         mod = mod.strip()
         try:
@@ -335,7 +336,6 @@ def setup(app):
             extra_setup = getattr(mod, 'setup')
             extra_setup(app, conf, tags)
             conf.set()
-
 # -- Options for breathe --
 
 breathe_projects = { 'auto_doxygen' : '_build/doxygen/xml' }

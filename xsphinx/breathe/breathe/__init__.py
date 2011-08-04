@@ -158,6 +158,9 @@ class DoxygenTypedefDirective(DoxygenStructDirective):
 
     kind = "typedef"
 
+class DoxygenDefineDirective(DoxygenStructDirective):
+
+    kind = "define"
 
 
 # Setup Administration
@@ -258,6 +261,7 @@ class DoxygenDirectiveFactory(object):
             "doxygenclass" : DoxygenClassDirective,
             "doxygenenum" : DoxygenEnumDirective,
             "doxygentypedef" : DoxygenTypedefDirective,
+            "doxygendefine" : DoxygenDefineDirective,
             }
 
     def __init__(self, builder_factory, finder_factory, matcher_factory, project_info_factory):
@@ -280,6 +284,9 @@ class DoxygenDirectiveFactory(object):
 
     def create_typedef_directive_container(self):
         return self.create_directive_container("doxygentypedef")
+
+    def create_define_directive_container(self):
+        return self.create_directive_container("doxygendefine")
 
     def create_class_directive_container(self):
         return self.create_directive_container("doxygenclass")
@@ -361,6 +368,11 @@ def setup(app):
     app.add_directive(
             "doxygentypedef",
             directive_factory.create_typedef_directive_container(),
+            )
+
+    app.add_directive(
+            "doxygendefine",
+            directive_factory.create_define_directive_container(),
             )
 
     app.add_directive(

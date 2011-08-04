@@ -49,7 +49,9 @@ def render_content(data_object, tab):
 
 
     if (hasattr(data_object,'kind') and data_object.kind == "see"):
-        s = "**See also:**\n\n" + s
+        return s
+#        print data_object
+#        s = "**See also:**\n\n" + s
 
 
     if (isinstance(data_object,unicode)):
@@ -60,10 +62,18 @@ def render_content(data_object, tab):
     if isinstance(data_object, docParamListItemSub):
         return render_param(data_object, tab)
         
+    if (hasattr(data_object, 'para')):
+        s += ''.join([render_content(x, tab) for x in data_object.para])
+
+
+    if (hasattr(data_object, 'content')):
+        s += ''.join([render_content(x, tab) for x in data_object.content])
+    elif (hasattr(data_object, 'content_')):
+        s += ''.join([render_content(x, tab) for x in data_object.content_])
 
 
     if (hasattr(data_object, 'parameterlist')):
-        s += ''.join([render_content(x, tab) for x in data_object.parameterlist])
+        s += '\n\n' + ''.join([render_content(x, tab) for x in data_object.parameterlist])
 
     if (hasattr(data_object, 'parameteritem')):
         s += ''.join([render_content(x, tab) for x in data_object.parameteritem])
@@ -74,12 +84,7 @@ def render_content(data_object, tab):
     if isinstance(data_object, enumvalueTypeSub):
         data_object.content_ = \
            [x for x in data_object.content_ if not check_for_linked(x)]
-                               
 
-    if (hasattr(data_object, 'content')):
-        s += ''.join([render_content(x, tab) for x in data_object.content])
-    elif (hasattr(data_object, 'content_')):
-        s += ''.join([render_content(x, tab) for x in data_object.content_])
 
     if (hasattr(data_object, 'simplesects')):
         s += ''.join([render_content(x, tab) for x in data_object.simplesects])
@@ -88,8 +93,6 @@ def render_content(data_object, tab):
         s += ''.join([render_content(x, tab) for x in data_object.verbatim])
 
 
-    if (hasattr(data_object, 'para')):
-        s += ''.join([render_content(x, tab) for x in data_object.para])
 
     if (hasattr(data_object, 'memberdef')):
         s += ''.join([render_content(x, tab) for x in data_object.memberdef])
@@ -125,6 +128,9 @@ def render_content(data_object, tab):
         elif data_object.kind == "enum":
             s = ".. c:type:: " + data_object.name + "\n" + add_indent(s)
             print "Rendering Doxygen enum " + data_object.name
+        elif data_object.kind == "define":
+            s = ".. c:macro:: " + data_object.name + "\n" + add_indent(s)
+            print "Rendering Doxygen define " + data_object.name
         elif data_object.kind == "variable":
 #            print data_object
  #           print dir(data_object)
@@ -142,6 +148,17 @@ def render_content(data_object, tab):
         
 
     s = s.replace("___port___port___","port:")
+
+    if s.find('__multret__') != -1:
+        mult_ret_subs = [ ('{','obrace'),
+                          ('}','cbrace'),
+                          (' ','space'),
+                          (',','comma'),
+                          ('/*','ocomment'),
+                          ('*/','ccomment')]
+        s = s.replace('__multret__','')
+        for repl, pattern in mult_ret_subs:
+            s = s.replace(pattern, repl)
 
     return s
 
