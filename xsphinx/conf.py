@@ -212,6 +212,7 @@ htmlhelp_basename = short_name
 
 # -- Options for LaTeX output --------------------------------------------------
 
+latex_docclass = 'memoir'
 
 try:
     latex_doctype = os.environ['SPHINX_LATEX_DOCTYPE']
@@ -223,6 +224,8 @@ if 'SPHINX_SECTION_NEWPAGE' in os.environ:
     latex_section_newpage = (os.environ['SPHINX_SECTION_NEWPAGE'] == '1')
 else:
     latex_section_newpage = True
+
+
 
 # The paper size ('letter' or 'a4').
 #latex_paper_size = 'letter'
@@ -321,6 +324,7 @@ def setup(app):
     app.add_config_value('latex_section_newpage',[],False)
     app.add_config_value('latex_section_numbers',[],True)
     app.add_config_value('breadcrumb_prefix',[],False)
+    app.add_config_value('use_xmoslatex',[],False)
 #    app.add_generic_role('srcfile',srcfile.srcfile)
     app.add_generic_role('srcfile',docutils.nodes.literal)
     latex_doctype='article'
