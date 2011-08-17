@@ -70,6 +70,7 @@ if 'SPHINX_MASTER_DOC' in os.environ:
 else:
     master_doc = 'index'
 
+
 # General information about the project.
 project = os.environ['SPHINX_PROJECT_NAME']
 copyright = u''
@@ -95,7 +96,7 @@ release = os.environ['VERSION']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = [xsphinx_dir + '/_build']
+exclude_patterns = [xsphinx_dir + '/_build','.#*']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
