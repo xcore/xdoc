@@ -1422,7 +1422,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('\n\\vspace{-0.5cm}\n' + hlcode + '\\end{%sVerbatim}\n\n' %  (self.table and 'Original' or ''))
         else:
 #            self.body.append('\n\\vspace{-0.5cm}\n' + hlcode + '\\end{%sVerbatim}\n\n' %  (self.table and 'Original' or ''))
-            self.body.append('\n\\vspace{0.2cm}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{\\BUseVerbatim{savedenv}}}\n\n\\vspace{0.2cm}\n')
+            self.body.append('\n\\vspace{0.1cm}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{\\small \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.1cm}\n')
         self.verbatim = None
     visit_doctest_block = visit_literal_block
     depart_doctest_block = depart_literal_block
