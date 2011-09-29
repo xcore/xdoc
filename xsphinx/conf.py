@@ -18,6 +18,12 @@ import xsphinx.images
 import xcomment, srcfile
 import docutils
 
+if 'USE_AAFIG' in os.environ:
+    use_aafig = (os.environ['USE_AAFIG'] != '0')
+else:
+    use_aafig = False
+
+
 if 'CURRENT_BUILDER' in os.environ:
     current_builder = os.environ['CURRENT_BUILDER']
 else:
@@ -52,6 +58,13 @@ sys.path.append(xsphinx_dir + "/breathe")
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.ifconfig', 'xsphinx.ext.mathjax', 'breathe']
+
+if use_aafig:
+    print "Found and adding aafig extension"
+    extensions.append('sphinxcontrib.aafig')
+
+aafig_default_options = dict(proportional=True,width="100%",textual=True)
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = [xsphinx_dir + '/_templates']
@@ -96,8 +109,10 @@ release = os.environ['VERSION']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = [xsphinx_dir + '/_build','.#*']
 
+exclude_patterns = [xsphinx_dir + '/_build','.*\.#.*','_up/'+os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]+'.*']
+
+exclude_dirnames = ['_up/'+os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]]
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
 
@@ -324,8 +339,10 @@ def setup(app):
     app.add_config_value('latex_doctype',[],False)
     app.add_config_value('latex_section_newpage',[],False)
     app.add_config_value('latex_section_numbers',[],True)
+    app.add_config_value('latex_use_chapters',[],False)
     app.add_config_value('breadcrumb_prefix',[],False)
     app.add_config_value('use_xmoslatex',[],False)
+    app.add_config_value('use_sidecaption',[],False)
 #    app.add_generic_role('srcfile',srcfile.srcfile)
     app.add_generic_role('srcfile',docutils.nodes.literal)
     latex_doctype='article'

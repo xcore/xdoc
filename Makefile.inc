@@ -92,7 +92,7 @@ man: doxygen
 
 
 %.pdf: %.tex xlatex
-	export TEXINPUTS=$(T):; pdflatex $<;pdflatex $<
+	export TEXINPUTS=$(T):_build/$(XLATEX):; pdflatex $<;pdflatex $<
 
 TEXROOT = $(subst /,_,$(subst $(space),_,$(call lc,$(SPHINX_PROJECT_NAME))))
 PDF_TARGET = $(TEXROOT).pdf

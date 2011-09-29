@@ -11,7 +11,7 @@
 \RequirePackage{textcomp}
 %\RequirePackage{fancyhdr}
 \RequirePackage{fancybox}
-\RequirePackage{titlesec}
+%\RequirePackage{titlesec}
 \RequirePackage{tabulary}
 \RequirePackage{amsmath} % for \text
 \RequirePackage{makeidx}
@@ -41,12 +41,12 @@
   \advance\@tempdima \leftmargin\makebox[\@tempdima][l]{#1}%
 }
 
-\newenvironment{fulllineitems}{
-  \begin{list}{}{\labelwidth \leftmargin \labelsep 0pt
-                 \rightmargin 0pt \topsep -\parskip \partopsep \parskip
-                 \itemsep -\parsep
-                 \let\makelabel=\py@itemnewline}
-}{\end{list}}
+% \newenvironment{fulllineitems}{
+%   \begin{list}{}{\labelwidth \leftmargin \labelsep 0pt
+%                  \rightmargin 0pt \topsep -\parskip \partopsep \parskip
+%                  \itemsep -\parsep
+%                  \let\makelabel=\py@itemnewline}
+% }{\end{list}}
 
 % \optional is used for ``[, arg]``, i.e. desc_optional nodes.
 \newcommand{\optional}[1]{%
@@ -63,3 +63,16 @@
   \item[#1\code{(}\py@sigparams{#2}{#3}]}
 
 \@ifundefined{version}{\newcommand{\version}[1]{}}{}
+
+	
+% Command to generate two index entries (using subentries)
+\newcommand{\indexii}[2]{\index{#1!#2}\index{#2!#1}}
+% And three entries (using only one level of subentries)
+\newcommand{\indexiii}[3]{\index{#1!#2 #3}\index{#2!#3,#1}\index{#3!#1 #2}}
+
+\newenvironment{fulllineitems}{
+  \begin{list}{}{\labelwidth \leftmargin \labelsep 0pt
+                 \rightmargin 0pt \topsep -\parskip \partopsep \parskip
+                 \itemsep -\parsep
+                 \let\makelabel=\py@itemnewline}
+}{\end{list}}

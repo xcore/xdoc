@@ -14,6 +14,7 @@
 
 import re
 import sys
+import string
 from os import path
 
 from docutils import nodes, writers
@@ -28,6 +29,15 @@ from sphinx.util.pycompat import any
 from sphinx.util.texescape import tex_escape_map, tex_replace_map
 from sphinx.util.smartypants import educate_quotes_latex
 
+xmoslatex_admonitionlabels = { 'attention' : 'warn',
+                               'caution' : 'warn',
+                               'danger' : 'warn',
+                               'error' : 'warn',
+                               'hint' : 'info',
+                               'important' : 'info',
+                               'note' : 'info',
+                               'tip' : 'info',
+                               'warning' : 'info' }
 
 
 NON_XMOS_HEADER = r'''\usepackage[T1]{fontenc}
@@ -150,7 +160,7 @@ class Table(object):
 
 
 class LaTeXTranslator(nodes.NodeVisitor):
-    sectionnames = ["part", "section", "subsection",
+    sectionnames = ["chapter", "section", "subsection",
                     "subsubsection", "paragraph", "subparagraph"]
 
     ignore_missing_images = False
@@ -267,6 +277,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             if builder.config.latex_use_parts:
                 self.top_sectionlevel = 0
+            elif builder.config.latex_use_chapters:
+                self.top_sectionlevel = 0
             else:
                 self.top_sectionlevel = 1
         self.next_section_ids = set()
@@ -361,6 +373,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         return ''.join(ret)
 
     def visit_document(self, node):
+        self.linesep = '|'
         self.footnotestack.append(self.collect_footnotes(node))
         self.curfilestack.append(node.get('docname', ''))
         if self.first_document == 1:
@@ -375,7 +388,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(self.hypertarget(':doc'))
         # "- 1" because the level is increased before the title is visited
         self.sectionlevel = self.top_sectionlevel - 1
+        self.section_summary = []
+
     def depart_document(self, node):
+        if self.section_summary != []:
+            summary = "\\begin{inthischapter}\n"
+            for item in self.section_summary:
+                summary += "\item %s\n"%item
+            summary += "\\end{inthischapter}\n\n"
+
+            self.body.insert(self.section_summary_pos, summary)
+
         if False and self.bibitems:
             widest_label = ""
             for bi in self.bibitems:
@@ -494,13 +517,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.this_is_the_title = 0
             raise nodes.SkipNode
         elif isinstance(parent, nodes.section):
-            if self.builder.config.latex_section_numbers:
-                modifier = ''
-            else:
+            if not self.builder.config.latex_section_numbers or \
+               'nosecnum' in node['classes']:
                 modifier = '*'
+            else:
+                modifier = ''
             try:
                 if (self.builder.config.latex_section_newpage):
-                    if (self.sectionlevel <= 1):
+                    if (self.sectionlevel <= self.top_sectionlevel):
                         self.body.append('\\clearpage\n');
                 self.body.append(r'\%s%s{' % (self.sectionnames[self.sectionlevel],modifier))
             except IndexError:
@@ -535,7 +559,29 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('\\textbf{')
             self.context.append('}\n')
         self.in_title = 1
+
+        if self.builder.config.latex_doctype == 'manual':
+            if self.sectionlevel == self.top_sectionlevel:
+                if self.section_summary != []:
+                    summary = "\\begin{inthischapter}\n"
+                    for item in self.section_summary:
+                        summary += "\item %s\n"%item
+                    summary += "\\end{inthischapter}\n\n"
+
+                    self.body.insert(self.section_summary_pos, summary)
+                self.section_summary = []
+                self.section_summary_pos = len(self.body)+2
+            if self.sectionlevel == self.top_sectionlevel+1:
+                self.section_summary_entry_pos = len(self.body)
+#                self.section_summary.append(str(node[0]))
+
     def depart_title(self, node):
+        if self.builder.config.latex_doctype == 'manual':
+            if self.sectionlevel == self.top_sectionlevel+1:
+                item = ''
+                for x in self.body[self.section_summary_entry_pos:]:
+                    item += x
+                self.section_summary.append(item)
         self.in_title = 0
         self.body.append(self.context.pop())
 
@@ -546,12 +592,25 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.context.append('')
     def depart_subtitle(self, node):
-        self.body.append(self.context.pop())
+        self.body.append(self.context.pop(
+))
+
+    def visit_desc_list(self, node):
+        if self.builder.config.latex_doctype == 'manual':
+            self.body.append('\\begin{option}\n\n')
+
+    def depart_desc_list(self, node):
+        if self.builder.config.latex_doctype == 'manual':
+            self.body.append('\\end{option}\n\n')
 
     def visit_desc(self, node):
-        self.body.append('\n\n\\begin{fulllineitems}\n')
+        if self.builder.config.latex_doctype != "manual":
+            self.body.append('\n\n\\begin{fulllineitems}\n')
+
     def depart_desc(self, node):
-        self.body.append('\n\\end{fulllineitems}\n\n')
+        if self.builder.config.latex_doctype != 'manual':
+            self.body.append('\n\\end{fulllineitems}\n\n')
+
 
     def visit_desc_signature(self, node):
         if node.parent['objtype'] != 'describe' and node['ids']:
@@ -559,18 +618,36 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             hyper = ''
         self.body.append(hyper)
-        for child in node:
-            if isinstance(child, addnodes.desc_parameterlist):
-                self.body.append(r'\pysiglinewithargsret{')
-                break
+        if self.builder.config.latex_doctype == 'manual':
+            self.prev_duplicate_sig = False
+            self.body.append(r'\item[')
         else:
-            self.body.append(r'\pysigline{')
+            params = False
+            for child in node:
+                if isinstance(child, addnodes.desc_parameterlist):
+                    params = True
+                    break
+            if params:
+                self.body.append(r'\pysiglinewithargsret{')
+            else:
+                self.body.append(r'\pysigline{')
+
+
     def depart_desc_signature(self, node):
-        self.body.append(r'}{} \justifying \setlength{\parindent}{0mm}')
+        if self.builder.config.latex_doctype == 'manual':
+            self.body.append(r']')
+            if self.prev_duplicate_sig:
+                self.body.append('\duplicateoption')
+        else:
+            self.body.append(r'}{} \justifying \setlength{\parindent}{0mm}')
 
     def visit_desc_addname(self, node):
-        self.body.append(r'\code{')
+        if self.builder.config.latex_doctype == 'manual':
+            self.body.append(r'\optemph{')
+        else:
+            self.body.append(r'\code{')
         self.literal_whitespace += 1
+
     def depart_desc_addname(self, node):
         self.body.append('}')
         self.literal_whitespace -= 1
@@ -586,10 +663,22 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_desc_name(self, node):
-        self.body.append(r'\bfcode{')
+        if self.builder.config.latex_doctype == 'manual':
+            if 'duplicate' in node['classes']:
+
+                self.body.append(" ]")
+                if self.prev_duplicate_sig:
+                    self.body.append('\duplicateoption')
+                self.body.append("\n\\item[")
+                self.prev_duplicate_sig = True
+        else:
+            self.body.append(r'\bfcode{')
         self.literal_whitespace += 1
     def depart_desc_name(self, node):
-        self.body.append('}')
+        if self.builder.config.latex_doctype == 'manual':
+            pass
+        else:
+            self.body.append('}')
         self.literal_whitespace -= 1
 
     def visit_desc_parameterlist(self, node):
@@ -640,7 +729,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if len(node.children) == 1 and node.children[0].astext() in \
                ('Footnotes', _('Footnotes')):
             raise nodes.SkipNode
-        self.body.append('\\paragraph{')
+        self.body.append('\\paragraph*{')
         self.context.append('}\n')
     def depart_rubric(self, node):
         self.body.append(self.context.pop())
@@ -657,7 +746,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if isinstance(node.parent, nodes.citation):
             self.bibitems[-1][0] = node.astext()
             self.bibitems[-1][2] = self.curfilestack[-1]
-            print self.bibitems[-1][1]
+#            print self.bibitems[-1][1]
             target = self.hypertarget(self.curfilestack[-1] + ':' + node.astext(),
                                       withdoc=False)
 #        raise nodes.SkipNode
@@ -670,6 +759,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
         raise nodes.SkipNode
 
     def visit_table(self, node):
+        if 'pdf-no-border' in node['classes'] or 'no-border' in node['classes']:
+            self.hline = ''
+        else:
+            self.hline = '\\hline'
+
         if self.table:
             raise UnsupportedError(
                 '%s:%s: nested tables are not yet implemented.' %
@@ -682,6 +776,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body = self.tablebody
     def depart_table(self, node):
 #        print "colcount: %d" % self.table.colcount
+        if 'pdf-no-border' in node['classes'] or 'no-border' in node['classes']:
+            linesep = ''
+            hline = ''
+        else:
+            linesep = '|'
+            hline = '\\hline'
+
+        self.linesep = linesep
         if self.table.rowcount > 30:
             self.table.longtable = True
         self.body = self._body
@@ -689,10 +791,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append("\\renewcommand{\\arraystretch}{1.25}\n")
 
         if not self.table.longtable and self.table.caption is not None:
-            self.body.append(u'\n\\begin{center}\\begin{threeparttable}\n'
+            if self.builder.config.use_sidecaption:
+                self.body.append(u'\n\\begin{figure}[H]')
+                self.body.append(u'\\begin{sidecaption}{%s}\n'%self.table.caption)
+#                self.body.append(u'\\begin{minipage}{\\textwidth}\n')
+                self.body.append(u'\small')
+            else:
+                self.body.append(u'\n\\begin{center}\\begin{threeparttable}\n')
 #                             u'\\capstart\\caption{%s}\n' % self.table.caption)
 #                             u'\\caption{%s}\n' % self.table.caption)
-                             )
+
         if self.table.longtable:
             self.body.append('\n\\begin{longtable}')
         elif self.table.has_verbatim:
@@ -705,26 +813,26 @@ class LaTeXTranslator(nodes.NodeVisitor):
             colspec_str = ''
             for colwidth in self.table.colspec:                
                 colwidth = (colwidth / total) * 0.90
-                colspec_str += 'p{%.3f\\linewidth}|' % colwidth
-            self.body.append('{|' + colspec_str + '}\n')
+                colspec_str += 'p{%.3f\\linewidth}%s' % (colwidth,linesep)
+            self.body.append('{%s'%linesep + colspec_str + '}\n')
         else:
-            print node
+#            print node
             if self.table.has_verbatim:
                 colwidth = 0.90 / self.table.colcount
-                colspec = ('p{%.3f\\linewidth}|' % colwidth) * \
+                colspec = ('p{%.3f\\linewidth}%s' % (colwidth,linesep)) * \
                           self.table.colcount
-                self.body.append('{|' + colspec + '}\n')
+                self.body.append('{%s'%linesep + colspec + '}\n')
             elif self.table.longtable:
                 colwidth = 0.90 / self.table.colcount
-                colspec = ('p{%.3f\\linewidth}|' % colwidth) * \
+                colspec = ('p{%.3f\\linewidth}%s' % (colwidth,linesep)) * \
                           self.table.colcount
                 self.body.append('{|' + colspec + '}\n')
 #                self.body.append('{|' + ('l|' * self.table.colcount) + '}\n')
             else:
                 colwidth = 0.90 / self.table.colcount
-                colspec = ('p{%.3f\\linewidth}|' % colwidth) * \
+                colspec = ('p{%.3f\\linewidth}%s' % (colwidth,linesep)) * \
                           self.table.colcount
-                self.body.append('{|' + colspec + '}\n')
+                self.body.append('{%s'%linesep + colspec + '}\n')
 #                self.body.append('{|' + ('l|' * self.table.colcount) + '}\n')
 #        if self.table.longtable and self.table.caption is not None:
 #            self.body.append(u'\\capstart\\caption{%s} \\\\\n' %
@@ -734,21 +842,21 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append(self.hypertarget(id, anchor=False))
             self.next_table_ids.clear()
         if self.table.longtable:
-            self.body.append('\\hline\n')
+            self.body.append('%sn'%hline)
             self.body.append('\\endfirsthead\n\n')
             self.body.append('\\multicolumn{%s}{c}%%\n' % self.table.colcount)
             self.body.append(r'{{\bfseries \tablename\ \thetable{} -- %s}} \\'
                              % _('continued from previous page'))
-            self.body.append('\n\\hline\n')
+            self.body.append('\n%s\n'%hline)
             self.body.append('\\endhead\n\n')
-            self.body.append(ur'\hline \multicolumn{%s}{|r|}{{%s}} \\ \hline'
-                             % (self.table.colcount,
-                                _('Continued on next page')))
+            self.body.append(ur'%s \multicolumn{%s}{%sr%s}{{%s}} \\ %s'
+                             % (hline, linesep, linesep,self.table.colcount,
+                                _('Continued on next page'),hline))
             self.body.append('\n\\endfoot\n\n')
-            self.body.append('\\hline\n')
+            self.body.append('%s\n'%hline)
             self.body.append('\\endlastfoot\n\n')
         else:
-            self.body.append('\\hline\n')
+            self.body.append('%s\n'%hline)
         self.body.extend(self.tablebody)
         if self.table.longtable:
             self.body.append('\\end{longtable}\n\n')
@@ -757,8 +865,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.body.append('\\end{tabular}\n\n')
         if not self.table.longtable and self.table.caption is not None:
-            self.body.append(u'\\caption{%s}\n' % self.table.caption)
-            self.body.append('\\end{threeparttable}\n\n\\end{center}\n\n')
+            if self.builder.config.use_sidecaption:
+#                self.body.append(u'\\end{minipage}')
+                self.body.append(u'\\end{sidecaption}\\end{figure}\n')
+            else:
+                self.body.append(u'\\caption{%s}\n' % self.table.caption)
+                self.body.append('\\end{threeparttable}\n\n\\end{center}\n\n')
         self.table = None
         self.tablebody = None
 
@@ -781,13 +893,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body.append('\\hline\n')
 #        self.table.had_head = True
     def depart_thead(self, node):
-        self.body.append('\\hline\n')
+        self.body.append('%s\n'%self.hline)
 
     def visit_tbody(self, node):
         if not self.table.had_head:
             self.visit_thead(node)
     def depart_tbody(self, node):
-        self.body.append('\\hline\n')
+        self.body.append('%s\n'%self.hline)
 
     def visit_row(self, node):
 #        for c in node.children:
@@ -804,13 +916,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if spanning_header or \
            (self.table.prev_colcount != None and \
                 colcount != self.table.prev_colcount):
-            self.body.append('\\hline\n')
+            self.body.append('%s\n'%self.hline)
         self.table.prev_colcount = colcount
         if (self.table.colcount != colcount):
             colwidth = 0.90 / colcount
-            colspec = ('p{%.3f\\linewidth}|' % colwidth) * colcount
+            colspec = ('p{%.3f\\linewidth}%s' % (colwidth,self.linesep)) * colcount
             self.body.append('\\multicolumn{%d}' % self.table.colcount)
-            self.body.append('{|' + colspec + '}{')
+            self.body.append('{%s'%self.linesep + colspec + '}{')
         self.table.col = 0
 
     def depart_row(self, node):
@@ -856,24 +968,40 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_bullet_list(self, node):
         if not self.compact_list:
-            self.body.append('\\begin{itemize}\n' )
+            if 'nopoints' in node['classes']:
+                self.body.append('\\begin{nopoints}\n' )
+            else:
+                self.body.append('\\begin{itemize}\n' )
+
+
+
     def depart_bullet_list(self, node):
         if not self.compact_list:
-            self.body.append('\\end{itemize}\n' )
+            if 'nopoints' in node['classes']:
+                self.body.append('\\end{nopoints}\n' )
+            else:
+                self.body.append('\\end{itemize}\n' )
+
 
     def visit_enumerated_list(self, node):
-        self.body.append('\\begin{enumerate}\n' )
+        if 'steps' in node['classes']:
+            self.body.append('\\begin{steps}\n' )
+        else:
+            self.body.append('\\begin{enumerate}\n' )
         if 'start' in node:
             self.body.append('\\setcounter{enumi}{%d}\n' % (node['start'] - 1))
     def depart_enumerated_list(self, node):
-        self.body.append('\\end{enumerate}\n' )
+        if 'steps' in node['classes']:
+            self.body.append('\\end{steps}\n' )
+        else:
+            self.body.append('\\end{enumerate}\n' )
 
     def visit_list_item(self, node):
         # Append "{}" in case the next character is "[", which would break
         # LaTeX's list environment (no numbering and the "[" is not printed).
-        self.body.append(r'\item {} \  ')
+        self.body.append(r'\item {  ')
     def depart_list_item(self, node):
-        self.body.append('\n')
+        self.body.append('}\n')
 
     def visit_definition_list(self, node):
 #        self.body.append('\\begin{description}\n')
@@ -909,28 +1037,60 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_field_list(self, node):
         self.body.append('\n\n')
+        if 'actions' in node['classes']:
+#            self.body.append('\\begin{actions}\n\n')
+            for f in node.traverse(nodes.field):
+                f['classes'].append('action')
+            for f in node.traverse(nodes.field_body):
+                f['classes'].append('action')
+            for f in node.traverse(nodes.field_name):
+                f['classes'].append('action')
+            self.sectionlevel += 1
+                #            exit(1)
+#        self.body.append('\\begin{tabular}{ll}')
 #        self.body.append('\\begin{quote}\\begin{description}\n')
         pass
     def depart_field_list(self, node):
+       if 'actions' in node['classes']:
+           self.sectionlevel -= 1
+#            self.body.append('\\end{actions}\n\n')
 #        self.body.append('\\end{description}\\end{quote}\n')
-        pass
+#        self.body.append('\\end{tabular} \n \n')
+       pass
 
     def visit_field(self, node):
+#        if 'action' in node['classes']:
+#            self.body.append('\\item{')
 #        self.body.append('\n\n\\textbf{')
 #        self.body.append('abc ')
 #        self.context.append('}')
         pass
 
     def depart_field(self, node):
+#        if 'action' in node['classes']:
+#            self.body.append('}\n\n')
 #        self.body.append('}\n\n')
         pass
 
 
     def visit_field_name(self, node):
-        self.body.append('\\textbf{')
+#        print self.sectionlevel
+        if 'action' in node['classes']:
+            if self.sectionlevel == 2:
+                self.body.append('\\vspace{-0.4cm}\n')
+            self.body.append('\\%s*{'%self.sectionnames[self.sectionlevel+1])
+        else:
+            self.body.append('\\textbf{')
 
     def depart_field_name(self, node):
-        self.body.append('}')
+        if 'action' in node['classes']:
+            if self.sectionlevel == 2:
+                self.body.append('}\n')
+                self.body.append('\\vspace{-0.4cm}\n')
+            else:
+                self.body.append(':}\n')
+        else:
+            self.body.append(':}')
 #        self.body.append('}\n\n')
         pass
         
@@ -939,12 +1099,33 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #    depart_field_name = depart_term
 
     visit_field_body = visit_definition
-    depart_field_body = depart_definition
+    def depart_field_body(self,node):
+        self.depart_definition(node)
+#        self.body.append('\\\\ \n')
 
     def visit_paragraph(self, node):
+        self.para_icons = []
+        self.para_icon_insert_point = len(self.body)
         self.body.append('\n')
+
     def depart_paragraph(self, node):
+        if self.para_icons:
+            pos = self.para_icon_insert_point
+            first = self.body[pos+1]
+            n = len(first) - len(first.lstrip())
+            n = string.find(first,' ',n)
+            icon_str = ' '
+            if len(self.para_icons) == 2:
+                icon_str += "\\doubleiconmargin{2}{%s}{%s}" % (self.para_icons[0],
+                                                               self.para_icons[1])
+            else:
+                for icon in self.para_icons:
+                    icon_str += '\\iconmargin{2}{%s} ' % icon
+            icon_str += ' '
+            self.body[pos+1] = first[:n] + icon_str + first[n:]
+#        self.body = self.body[:pos] + ' gg ' + self.body[pos:]
         self.body.append('\n')
+        self.para_icons = None
 
     def visit_centered(self, node):
         self.body.append('\n\\begin{center}')
@@ -986,6 +1167,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_image(self, node):
         attrs = node.attributes
+        if 'iconmargin' in node['classes']:
+            self.para_icons.append(node['uri'])
+            return
         pre = []                        # in reverse order
         post = []
 #        include_graphics_options = []
@@ -1024,6 +1208,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 post.append(align_prepost[is_inline, attrs['align']][1])
             except KeyError:
                 pass
+        if is_inline:
+            pre.append('\\raisebox{-1mm}{')
+            post.append('}')
         if not is_inline:
             pre.append('\n')
             post.append('\n')
@@ -1049,6 +1236,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_figure(self, node):
+        if self.builder.config.use_sidecaption:
+            cap = ""
+            for c in node.traverse(nodes.caption):
+                cap = c[0]
+            node['align'] = 'left'
+            self.body.append('\\begin{figure}[H]\n')
+            self.body.append('\\begin{sidecaption}{%s}\n' % cap)
+            self.context.append('\\end{sidecaption}\\end{figure}\n')
+            return
         ids = ''
         for id in self.next_figure_ids:
             ids += self.hypertarget(id, anchor=False)
@@ -1081,16 +1277,23 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.include_graphics_options.append('width=%s' % w)
 
             self.context.append(ids + align_end + '\\end{figure}\n')
+
     def depart_figure(self, node):
         self.body.append(self.context.pop())
 
     def visit_caption(self, node):
-        self.body.append('\\caption{')
+        if self.builder.config.use_sidecaption:
+            raise nodes.SkipNode
+        else:
+            self.body.append('\\caption{')
+
     def depart_caption(self, node):
-        self.body.append('}')
+        if not self.builder.config.use_sidecaption:
+            self.body.append('}')
 
     def visit_legend(self, node):
         self.body.append('{\\small ')
+
     def depart_legend(self, node):
         self.body.append('}')
 
@@ -1101,33 +1304,39 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body.append('\\end{notice}\n')
         pass
 
+
+
     def _make_visit_admonition(name):
-        def visit_admonition(self, node):            
-           self.body.append('\n\n \\ \\hspace{-0.35cm} \%smarginraise '%name)
-#            self.body.append(u'\n\\begin{notice}{%s}{%s:}' %
-#                             (name, admonitionlabels[name]))
+        def visit_admonition(self, node):
+            if self.builder.config.use_xmoslatex:
+                self.body.append('\n\n \\ \\hspace{-0.35cm} \%smarginraise '%xmoslatex_admonitionlabels[name])
+            else:
+                self.body.append(u'\n\n\\textbf{%s}: ' %
+                                 (admonitionlabels[name]))
         return visit_admonition
+
     def _depart_named_admonition(self, node):
-#        self.body.append('\\end{notice}\n')
+#        if not self.builder.config.use_xmoslatex:
+#            self.body.append('\\end{notice}\n')
         pass
 
-    visit_attention = _make_visit_admonition('warn')
+    visit_attention = _make_visit_admonition('attention')
     depart_attention = _depart_named_admonition
-    visit_caution = _make_visit_admonition('warn')
+    visit_caution = _make_visit_admonition('caution')
     depart_caution = _depart_named_admonition
-    visit_danger = _make_visit_admonition('warn')
+    visit_danger = _make_visit_admonition('danger')
     depart_danger = _depart_named_admonition
-    visit_error = _make_visit_admonition('warn')
+    visit_error = _make_visit_admonition('error')
     depart_error = _depart_named_admonition
-    visit_hint = _make_visit_admonition('info')
+    visit_hint = _make_visit_admonition('hint')
     depart_hint = _depart_named_admonition
-    visit_important = _make_visit_admonition('info')
+    visit_important = _make_visit_admonition('important')
     depart_important = _depart_named_admonition
-    visit_note = _make_visit_admonition('info')
+    visit_note = _make_visit_admonition('note')
     depart_note = _depart_named_admonition
-    visit_tip = _make_visit_admonition('info')
+    visit_tip = _make_visit_admonition('tip')
     depart_tip = _depart_named_admonition
-    visit_warning = _make_visit_admonition('warn')
+    visit_warning = _make_visit_admonition('warning')
     depart_warning = _depart_named_admonition
 
     def visit_versionmodified(self, node):
@@ -1422,7 +1631,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('\n\\vspace{-0.5cm}\n' + hlcode + '\\end{%sVerbatim}\n\n' %  (self.table and 'Original' or ''))
         else:
 #            self.body.append('\n\\vspace{-0.5cm}\n' + hlcode + '\\end{%sVerbatim}\n\n' %  (self.table and 'Original' or ''))
-            self.body.append('\n\\vspace{0.1cm}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{\\small \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.1cm}\n')
+            self.body.append('\n\\vspace{0.1cm}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{\\tiny \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.1cm}\n')
         self.verbatim = None
     visit_doctest_block = visit_literal_block
     depart_doctest_block = depart_literal_block

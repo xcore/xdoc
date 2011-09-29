@@ -43,7 +43,8 @@ class Image(Directive):
                    'scale': directives.percentage,
                    'align': align,
                    'target': directives.unchanged_required,
-                   'class': directives.class_option}
+                   'class': directives.class_option,
+                   'iconmargin' : directives.flag}
 
     def run(self):
         if 'align' in self.options:
@@ -83,13 +84,23 @@ class Image(Directive):
             else:                           # malformed target
                 messages.append(data)       # data is a system message
             del self.options['target']
-        set_classes(self.options)
+
+
         image_node = nodes.image(self.block_text, **self.options)
+
+        if 'iconmargin' in self.options:
+            image_node['classes'].append('iconmargin')
+
+        set_classes(self.options)
+
         if reference_node:
             reference_node += image_node
             return messages + [reference_node]
         else:
             return messages + [image_node]
+
+
+
 
 
 class Figure(Image):
