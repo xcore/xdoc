@@ -7,6 +7,11 @@ space :=
 space +=
 
 
+DO_LATEX = echo Running LaTeX;export TEXINPUTS=$(T):_build/xlatex:;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.0;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.1; mv *.aux _build/xlatex; mv *.log _build/xlatex;mv *.idx _build/xlatex; mv *.out _build/xlatex;mv $1 _build/xlatex
+
+
+export DO_LATEX
+
 XDOC_MAKEFILE = $(filter %xdoc/Makefile.inc,$(MAKEFILE_LIST))
 
 XDOC_DIR = $(patsubst %/Makefile.inc,%,$(XDOC_MAKEFILE))
@@ -99,7 +104,7 @@ PDF_TARGET = $(TEXROOT).pdf
 
 pdf: XLATEX=xlatex
 pdf: xlatex
-	export TEXINPUTS=$(T):; pdflatex $(TEXROOT).tex;pdflatex $(TEXROOT).tex
+	@$(call DO_LATEX, $(TEXROOT).tex)
 	@echo "Build complete"
 
 

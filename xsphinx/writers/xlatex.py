@@ -1440,7 +1440,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.in_title or not uri:
             self.context.append('')
         elif uri.startswith('mailto:') or uri.startswith('http:') or \
-                 uri.startswith('https:') or uri.startswith('ftp:'):
+                 uri.startswith('https:') or uri.startswith('ftp:') or \
+                 uri.startswith('/'):
+
+            if uri.startswith('/'):
+                uri = 'http://www.xmos.com'+uri
+
             self.body.append('\\href{%s}{' % self.encode_uri(uri))
             # if configured, put the URL after the link
             if self.builder.config.latex_show_urls and \
