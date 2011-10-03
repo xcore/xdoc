@@ -1636,7 +1636,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('\n\\vspace{-0.5cm}\n' + hlcode + '\\end{%sVerbatim}\n\n' %  (self.table and 'Original' or ''))
         else:
 #            self.body.append('\n\\vspace{-0.5cm}\n' + hlcode + '\\end{%sVerbatim}\n\n' %  (self.table and 'Original' or ''))
-            self.body.append('\n\\vspace{0.1cm}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{\\tiny \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.1cm}\n')
+
+            if self.builder.config.tiny_verbatim:
+                tinyv = '\\tiny'
+            else:
+                tinyv = ''
+            self.body.append('\n\\vspace{0.1cm}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{%s \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.1cm}\n' % tinyv)
         self.verbatim = None
     visit_doctest_block = visit_literal_block
     depart_doctest_block = depart_literal_block

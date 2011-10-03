@@ -10,6 +10,25 @@ space +=
 DO_LATEX = echo Running LaTeX;export TEXINPUTS=$(T):_build/xlatex:;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.0;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.1; mv *.aux _build/xlatex; mv *.log _build/xlatex;mv *.idx _build/xlatex; mv *.out _build/xlatex;mv $1 _build/xlatex
 
 
+OTHER_DOC_DIRS_ABS = $(foreach x,$(OTHER_DOC_DIRS),$(abspath $x))
+ifeq ($(OTHER_DOC_DIRS),)
+LINKED_DIRS =
+else
+_link_dir:
+	-mkdir _linked_dirs
+
+%.link: | _link_dir
+	-ln -T -s $(abspath $*) _linked_dirs/$(notdir $(abspath $*))
+
+_linked_dirs: $(foreach x, $(OTHER_DOC_DIRS), $(x).link)
+	@echo "Created linked dirs"
+LINKED_DIRS = _linked_dirs
+endif
+
+export LINKED_DIRS
+export OTHER_DOC_DIRS
+export OTHER_DOC_DIRS_ABS
+
 export DO_LATEX
 
 XDOC_MAKEFILE = $(filter %xdoc/Makefile.inc,$(MAKEFILE_LIST))
@@ -65,7 +84,7 @@ doxygen:
 	@export PATH=$(PATH):/tools/doxygen/doxygen-1.5.8/bin/ && cd $(DOC_DIR) && doxygen 2>&1 | grep -v "REFERENCE" ; echo "Done"
 	@rm $(DOC_DIR)/Doxyfile
 
-html: doxygen
+html: doxygen | $(LINKED_DIRS)
 	export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b html $(ALLSPHINXOPTS) . $(BUILDDIR)/html
 	@echo ".nojekyll" > _build/html/.nojekyll
 	@echo
@@ -73,7 +92,7 @@ html: doxygen
 
 
 
-singlehtml: doxygen
+singlehtml: doxygen | $(LINKED_DIRS)
 	export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b singlehtml $(ALLSPHINXOPTS) . $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/singlehtml."
@@ -83,7 +102,7 @@ xlatex: doxygen
 	export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX)
 	cp _build/$(XLATEX)/*.tex .
 
-man: doxygen
+man: doxygen | $(LINKED_DIRS)
 	export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b man $(ALLSPHINXOPTS) . $(BUILDDIR)/man
 	@echo
 	@echo "Build finished. The man pages are in $(BUILDDIR)/man."
@@ -103,7 +122,7 @@ TEXROOT = $(subst /,_,$(subst $(space),_,$(call lc,$(SPHINX_PROJECT_NAME))))
 PDF_TARGET = $(TEXROOT).pdf
 
 pdf: XLATEX=xlatex
-pdf: xlatex
+pdf: xlatex | $(LINKED_DIRS)
 	@$(call DO_LATEX, $(TEXROOT).tex)
 	@echo "Build complete"
 

@@ -17,6 +17,7 @@ import xsphinx.code
 import xsphinx.images
 import xcomment, srcfile
 import docutils
+from xsphinx.xdoctoctree import XdocTocTree
 
 if 'USE_AAFIG' in os.environ:
     use_aafig = (os.environ['USE_AAFIG'] != '0')
@@ -110,9 +111,10 @@ release = os.environ['VERSION']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 
-exclude_patterns = [xsphinx_dir + '/_build','.*\.#.*','_up/'+os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]+'.*']
+exclude_patterns = [xsphinx_dir + '/_build','.*\.#.*']
+#,'_linked_dirs/.*/'+os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]+'.*']
 
-exclude_dirnames = ['_up/'+os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]]
+exclude_dirnames = [os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]]
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
 
@@ -343,9 +345,11 @@ def setup(app):
     app.add_config_value('breadcrumb_prefix',[],False)
     app.add_config_value('use_xmoslatex',[],False)
     app.add_config_value('use_sidecaption',[],False)
+    app.add_config_value('tiny_verbatim',[],False)
 #    app.add_generic_role('srcfile',srcfile.srcfile)
     app.add_generic_role('srcfile',docutils.nodes.literal)
     latex_doctype='article'
+    app.add_directive('toctree', XdocTocTree)
     xcomment.setup(app, enable_comments)
     for mod in extraconf_modules:
         mod = mod.strip()
