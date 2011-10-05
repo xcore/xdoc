@@ -177,7 +177,7 @@ def render_compoundtype(type_data_object, data_object, state, content, content_o
 
     for sectiondef in compound.sectiondef:
         if sectiondef.kind == "public-attrib":
-            s += add_indent("**Structure Members**:\n\n")
+            s += add_indent("**Structure Members:**\n\n")
             s += add_indent(render_content(sectiondef,''))
 
 

@@ -26,7 +26,7 @@ if __name__ == "__main__":
         for pattern, repl in substs:
             x = re.sub(pattern, repl, x)
 
-        m = re.match(r'\{(.*)\}',x)
+        m = re.match(r'^\s*\{(.*)\}\s*[^\s\/]',x)
         if m:
             ret_type = m.group(0)
             for pattern, repl in mult_ret_subs:

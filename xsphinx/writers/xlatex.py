@@ -81,6 +81,7 @@ HEADER1 = r'''
 \usepackage{xsphinx}
 \usepackage{threeparttable}
 \usepackage{fancyvrb}
+\usepackage{indent}
 \renewcommand\bfcode\textbf
 \renewcommand\bf\textbf
 \graphicspath{{./}{./images/}}
@@ -101,6 +102,8 @@ FOOTER = r'''
 %(printindex)s
 \end{document}
 '''
+
+toplevel_desc = ['function','type']
 
 class collected_footnote(nodes.footnote):
     """Footnotes that are collected are assigned this class."""
@@ -294,6 +297,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.no_contractions = 0
         self.compact_list = 0
         self.first_param = 0
+        self.fullwidth = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -526,6 +530,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 if (self.builder.config.latex_section_newpage):
                     if (self.sectionlevel <= self.top_sectionlevel):
                         self.body.append('\\clearpage\n');
+                if 'compact' in node['classes']:
+                    self.body.append('\n\\vspace{-\\parsep}\n')
                 self.body.append(r'\%s%s{' % (self.sectionnames[self.sectionlevel],modifier))
             except IndexError:
                 indent = ""
@@ -584,6 +590,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.section_summary.append(item)
         self.in_title = 0
         self.body.append(self.context.pop())
+        if 'compact' in node['classes']:
+            self.body.append('\n\\vspace{-\\parsep}\n')
+
 
     def visit_subtitle(self, node):
         if isinstance(node.parent, nodes.sidebar):
@@ -592,24 +601,59 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.context.append('')
     def depart_subtitle(self, node):
-        self.body.append(self.context.pop(
-))
+        self.body.append(self.context.pop())
 
     def visit_desc_list(self, node):
         if self.builder.config.latex_doctype == 'manual':
-            self.body.append('\\begin{option}\n\n')
+            desctype = None
+            for x in node.traverse(addnodes.desc):
+                desctype = x['desctype']
+                break
+            node['desctype'] = desctype
+            if desctype in toplevel_desc:
+                pass
+            elif desctype != None:
+                self.body.append('\\begin{option}\n\n')
+            else:
+                pass
+#                print node
 
     def depart_desc_list(self, node):
         if self.builder.config.latex_doctype == 'manual':
-            self.body.append('\\end{option}\n\n')
+            desctype = node['desctype']
+            if desctype in toplevel_desc:
+                pass
+            elif desctype != None:
+                self.body.append('\\end{option}\n\n')
 
     def visit_desc(self, node):
         if self.builder.config.latex_doctype != "manual":
             self.body.append('\n\n\\begin{fulllineitems}\n')
+        else:
+            if node['desctype'] in toplevel_desc:
+                estimated_param_len = 0
+                for y in node.traverse(addnodes.desc_signature):
+                    for x in y.traverse(nodes.Text):
+                        estimated_param_len += len(str(x))
+                if self.fullwidth:
+                    long_params = estimated_param_len > 70
+                else:
+                    long_params = estimated_param_len > 65
+                node['long_params'] = long_params
+                for x in node.traverse(addnodes.desc_parameter):
+                    x['long_params'] = long_params
+                if long_params:
+                    self.body.append('\n\\vspace{-6mm}')
+                self.body.append('\n\n\\texttt{\n')
+                if long_params:
+                    self.body.append('\\begin{tabbing}')
 
     def depart_desc(self, node):
         if self.builder.config.latex_doctype != 'manual':
             self.body.append('\n\\end{fulllineitems}\n\n')
+
+
+
 
 
     def visit_desc_signature(self, node):
@@ -620,7 +664,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append(hyper)
         if self.builder.config.latex_doctype == 'manual':
             self.prev_duplicate_sig = False
-            self.body.append(r'\item[')
+            if not node.parent['desctype'] in toplevel_desc:
+                self.body.append('\\item[')
         else:
             params = False
             for child in node:
@@ -635,9 +680,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def depart_desc_signature(self, node):
         if self.builder.config.latex_doctype == 'manual':
-            self.body.append(r']')
-            if self.prev_duplicate_sig:
-                self.body.append('\duplicateoption')
+            if not node.parent['desctype'] in toplevel_desc:
+                self.body.append(r']')
+                if self.prev_duplicate_sig:
+                    self.body.append('\duplicateoption')
         else:
             self.body.append(r'}{} \justifying \setlength{\parindent}{0mm}')
 
@@ -665,12 +711,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_desc_name(self, node):
         if self.builder.config.latex_doctype == 'manual':
             if 'duplicate' in node['classes']:
-
-                self.body.append(" ]")
-                if self.prev_duplicate_sig:
-                    self.body.append('\duplicateoption')
-                self.body.append("\n\\item[")
-                self.prev_duplicate_sig = True
+                if not node.parent['desctype'] in toplevel_desc:
+                    self.body.append(" ]")
+                    if self.prev_duplicate_sig:
+                        self.body.append('\duplicateoption')
+                    self.body.append("\n\\item[")
+                    self.prev_duplicate_sig = True
         else:
             self.body.append(r'\bfcode{')
         self.literal_whitespace += 1
@@ -682,20 +728,36 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.literal_whitespace -= 1
 
     def visit_desc_parameterlist(self, node):
-        self.body.append('}{\\raggedright ')
+        if self.builder.config.latex_doctype == 'manual':
+            self.body.append('(')
+        else:
+            self.body.append('}{\\raggedright ')
         self.first_param = 1
     def depart_desc_parameterlist(self, node):
-        pass
+        if self.builder.config.latex_doctype == 'manual':
+            self.body.append(')')
 
     def visit_desc_parameter(self, node):
         if not self.first_param:
-            self.body.append(',\\\\ ')
+            if self.builder.config.latex_doctype == 'manual':
+                if 'long_params' in node and node['long_params']:
+                    self.body.append(',\\\\ \n\\> ')
+                else:
+                    self.body.append(', ')
+            else:
+                self.body.append(',\\\\ ')
         else:
+            if self.builder.config.latex_doctype == 'manual':
+                if 'long_params' in node and node['long_params']:
+                    self.body.append('\\= ')
             self.first_param = 0
-        if not node.hasattr('noemph'):
+        if self.builder.config.latex_doctype != 'manual' and \
+           not node.hasattr('noemph'):
             self.body.append(r'\emph{')
+
     def depart_desc_parameter(self, node):
-        if not node.hasattr('noemph'):
+        if self.builder.config.latex_doctype != 'manual' and \
+           not node.hasattr('noemph'):
             self.body.append('}')
 
     def visit_desc_optional(self, node):
@@ -709,11 +771,35 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('}')
 
     def visit_desc_content(self, node):
-        if node.children and not isinstance(node.children[0], nodes.paragraph):
-            # avoid empty desc environment which causes a formatting bug
-            self.body.append('~')
+        if self.builder.config.latex_doctype == 'manual':
+            if node.parent['desctype'] in toplevel_desc:
+                if node.parent['long_params']:
+                    self.body.append('\n\\end{tabbing}')
+                    if len(node.children) == 0:
+                        self.body.append('\\vspace{-3mm}\n')
+
+                if self.fullwidth:
+                    indent = '22mm'
+                else:
+                    indent = '11mm'
+                self.body.append('}\n\n')
+
+                self.body.append('\\vspace{-2mm}\n')
+
+                if len(node.children) != 0:
+                    self.body.append('\\begin{indentation}{%s}{0mm}'%indent)
+
+        else:
+            if node.children and \
+               not isinstance(node.children[0], nodes.paragraph):
+                # avoid empty desc environment which causes a formatting bug
+                self.body.append('~')
     def depart_desc_content(self, node):
-        pass
+        if self.builder.config.latex_doctype == 'manual':
+            if node.parent['desctype'] in toplevel_desc:
+                if len(node.children) != 0:
+                    self.body.append('\n\\end{indentation}\n')
+                    #self.body.append('\\vspace{u3mm}\n')
 
     def visit_refcount(self, node):
         self.body.append("\\emph{")
@@ -1046,6 +1132,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for f in node.traverse(nodes.field_name):
                 f['classes'].append('action')
             self.sectionlevel += 1
+        if self.builder.config.latex_doctype == 'manual':
+            if 'latex_compact' in node['classes']:
+                for f in node.traverse(nodes.field_name):
+                    f['classes'].append('latex_compact')
+                self.body.append('\\vspace{-3mm}\n\\begin{option}\n\n')
+
                 #            exit(1)
 #        self.body.append('\\begin{tabular}{ll}')
 #        self.body.append('\\begin{quote}\\begin{description}\n')
@@ -1053,6 +1145,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_field_list(self, node):
        if 'actions' in node['classes']:
            self.sectionlevel -= 1
+       if self.builder.config.latex_doctype == 'manual':
+            if 'latex_compact' in node['classes']:
+                self.body.append('\\end{option}\n\\vspace{-3mm}\n\n')
+
 #            self.body.append('\\end{actions}\n\n')
 #        self.body.append('\\end{description}\\end{quote}\n')
 #        self.body.append('\\end{tabular} \n \n')
@@ -1079,6 +1175,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if self.sectionlevel == 2:
                 self.body.append('\\vspace{-0.4cm}\n')
             self.body.append('\\%s*{'%self.sectionnames[self.sectionlevel+1])
+        elif 'latex_compact' in node['classes']:
+            self.body.append('\\item[')
         else:
             self.body.append('\\textbf{')
 
@@ -1089,6 +1187,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\\vspace{-0.4cm}\n')
             else:
                 self.body.append(':}\n')
+        elif 'latex_compact' in node['classes']:
+            self.body.append(']')
+
         else:
             self.body.append(':}')
 #        self.body.append('}\n\n')
@@ -1244,6 +1345,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('\\begin{figure}[H]\n')
             self.body.append('\\begin{sidecaption}{%s}\n' % cap)
             self.context.append('\\end{sidecaption}\\end{figure}\n')
+            if node.has_key('width'):
+                node[0]['width'] = node['width']
             return
         ids = ''
         for id in self.next_figure_ids:
@@ -1510,13 +1613,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_emphasis(self, node):
         if hasattr(self,'no_emph') and self.no_emph == 1:
             self.body.append('\\begin{comment}')
-        else:
+        elif not isinstance(node.parent, addnodes.desc_parameter):
             self.body.append(r'\emph{')
     def depart_emphasis(self, node):
         if hasattr(self,'no_emph') and self.no_emph == 1:
             self.no_emph = 0
             self.body.append('\\end{comment}\n')
-        else:
+        elif not isinstance(node.parent, addnodes.desc_parameter):
             self.body.append('}')
 
     def visit_literal_emphasis(self, node):
@@ -1527,6 +1630,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.no_contractions -= 1
 
     def visit_strong(self, node):
+        if self.builder.config.latex_doctype == 'manual':
+            if str(node[0]) == 'Enum Values:':
+                node.parent.parent[1]['classes'].append('skip')
+                self.body.append('This type has the following values:\n')
+                raise nodes.SkipNode
+            if str(node[0]) == 'Structure Members:':
+                self.body.append('This structure has the following members:\n')
+                raise nodes.SkipNode
+
         self.body.append(r'\textbf{')
     def depart_strong(self, node):
         self.body.append('}')
@@ -1640,7 +1752,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if self.builder.config.tiny_verbatim:
                 tinyv = '\\tiny'
             else:
-                tinyv = ''
+                tinyv = '\\small'
             self.body.append('\n\\vspace{0.1cm}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{%s \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.1cm}\n' % tinyv)
         self.verbatim = None
     visit_doctest_block = visit_literal_block
@@ -1682,7 +1794,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if isinstance(child, nodes.bullet_list) or \
                     isinstance(child, nodes.enumerated_list):
                 done = 1
-        if not done:
+        if not done and not 'skip' in node['classes']:
             self.body.append('\\begin{quote}\n')
     def depart_block_quote(self, node):
         done = 0
@@ -1691,7 +1803,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if isinstance(child, nodes.bullet_list) or \
                     isinstance(child, nodes.enumerated_list):
                 done = 1
-        if not done:
+        if not done and not 'skip' in node['classes']:
             self.body.append('\\end{quote}\n')
 
     # option node handling copied from docutils' latex writer
