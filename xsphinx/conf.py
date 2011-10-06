@@ -42,7 +42,7 @@ else:
 xsphinx_dir = os.environ['XDOC_DIR'] + "/xsphinx"
 
 short_name = os.environ['SPHINX_PROJECT_NAME'].lower()
-short_name = re.sub('[. /]','_',short_name)
+short_name = re.sub('[,:. /]','_',short_name)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -243,7 +243,7 @@ if 'SPHINX_SECTION_NEWPAGE' in os.environ:
 else:
     latex_section_newpage = True
 
-
+latex_toc = True
 
 # The paper size ('letter' or 'a4').
 #latex_paper_size = 'letter'
@@ -301,6 +301,7 @@ class C:
     pass
 
 
+primary_domain = None
 
 if 'BREADCRUMB_PREFIX' in os.environ:
     breadcrumb_prefix = os.environ['BREADCRUMB_PREFIX']
@@ -346,6 +347,7 @@ def setup(app):
     app.add_config_value('use_xmoslatex',[],False)
     app.add_config_value('use_sidecaption',[],False)
     app.add_config_value('tiny_verbatim',[],False)
+    app.add_config_value('latex_toc',True,False)
 #    app.add_generic_role('srcfile',srcfile.srcfile)
     app.add_generic_role('srcfile',docutils.nodes.literal)
     latex_doctype='article'

@@ -118,7 +118,8 @@ man: doxygen | $(LINKED_DIRS)
 %.pdf: %.tex xlatex
 	export TEXINPUTS=$(T):_build/$(XLATEX):; pdflatex $<;pdflatex $<
 
-TEXROOT = $(subst /,_,$(subst $(space),_,$(call lc,$(SPHINX_PROJECT_NAME))))
+COMMA=,
+TEXROOT = $(subst $(COMMA),_,$(subst :,_,$(subst /,_,$(subst $(space),_,$(call lc,$(SPHINX_PROJECT_NAME))))))
 PDF_TARGET = $(TEXROOT).pdf
 
 pdf: XLATEX=xlatex
