@@ -156,7 +156,6 @@ class Table(object):
     def __init__(self):
         self.col = 0
         self.colcount = 0
-#        self.colspec = None
         self.colspec = []
         self.rowcount = 0
         self.had_head = False
@@ -316,6 +315,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.compact_list = 0
         self.first_param = 0
         self.fullwidth = False
+        self.in_reference = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -336,14 +336,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                '\\label{%s}' % self.idescape(id)
 
     def hyperlink(self, id):
-        self.no_emph = 1
-        return '\Sec~\\ref{%s}{{' % (self.idescape(id))
+#        self.no_emph = 1
 
-#        if id.find('sec-') != -1:
-#         ...
-#        else:
-#            print id[0:3]
-#            return '{\\hyperref[%s]{' % (self.idescape(id))
+
+        if id.find('sec-') != -1:
+            return '\Sec~\\ref{%s}{{' % (self.idescape(id))
+        else:
+            return '{\\hyperref[%s]{' % (self.idescape(id))
 
     def hyperpageref(self, id):
         return '\\autopageref*{%s}' % (self.idescape(id))
@@ -428,6 +427,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
             summary += "\\end{inthischapter}\n\n"
 
             self.body.insert(self.section_summary_pos, summary)
+
+        if self.builder.config.latex_doctype == 'manual':
+            if not self.seen_first_title:
+                self.seen_first_title = True
+                self.body.append('\\end{fullwidth}\n')
+
+
 
         if False and self.bibitems:
             widest_label = ""
@@ -891,17 +897,25 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table = Table()
         self.table.longtable = 'longtable' in node['classes']
         self.tablebody = []
+        self.table.simple = 'simple-content' in node['classes']
+        self.table.no_hlines = True
         # Redirect body output until table is finished.
         self._body = self.body
         self.body = self.tablebody
+        for cs in node.traverse(nodes.colspec):
+            self.table.colcount +=1
+            self.table.colspec.append(cs.attributes['colwidth'])
+        self.table.skipcols = [0 for x in range(self.table.colcount)]
+
     def depart_table(self, node):
-#        print "colcount: %d" % self.table.colcount
         if 'pdf-no-border' in node['classes'] or 'no-border' in node['classes']:
             linesep = ''
             hline = ''
         else:
             linesep = '|'
             hline = '\\hline'
+        if self.builder.config.latex_doctype == 'manual':
+            linesep = ''
 
         self.linesep = linesep
         if self.table.rowcount > 30:
@@ -921,19 +935,24 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #                             u'\\capstart\\caption{%s}\n' % self.table.caption)
 #                             u'\\caption{%s}\n' % self.table.caption)
 
+#        self.body.append('\\begin{center}')
+
         if self.table.longtable:
             self.body.append('\n\\begin{longtable}')
         elif self.table.has_verbatim:
             self.body.append('\n\\begin{tabular}')
         else:
-            self.body.append('\n\\begin{tabular}')
+            self.body.append('\n\\begin{tabularx}{\linewidth}')
 #            self.body.append('\n\\begin{center}\\begin{tabulary}{\\linewidth}')
         if self.table.colspec:
             total = float(sum(self.table.colspec))
             colspec_str = ''
             for colwidth in self.table.colspec:                
                 colwidth = (colwidth / total) * 0.90
-                colspec_str += 'p{%.3f\\linewidth}%s' % (colwidth,linesep)
+                if self.table.simple:
+                    colspec_str += 'l%s' % (linesep)
+                else:
+                    colspec_str += 'p{%.3f\\linewidth}%s' % (colwidth,linesep)
             self.body.append('{%s'%linesep + colspec_str + '}\n')
         else:
 #            print node
@@ -976,14 +995,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('%s\n'%hline)
             self.body.append('\\endlastfoot\n\n')
         else:
-            self.body.append('%s\n'%hline)
+            self.body.append('\\Hline\n')
+            #self.body.append('%s\n'%hline)
         self.body.extend(self.tablebody)
         if self.table.longtable:
             self.body.append('\\end{longtable}\n\n')
         elif self.table.has_verbatim:
             self.body.append('\\end{tabular}\n\n')
         else:
-            self.body.append('\\end{tabular}\n\n')
+            self.body.append('\\end{tabularx}\n\n')
+
+#        self.body.append('\\end{center}')
+
         if not self.table.longtable and self.table.caption is not None:
             if self.builder.config.use_sidecaption:
 #                self.body.append(u'\\end{minipage}')
@@ -995,8 +1018,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.tablebody = None
 
     def visit_colspec(self, node):
-        self.table.colcount += 1
-        self.table.colspec.append(node.attributes['colwidth'])
+        pass
  
     def depart_colspec(self, node):
         pass
@@ -1033,21 +1055,42 @@ class LaTeXTranslator(nodes.NodeVisitor):
         colcount = len(node.children)
         spanning_header = (self.table.prev_colcount != self.table.colcount and \
                            self.table.prev_colcount == 1) 
-        if spanning_header or \
-           (self.table.prev_colcount != None and \
-                colcount != self.table.prev_colcount):
-            self.body.append('%s\n'%self.hline)
+
+
+#        if spanning_header or \
+#                (self.table.prev_colcount != None and \
+#                 colcount != self.table.prev_colcount):
+        if not self.table.no_hlines:
+            for i in range(self.table.colcount):
+                if self.table.skipcols[i] == 0:
+                    self.body.append('\\cline{%d-%d}\n'%(i+1,i+1))
+
+#        self.body.append('\hline\n')
+
         self.table.prev_colcount = colcount
-        if (self.table.colcount != colcount):
-            colwidth = 0.90 / colcount
-            colspec = ('p{%.3f\\linewidth}%s' % (colwidth,self.linesep)) * colcount
-            self.body.append('\\multicolumn{%d}' % self.table.colcount)
-            self.body.append('{%s'%self.linesep + colspec + '}{')
+        # if (self.table.colcount != colcount):
+        #     colwidth = 0.90 / colcount
+        #     colspec = ('p{%.3f\\linewidth}%s' % (colwidth,self.linesep)) * colcount
+        #     self.body.append('\\multicolumn{%d}' % self.table.colcount)
+        #     self.body.append('{%s'%self.linesep + colspec + '}{')
         self.table.col = 0
 
+        found_content = False
+        for x in node.traverse(nodes.paragraph):
+            found_content = True
+
+        if not found_content:
+            self.body.append('\\hline\n')
+            raise nodes.SkipNode
+
     def depart_row(self, node):
-        if (self.table.colcount != len(node.children)):
-            self.body.append('}')
+#        if (self.table.colcount != len(node.children)):
+#            self.body.append('}')
+        while self.table.col < self.table.colcount and self.table.skipcols[self.table.col] > 0:
+            self.table.skipcols[self.table.col] = self.table.skipcols[self.table.col]-1
+            self.table.col += 1
+            self.body.append(' & ')
+
         self.body.append('\\\\\n')
 #        if (self.table.colcount != len(node.children)):
 #            self.body.append('\hline\n')
@@ -1058,15 +1101,43 @@ class LaTeXTranslator(nodes.NodeVisitor):
         #     raise UnsupportedError('%s:%s: row spanning cells are '
         #                            'not yet implemented.' %
         #                            (self.curfilestack[-1], node.line or ''))
-        # if node.has_key('morecols'):
-        #     print node['morecols']
-        #     raise UnsupportedError('%s:%s: column or row spanning cells are '
-        #                            'not yet implemented.' %
-        #                            (self.curfilestack[-1], node.line or ''))
+        if node.has_key('morecols') and node.has_key('morerows'):
+             raise UnsupportedError('%s:%s: ceels that span columns and rows'
+                                    ' are not yet implemented.' %
+                                    (self.curfilestack[-1], node.line or ''))
 
-        
+        while self.table.skipcols[self.table.col] > 0:
+            self.table.skipcols[self.table.col] = self.table.skipcols[self.table.col]-1
+            self.table.col += 1
+            self.body.append(' & ')
+
+
         if self.table.col > 0:
             self.body.append(' & ')
+        if node.has_key('morecols'):
+            n = int(node['morecols'])+1
+            total = float(sum(self.table.colspec))
+            colwidth = float(sum(self.table.colspec[self.table.col:self.table.col+n]))
+            colwidth = (colwidth / total) * 0.90
+            if self.table.col == 0:
+                init_div='|'
+            else:
+                init_div=''
+            if self.table.simple:
+                self.body.append('\multicolumn{%d}{%sl}{' % (n,init_div) )
+            else:
+                self.body.append('\multicolumn{%d}{%sp{%.3f\linewidth}|}{' % (n,init_div,colwidth) )
+
+#            self.context.append('}')
+
+        if node.has_key('morerows'):
+            n = int(node['morerows'])+1
+            total = float(sum(self.table.colspec))
+            colwidth = float(self.table.colspec[self.table.col])
+            colwidth = (colwidth / total) * 0.90
+#            self.body.append('\multirow{%d}{%.3f\linewidth}{' % (n,colwidth) )
+            self.table.skipcols[self.table.col] += n-1
+
         self.table.col += 1
         if isinstance(node.parent.parent, nodes.thead):
             self.body.append('\\textbf{')
@@ -1075,6 +1146,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.context.append('')
 
     def depart_entry(self, node):
+        if node.has_key('morecols'):
+            self.body.append('}')
+        if node.has_key('morerows'):
+            pass
+#            self.body.append('}')
+
         self.body.append(self.context.pop()) # header
 
     def visit_acks(self, node):
@@ -1243,13 +1320,23 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #            print "ADM"
         self.para_icons = []
         self.para_icon_insert_point = len(self.body)
-        self.body.append('\n')
+        if not isinstance(node.parent, nodes.entry):
+            self.body.append('\n')
+        else:
+            self.body.append('')
 
     def depart_paragraph(self, node):
         icon_str = ''
         for m in node['margin_items']:
             icon_str += m+' '
         pos = self.para_icon_insert_point
+
+        for i in range(pos, len(self.body)):
+            if self.body[i] == '---squeeze---':
+                self.body[i-1] = self.body[i-1].rstrip()
+                self.body[i] = ''
+                self.body[i+1] = self.body[i+1].lstrip()
+
         first = self.body[pos+1]
         n = len(first) - len(first.lstrip())
         n = string.find(first,' ',n)
@@ -1263,7 +1350,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        icon_str += ' '
         self.body[pos+1] = first[:n] + icon_str + first[n:]
 #        self.body = self.body[:pos] + ' gg ' + self.body[pos:]
-        self.body.append('\n')
+        if not isinstance(node.parent, nodes.entry):
+            self.body.append('\n')
         self.para_icons = None
 
     def visit_centered(self, node):
@@ -1642,7 +1730,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 '%s:%s' % (self.builder.env.doc2path(self.curfilestack[-1]),
                            node.line or ''))
             self.context.append('')
+        self.in_reference = True
     def depart_reference(self, node):
+        self.in_reference = False
         self.body.append(self.context.pop())
 
     def visit_download_reference(self, node):
@@ -1737,7 +1827,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'\texttt{%s}' % content)
         elif node.has_key('role') and node['role'] == 'samp':
             self.body.append(r'\samp{%s}' % content)
-        elif self.in_footnote:
+        elif self.in_footnote or self.in_reference:
             self.body.append(r'\code{%s}' % content)
         else:
             self.body.append(r'\verb`%s`' % node.astext().strip())
@@ -2024,3 +2114,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         raise NotImplementedError('Unknown node: ' + node.__class__.__name__)
 
 
+    def visit_squeeze(self, node):
+        self.body.append('SQQ')
+        pass
+
+    def depart_squeeze(self, node):
+        pass

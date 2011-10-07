@@ -17,7 +17,10 @@ import xsphinx.code
 import xsphinx.images
 import xcomment, srcfile
 import docutils
+import xroles
+import xdirectives
 from xsphinx.xdoctoctree import XdocTocTree
+import xtable
 
 if 'USE_AAFIG' in os.environ:
     use_aafig = (os.environ['USE_AAFIG'] != '0')
@@ -350,8 +353,12 @@ def setup(app):
     app.add_config_value('latex_toc',True,False)
 #    app.add_generic_role('srcfile',srcfile.srcfile)
     app.add_generic_role('srcfile',docutils.nodes.literal)
+    app.add_generic_role('~',docutils.nodes.term)
+    app.add_generic_role('n',docutils.nodes.term)
+    app.add_directive('squeeze',xdirectives.SqueezeDirective)
     latex_doctype='article'
     app.add_directive('toctree', XdocTocTree)
+    app.add_directive('table', xtable.Table)
     xcomment.setup(app, enable_comments)
     for mod in extraconf_modules:
         mod = mod.strip()
@@ -378,6 +385,8 @@ rst_prolog = '''
 
 if current_builder=='xlatex':
         rst_epilog = '''
+.. |-| replace:: ---squeeze---
+
 .. |submenu| raw:: latex
  
          \submenu
@@ -395,3 +404,6 @@ else:
                \\newpage
 
         """
+
+rst_epilog += """
+"""
