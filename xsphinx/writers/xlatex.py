@@ -616,10 +616,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.builder.config.latex_doctype == 'collection':
             if self.sectionlevel == self.top_sectionlevel:
                 if self.section_summary != []:
-                    summary = "\\begin{inthischapter}\n"
+                    summary = "\\begin{inthisdocument}\n"
                     for item in self.section_summary:
                         summary += "\item %s\n"%item
-                    summary += "\\end{inthischapter}\n\n"
+                    summary += "\\end{inthisdocument}\n\n"
 
                     self.body.insert(self.section_summary_pos, summary)
                 self.section_summary = []
