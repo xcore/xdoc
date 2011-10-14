@@ -93,7 +93,7 @@ HEADER1 = r'''
 
 BEGIN_DOC = r'''
 \setcounter{tocdepth}{3}
-\begin{document}
+%(begin)s
 \sloppy
 %(shorthandoff)s
 %(maketitle)s
@@ -104,7 +104,7 @@ BEGIN_DOC = r'''
 FOOTER = r'''
 \renewcommand{\indexname}{%(indexname)s}
 %(printindex)s
-\end{document}
+%(enddoc)s
 '''
 
 toplevel_desc = ['function','type']
@@ -122,7 +122,7 @@ class XLaTeXWriter(writers.Writer):
 
     settings_spec = ('LaTeX writer options', '', (
         ('Document name', ['--docname'], {'default': ''}),
-        ('Document class', ['--docclass'], {'default': 'manual'}),
+        ('Document class', ['--docclass'], {'default': 'collection'}),
         ('Author', ['--author'], {'default': ''}),
         ))
     settings_defaults = {}
@@ -214,10 +214,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
             toc = '\\toc\n\\newpage\n'
         else:
             toc = ''
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             fullwidth = '\\begin{fullwidth}\n'
         else:
             fullwidth = ''
+
+        if builder.config.use_xmoslatex:
+            begin = '\\start'
+            enddoc = '\\finish'
+        else:
+            begin = '\\begin{document}'
+            enddoc = '\\end{document}'
+
         self.seen_first_title = False
         self.elements.update({
             'wrapperclass': builder.config.latex_docclass,
@@ -233,6 +241,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             'toc' : toc,
             'fullwidth': fullwidth,
             'indexname':    _('Index'),
+            'begin':begin,
+            'enddoc':enddoc
         })
 
         if builder.config.use_xmoslatex:
@@ -248,7 +258,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         # if document.settings.docclass == 'howto':
         #     docclass = builder.config.latex_docclass.get('howto', 'article')
         # else:
-        #     docclass = builder.config.latex_docclass.get('manual', 'report')
+        #     docclass = builder.config.latex_docclass.get('collection', 'report')
         
         self.elements['docclass'] = builder.config.latex_docclass
 
@@ -421,14 +431,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
         if self.section_summary != []:
-            summary = "\\begin{inthischapter}\n"
+            summary = "\\begin{inthisdocument}\n"
             for item in self.section_summary:
                 summary += "\item %s\n"%item
-            summary += "\\end{inthischapter}\n\n"
+            summary += "\\end{inthisdocument}\n\n"
 
             self.body.insert(self.section_summary_pos, summary)
 
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             if not self.seen_first_title:
                 self.seen_first_title = True
                 self.body.append('\\end{fullwidth}\n')
@@ -564,7 +574,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                         self.body.append('\\clearpage\n');
                 if 'compact' in node['classes']:
                     self.body.append('\n\\vspace{-\\parsep}\n')
-                if self.builder.config.latex_doctype == 'manual':
+                if self.builder.config.latex_doctype == 'collection':
                     if not self.seen_first_title:
                         self.seen_first_title = True
                         self.body.append('\\end{fullwidth}\n')
@@ -603,7 +613,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.context.append('}\n')
         self.in_title = 1
 
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             if self.sectionlevel == self.top_sectionlevel:
                 if self.section_summary != []:
                     summary = "\\begin{inthischapter}\n"
@@ -619,7 +629,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #                self.section_summary.append(str(node[0]))
 
     def depart_title(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             if self.sectionlevel == self.top_sectionlevel+1:
                 item = ''
                 for x in self.body[self.section_summary_entry_pos:]:
@@ -641,7 +651,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append(self.context.pop())
 
     def visit_desc_list(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             desctype = None
             for x in node.traverse(addnodes.desc):
                 desctype = x['desctype']
@@ -656,7 +666,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #                print node
 
     def depart_desc_list(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             desctype = node['desctype']
             if desctype in toplevel_desc:
                 pass
@@ -664,7 +674,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\\end{option}\n\n')
 
     def visit_desc(self, node):
-        if self.builder.config.latex_doctype != "manual":
+        if self.builder.config.latex_doctype != "collection":
             self.body.append('\n\n\\begin{fulllineitems}\n')
         else:
             if node['desctype'] in toplevel_desc:
@@ -686,7 +696,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.body.append('\\begin{tabbing}')
 
     def depart_desc(self, node):
-        if self.builder.config.latex_doctype != 'manual':
+        if self.builder.config.latex_doctype != 'collection':
             self.body.append('\n\\end{fulllineitems}\n\n')
 
 
@@ -700,7 +710,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             hyper = ''
         self.body.append(hyper)
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             self.prev_duplicate_sig = False
             if not node.parent['desctype'] in toplevel_desc:
                 self.body.append('\\item[')
@@ -717,7 +727,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
     def depart_desc_signature(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             if not node.parent['desctype'] in toplevel_desc:
                 self.body.append(r']')
                 if self.prev_duplicate_sig:
@@ -726,7 +736,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'}{} \justifying \setlength{\parindent}{0mm}')
 
     def visit_desc_addname(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             self.body.append(r'\optemph{')
         else:
             self.body.append(r'\code{')
@@ -747,7 +757,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_desc_name(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             if 'duplicate' in node['classes']:
                 if not node.parent['desctype'] in toplevel_desc:
                     self.body.append(" ]")
@@ -759,25 +769,25 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'\bfcode{')
         self.literal_whitespace += 1
     def depart_desc_name(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             pass
         else:
             self.body.append('}')
         self.literal_whitespace -= 1
 
     def visit_desc_parameterlist(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             self.body.append('(')
         else:
             self.body.append('}{\\raggedright ')
         self.first_param = 1
     def depart_desc_parameterlist(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             self.body.append(')')
 
     def visit_desc_parameter(self, node):
         if not self.first_param:
-            if self.builder.config.latex_doctype == 'manual':
+            if self.builder.config.latex_doctype == 'collection':
                 if 'long_params' in node and node['long_params']:
                     self.body.append(',\\\\ \n\\> ')
                 else:
@@ -785,16 +795,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 self.body.append(',\\\\ ')
         else:
-            if self.builder.config.latex_doctype == 'manual':
+            if self.builder.config.latex_doctype == 'collection':
                 if 'long_params' in node and node['long_params']:
                     self.body.append('\\= ')
             self.first_param = 0
-        if self.builder.config.latex_doctype != 'manual' and \
+        if self.builder.config.latex_doctype != 'collection' and \
            not node.hasattr('noemph'):
             self.body.append(r'\emph{')
 
     def depart_desc_parameter(self, node):
-        if self.builder.config.latex_doctype != 'manual' and \
+        if self.builder.config.latex_doctype != 'collection' and \
            not node.hasattr('noemph'):
             self.body.append('}')
 
@@ -809,7 +819,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('}')
 
     def visit_desc_content(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             if node.parent['desctype'] in toplevel_desc:
                 if node.parent['long_params']:
                     self.body.append('\n\\end{tabbing}')
@@ -833,7 +843,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 # avoid empty desc environment which causes a formatting bug
                 self.body.append('~')
     def depart_desc_content(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             if node.parent['desctype'] in toplevel_desc:
                 if len(node.children) != 0:
                     self.body.append('\n\\end{indentation}\n')
@@ -898,6 +908,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table.longtable = 'longtable' in node['classes']
         self.tablebody = []
         self.table.simple = 'simple-content' in node['classes']
+
         self.table.no_hlines = True
         # Redirect body output until table is finished.
         self._body = self.body
@@ -912,9 +923,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
             linesep = ''
             hline = ''
         else:
-            linesep = '|'
-            hline = '\\hline'
-        if self.builder.config.latex_doctype == 'manual':
+#            linesep = '|'
+#            hline = '\\hline'
+
+#        if self.builder.config.latex_doctype == 'collection':
             linesep = ''
 
         self.linesep = linesep
@@ -942,7 +954,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         elif self.table.has_verbatim:
             self.body.append('\n\\begin{tabular}')
         else:
-            self.body.append('\n\\begin{tabularx}{\linewidth}')
+            self.body.append('\n\\begin{tabularx}{0.9\linewidth}')
 #            self.body.append('\n\\begin{center}\\begin{tabulary}{\\linewidth}')
         if self.table.colspec:
             total = float(sum(self.table.colspec))
@@ -1057,10 +1069,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
                            self.table.prev_colcount == 1) 
 
 
-#        if spanning_header or \
-#                (self.table.prev_colcount != None and \
-#                 colcount != self.table.prev_colcount):
+
         if not self.table.no_hlines:
+         if spanning_header or \
+                (self.table.prev_colcount != None and \
+                 colcount != self.table.prev_colcount):
             for i in range(self.table.colcount):
                 if self.table.skipcols[i] == 0:
                     self.body.append('\\cline{%d-%d}\n'%(i+1,i+1))
@@ -1243,7 +1256,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for f in node.traverse(nodes.field_name):
                 f['classes'].append('action')
             self.sectionlevel += 1
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
+            node['classes'].append('latex_compact')
             if 'latex_compact' in node['classes']:
                 for f in node.traverse(nodes.field_name):
                     f['classes'].append('latex_compact')
@@ -1256,7 +1270,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_field_list(self, node):
        if 'actions' in node['classes']:
            self.sectionlevel -= 1
-       if self.builder.config.latex_doctype == 'manual':
+       if self.builder.config.latex_doctype == 'collection':
             if 'latex_compact' in node['classes']:
                 self.body.append('\\end{option}\n\\vspace{-3mm}\n\n')
 
@@ -1327,12 +1341,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def depart_paragraph(self, node):
         icon_str = ''
+
         for m in node['margin_items']:
             icon_str += m+' '
         pos = self.para_icon_insert_point
 
         for i in range(pos, len(self.body)):
-            if self.body[i] == '---squeeze---':
+            if self.body[i] == 'ihjsqueezeihj':
                 self.body[i-1] = self.body[i-1].rstrip()
                 self.body[i] = ''
                 self.body[i+1] = self.body[i+1].lstrip()
@@ -1765,7 +1780,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.no_contractions -= 1
 
     def visit_strong(self, node):
-        if self.builder.config.latex_doctype == 'manual':
+        if self.builder.config.latex_doctype == 'collection':
             if str(node[0]) == 'Enum Values:':
                 node.parent.parent[1]['classes'].append('skip')
                 self.body.append('This type has the following values:\n')
@@ -1939,7 +1954,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if 'commentary' in node['classes']:
                 self.body.append('\\begin{commentary}\n')
             elif not 'skip' in node['classes']:
-                if self.builder.config.latex_doctype == 'manual':
+                if self.builder.config.latex_doctype == 'collection':
                     self.body.append('\\vspace{-3mm}\n')
                 self.body.append('\\begin{quote}\n')
 
@@ -1955,7 +1970,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\\end{commentary}\n')
             elif not 'skip' in node['classes']:
                 self.body.append('\\end{quote}\n')
-                if self.builder.config.latex_doctype == 'manual':
+                if self.builder.config.latex_doctype == 'collection':
                     self.body.append('\\vspace{-3mm}\n')
 
     # option node handling copied from docutils' latex writer

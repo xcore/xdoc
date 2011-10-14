@@ -157,7 +157,10 @@ html_theme_options = {}
 
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ["themes"]
+doc_dir = os.path.abspath(os.environ['DOC_DIR'])
+user_theme_dir = os.path.relpath(os.path.join(doc_dir,"themes"))
+html_theme_path = ["themes",user_theme_dir]
+
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -385,7 +388,6 @@ rst_prolog = '''
 
 if current_builder=='xlatex':
         rst_epilog = '''
-.. |-| replace:: ---squeeze---
 
 .. |submenu| raw:: latex
  
@@ -394,6 +396,8 @@ if current_builder=='xlatex':
 .. |newpage| raw:: latex
 
                \\newpage
+.. role:: ebnf
+   :class: ebnf
         '''
 else:
         rst_epilog = """
@@ -402,8 +406,10 @@ else:
 .. |newpage| raw:: latex
 
                \\newpage
-
+.. role:: ebnf
+   :class: ebnf
         """
 
 rst_epilog += """
+.. |-| replace:: ihjsqueezeihj
 """
