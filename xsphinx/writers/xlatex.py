@@ -1994,7 +1994,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if 'commentary' in node['classes']:
                 self.body.append('\\begin{commentary}\n')
             elif not 'skip' in node['classes']:
-                if self.builder.config.latex_doctype == 'collection':
+                if self.builder.config.use_xmoslatex:
                     self.body.append('\\vspace{-3mm}\n')
                 self.body.append('\\begin{quote}\n')
 
@@ -2010,7 +2010,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\\end{commentary}\n')
             elif not 'skip' in node['classes']:
                 self.body.append('\\end{quote}\n')
-                if self.builder.config.latex_doctype == 'collection':
+                if self.builder.config.use_xmoslatex:
                     self.body.append('\\vspace{-3mm}\n')
 
     # option node handling copied from docutils' latex writer
