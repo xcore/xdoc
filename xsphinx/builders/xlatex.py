@@ -105,6 +105,7 @@ class XLaTeXBuilder(Builder):
             doctree.settings.title = title
             doctree.settings.docname = docname
             doctree.settings.docclass = docclass
+
             docwriter.write(doctree, destination)
             self.info("done")
 
@@ -133,6 +134,9 @@ class XLaTeXBuilder(Builder):
             largetree.append(appendix)
         self.info()
         self.info("resolving references...")
+#        for node in largetree.traverse(nodes.target):
+#            print node.parent
+
         self.env.resolve_references(largetree, indexfile, self)
         # resolve :ref:s to distant tex files -- we can't add a cross-reference,
         # but append the document name
@@ -149,6 +153,11 @@ class XLaTeXBuilder(Builder):
             else:
                 pass
             pendingnode.replace_self(newnodes)
+
+#        for node in largetree.traverse(nodes.reference):
+#            print node
+
+
         return largetree
 
     def finish(self):

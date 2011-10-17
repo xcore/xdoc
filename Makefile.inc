@@ -135,6 +135,7 @@ latex_to_pdf:
 clean:
 	rm -rf _build
 	-rm -f $(TEXROOT).tex
+	-rm -f $(TEXROOT).toc
 	-rm -f $(TEXROOT).dvi
 	-rm -f $(TEXROOT).pdf
 	-rm -f $(TEXROOT).idx

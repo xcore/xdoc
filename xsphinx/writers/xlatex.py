@@ -211,7 +211,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.elements = self.default_elements.copy()
         if self.builder.config.latex_toc:
-            toc = '\\toc\n\\newpage\n'
+            toc = '\\toc\n'
         else:
             toc = ''
         if self.builder.config.latex_doctype == 'collection':
@@ -326,6 +326,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.first_param = 0
         self.fullwidth = False
         self.in_reference = False
+        self.next_title_indent = False
+        self.next_title_fullwidth = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -499,9 +501,34 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('\n\n')
         if node.get('ids'):
             self.next_section_ids.update(node['ids'])
+        if 'testplan_item' in node['classes']:
+            self.next_title_indent = True
+
+        if not self.fullwidth:
+          if self.builder.config.latex_doctype != 'collection':
+            for n in node.traverse():
+                has_toplevel_desc = \
+                    isinstance(n, addnodes.desc) and \
+                    (n['desctype'] in toplevel_desc)
+                tp_item = isinstance(n, nodes.section) and \
+                    'testplan_item' in n['classes']
+                if (has_toplevel_desc or tp_item):
+                    self.fullwidth = True
+                    self.body.append('\\begin{fullwidth}')
+                    node.started_fullwidth = True
+                    break
+
     def depart_section(self, node):
         self.sectionlevel = max(self.sectionlevel - 1,
                                 self.top_sectionlevel - 1)
+
+
+        if 'testplan_item' in node['classes']:
+            self.body.append('\\end{indentation}')
+        if hasattr(node,'started_fullwidth'):
+            self.body.append('\\end{fullwidth}')
+            self.fullwidth = False
+
 
     def visit_problematic(self, node):
         self.body.append(r'{\color{red}\bfseries{}')
@@ -639,6 +666,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append(self.context.pop())
         if 'compact' in node['classes']:
             self.body.append('\n\\vspace{-\\parsep}\n')
+        if self.next_title_indent:
+            self.next_title_indent = False
+            self.body.append('\\begin{indentation}{22mm}{0mm}')
 
 
     def visit_subtitle(self, node):
@@ -907,7 +937,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table = Table()
         self.table.longtable = 'longtable' in node['classes']
         self.tablebody = []
-        self.table.simple = 'simple-content' in node['classes']
+
+        self.table.simple = True
+
+        for child in node.traverse():
+            if isinstance(child, nodes.literal_block) or \
+               isinstance(child, nodes.field_list) or \
+               isinstance(child, nodes.bullet_list):
+                self.table.simple = False
+
+
+#        self.table.simple = 'simple-content' in node['classes']
 
         self.table.no_hlines = True
         # Redirect body output until table is finished.
@@ -954,13 +994,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
         elif self.table.has_verbatim:
             self.body.append('\n\\begin{tabular}')
         else:
-            self.body.append('\n\\begin{tabularx}{0.9\linewidth}')
+            self.body.append('\n\\begin{tabularx}{\linewidth}')
 #            self.body.append('\n\\begin{center}\\begin{tabulary}{\\linewidth}')
         if self.table.colspec:
             total = float(sum(self.table.colspec))
             colspec_str = ''
             for colwidth in self.table.colspec:                
-                colwidth = (colwidth / total) * 0.90
+                colwidth = (colwidth / total)
                 if self.table.simple:
                     colspec_str += 'l%s' % (linesep)
                 else:
@@ -969,18 +1009,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
 #            print node
             if self.table.has_verbatim:
-                colwidth = 0.90 / self.table.colcount
+                colwidth = 1.0 / self.table.colcount
                 colspec = ('p{%.3f\\linewidth}%s' % (colwidth,linesep)) * \
                           self.table.colcount
                 self.body.append('{%s'%linesep + colspec + '}\n')
             elif self.table.longtable:
-                colwidth = 0.90 / self.table.colcount
+                colwidth = 1.0 / self.table.colcount
                 colspec = ('p{%.3f\\linewidth}%s' % (colwidth,linesep)) * \
                           self.table.colcount
                 self.body.append('{|' + colspec + '}\n')
 #                self.body.append('{|' + ('l|' * self.table.colcount) + '}\n')
             else:
-                colwidth = 0.90 / self.table.colcount
+                colwidth = 1.0 / self.table.colcount
                 colspec = ('p{%.3f\\linewidth}%s' % (colwidth,linesep)) * \
                           self.table.colcount
                 self.body.append('{%s'%linesep + colspec + '}\n')
@@ -1131,7 +1171,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             n = int(node['morecols'])+1
             total = float(sum(self.table.colspec))
             colwidth = float(sum(self.table.colspec[self.table.col:self.table.col+n]))
-            colwidth = (colwidth / total) * 0.90
+            colwidth = (colwidth / total)
             if self.table.col == 0:
                 init_div='|'
             else:
@@ -1147,7 +1187,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             n = int(node['morerows'])+1
             total = float(sum(self.table.colspec))
             colwidth = float(self.table.colspec[self.table.col])
-            colwidth = (colwidth / total) * 0.90
+            colwidth = (colwidth / total) * 1.0
 #            self.body.append('\multirow{%d}{%.3f\linewidth}{' % (n,colwidth) )
             self.table.skipcols[self.table.col] += n-1
 
@@ -1298,7 +1338,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        print self.sectionlevel
         if 'action' in node['classes']:
             if self.sectionlevel == 2:
-                self.body.append('\\vspace{-0.4cm}\n')
+                self.body.append('\\vspace{\\baselineskip}\n')
             self.body.append('\\%s*{'%self.sectionnames[self.sectionlevel+1])
         elif 'latex_compact' in node['classes']:
             self.body.append('\\item[')
@@ -1309,7 +1349,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'action' in node['classes']:
             if self.sectionlevel == 2:
                 self.body.append('}\n')
-                self.body.append('\\vspace{-0.4cm}\n')
+                self.body.append('\\vspace{-\\baselineskip}\n')
             else:
                 self.body.append(':}\n')
         elif 'latex_compact' in node['classes']:
@@ -1909,7 +1949,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 tinyv = '\\tiny'
             else:
                 tinyv = '\\small'
-            self.body.append('\n\\vspace{0.1cm}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{%s \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.1cm}\n' % tinyv)
+            self.body.append('\n\\vspace{0.25\\baselineskip}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{%s \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.25\\baselineskip}\n' % tinyv)
         self.verbatim = None
     visit_doctest_block = visit_literal_block
     depart_doctest_block = depart_literal_block
@@ -2037,9 +2077,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_inline(self, node):
         classes = node.get('classes', [])
-        self.body.append(r'\DUspan{%s}{' % ','.join(classes))
+        if 'ebnf' in classes:
+            self.body.append('\\emph{')
+#        self.body.append(r'\DUspan{%s}{' % ','.join(classes))
+
     def depart_inline(self, node):
-        self.body.append('}')
+        classes = node.get('classes', [])
+        if 'ebnf' in classes:
+            self.body.append('}')
+
+#        self.body.append('}')
+        pass
 
     def visit_generated(self, node):
         pass
