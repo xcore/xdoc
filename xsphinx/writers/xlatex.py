@@ -92,7 +92,6 @@ HEADER1 = r'''
 '''
 
 BEGIN_DOC = r'''
-\setcounter{tocdepth}{3}
 %(begin)s
 \sloppy
 %(shorthandoff)s
@@ -215,7 +214,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             toc = ''
         if self.builder.config.latex_doctype == 'collection':
-            fullwidth = '\\begin{fullwidth}\n'
+            fullwidth = '\\begin{fullwidth} %preface\n'
         else:
             fullwidth = ''
 
@@ -408,7 +407,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         return ''.join(ret)
 
     def visit_document(self, node):
-        self.linesep = '|'
         self.footnotestack.append(self.collect_footnotes(node))
         self.curfilestack.append(node.get('docname', ''))
         if self.first_document == 1:
@@ -437,6 +435,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for item in self.section_summary:
                 summary += "\item %s\n"%item
             summary += "\\end{inthisdocument}\n\n"
+            if self.section_summary_fullwidth:
+                summary += '\\begin{fullwidth} % chapter\n'
 
             self.body.insert(self.section_summary_pos, summary)
 
@@ -496,6 +496,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         raise nodes.SkipNode
 
     def visit_section(self, node):
+        if 'xc-spec' in node['classes']:
+            self.body.append('\\begin{spec}')
         if not self.this_is_the_title:
             self.sectionlevel += 1
         self.body.append('\n\n')
@@ -505,17 +507,23 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.next_title_indent = True
 
         if not self.fullwidth:
-          if self.builder.config.latex_doctype != 'collection':
+          if self.builder.config.latex_doctype != 'collection' or self.sectionlevel == self.top_sectionlevel:
             for n in node.traverse():
                 has_toplevel_desc = \
                     isinstance(n, addnodes.desc) and \
                     (n['desctype'] in toplevel_desc)
                 tp_item = isinstance(n, nodes.section) and \
                     'testplan_item' in n['classes']
-                if (has_toplevel_desc or tp_item):
+                if not 'not-fullwidth' in node['classes']:
+                  if (has_toplevel_desc or
+                      tp_item or
+                      'fullwidth' in node['classes']):
                     self.fullwidth = True
-                    self.body.append('\\begin{fullwidth}')
-                    node.started_fullwidth = True
+                    if self.builder.config.latex_doctype != 'collection':
+                        self.body.append('\\begin{fullwidth} % fragment')
+                    else:
+                        self.body.append('\n% FULLWIDTH SECTION\n')
+                    node['started_fullwidth'] = True
                     break
 
     def depart_section(self, node):
@@ -525,10 +533,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'testplan_item' in node['classes']:
             self.body.append('\\end{indentation}')
-        if hasattr(node,'started_fullwidth'):
+        if 'started_fullwidth' in node:
             self.body.append('\\end{fullwidth}')
             self.fullwidth = False
-
+        if 'xc-spec' in node['classes']:
+            self.body.append('\\end{spec}')
 
     def visit_problematic(self, node):
         self.body.append(r'{\color{red}\bfseries{}')
@@ -648,8 +657,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                         summary += "\item %s\n"%item
                     summary += "\\end{inthisdocument}\n\n"
 
+                    if self.section_summary_fullwidth:
+                        summary += '\\begin{fullwidth} % chapter\n'
+
                     self.body.insert(self.section_summary_pos, summary)
                 self.section_summary = []
+                self.section_summary_fullwidth = self.fullwidth
+
                 self.section_summary_pos = len(self.body)+2
             if self.sectionlevel == self.top_sectionlevel+1:
                 self.section_summary_entry_pos = len(self.body)
@@ -662,6 +676,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 for x in self.body[self.section_summary_entry_pos:]:
                     item += x
                 self.section_summary.append(item)
+
         self.in_title = 0
         self.body.append(self.context.pop())
         if 'compact' in node['classes']:
@@ -720,8 +735,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 for x in node.traverse(addnodes.desc_parameter):
                     x['long_params'] = long_params
                 if long_params:
-                    self.body.append('\n\\vspace{-6mm}')
-                self.body.append('\n\n\\texttt{\n')
+                    self.body.append('\n\\vspace{-2.5\\baselineskip}')
+                self.body.append('\n\n\\texttt{')
                 if long_params:
                     self.body.append('\\begin{tabbing}')
 
@@ -866,7 +881,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
                 if len(node.children) != 0:
                     self.body.append('\\begin{indentation}{%s}{0mm}'%indent)
-
+                else:
+                    for x in node.parent.traverse(
+                        condition=lambda x: not isinstance(x, addnodes.index),
+                        include_self=False,
+                        descend=False,
+                        ascend=False,
+                        siblings=True):
+                        if isinstance(x, addnodes.desc):
+                            # immediately followed by another desc
+                            self.body.append('\n\\vspace{-0.25\\baselineskip}\n')
+                        break
         else:
             if node.children and \
                not isinstance(node.children[0], nodes.paragraph):
@@ -930,6 +955,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.hline = '\\hline'
 
+
         if self.table:
             raise UnsupportedError(
                 '%s:%s: nested tables are not yet implemented.' %
@@ -949,7 +975,25 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 #        self.table.simple = 'simple-content' in node['classes']
 
-        self.table.no_hlines = True
+        self.table.vertical_borders = 'vertical-borders' in node['classes']
+        self.table.horizontal_borders = 'horizontal-borders' in node['classes']
+
+        self.table.no_hlines = not self.table.horizontal_borders
+
+
+
+        if self.table.horizontal_borders:
+            self.table.hline = '\\hline'
+        else:
+            self.table.hline = ''
+
+        if self.table.vertical_borders:
+            self.table.linesep = '|'
+        else:
+            self.table.linesep = ''
+
+#        if self.builder.config.latex_doctype == 'collection':
+            linesep = ''
         # Redirect body output until table is finished.
         self._body = self.body
         self.body = self.tablebody
@@ -959,17 +1003,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table.skipcols = [0 for x in range(self.table.colcount)]
 
     def depart_table(self, node):
-        if 'pdf-no-border' in node['classes'] or 'no-border' in node['classes']:
-            linesep = ''
-            hline = ''
-        else:
-#            linesep = '|'
-#            hline = '\\hline'
-
-#        if self.builder.config.latex_doctype == 'collection':
-            linesep = ''
-
-        self.linesep = linesep
+        linesep = self.table.linesep
+        hline = self.table.hline
         if self.table.rowcount > 30:
             self.table.longtable = True
         self.body = self._body
@@ -999,10 +1034,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.table.colspec:
             total = float(sum(self.table.colspec))
             colspec_str = ''
-            for colwidth in self.table.colspec:                
+            for i in range(len(self.table.colspec)):
+                colwidth = self.table.colspec[i]
                 colwidth = (colwidth / total)
                 if self.table.simple:
-                    colspec_str += 'l%s' % (linesep)
+                    if i == len(self.table.colspec)-1:
+                        colspec_str += 'Y%s' % (linesep)
+                    else:
+                        colspec_str += 'l%s' % (linesep)
                 else:
                     colspec_str += 'p{%.3f\\linewidth}%s' % (colwidth,linesep)
             self.body.append('{%s'%linesep + colspec_str + '}\n')
@@ -1132,7 +1171,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         for x in node.traverse(nodes.paragraph):
             found_content = True
 
-        if not found_content:
+        if not found_content and not self.table.horizontal_borders:
             self.body.append('\\hline\n')
             raise nodes.SkipNode
 
@@ -1161,8 +1200,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         while self.table.skipcols[self.table.col] > 0:
             self.table.skipcols[self.table.col] = self.table.skipcols[self.table.col]-1
+            if self.table.col > 0:
+                self.body.append(' & ')
             self.table.col += 1
-            self.body.append(' & ')
 
 
         if self.table.col > 0:
@@ -1173,13 +1213,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
             colwidth = float(sum(self.table.colspec[self.table.col:self.table.col+n]))
             colwidth = (colwidth / total)
             if self.table.col == 0:
-                init_div='|'
+                init_div=self.table.linesep
             else:
                 init_div=''
-            if self.table.simple:
-                self.body.append('\multicolumn{%d}{%sl}{' % (n,init_div) )
+            if self.table.col+n == len(self.table.colspec):
+                final_div=self.table.linesep
             else:
-                self.body.append('\multicolumn{%d}{%sp{%.3f\linewidth}|}{' % (n,init_div,colwidth) )
+                final_div=''
+            if self.table.simple:
+                self.body.append('\\multicolumn{%d}{%sl%s}{' % (n,init_div,final_div) )
+            else:
+                self.body.append('\\multicolumn{%d}{%sp{%.3f\linewidth}%s}{' % (n,init_div,colwidth,final_div) )
 
 #            self.context.append('}')
 
