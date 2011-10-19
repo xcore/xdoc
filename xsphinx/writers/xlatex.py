@@ -696,7 +696,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append(self.context.pop())
 
     def visit_desc_list(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             desctype = None
             for x in node.traverse(addnodes.desc):
                 desctype = x['desctype']
@@ -711,7 +711,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #                print node
 
     def depart_desc_list(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             desctype = node['desctype']
             if desctype in toplevel_desc:
                 pass
@@ -719,7 +719,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\\end{option}\n\n')
 
     def visit_desc(self, node):
-        if self.builder.config.latex_doctype != "collection":
+        if not self.builder.config.use_xmoslatex:
             self.body.append('\n\n\\begin{fulllineitems}\n')
         else:
             if node['desctype'] in toplevel_desc:
@@ -741,7 +741,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.body.append('\\begin{tabbing}')
 
     def depart_desc(self, node):
-        if self.builder.config.latex_doctype != 'collection':
+        if not self.builder.config.use_xmoslatex:
             self.body.append('\n\\end{fulllineitems}\n\n')
 
 
@@ -755,7 +755,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             hyper = ''
         self.body.append(hyper)
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             self.prev_duplicate_sig = False
             if not node.parent['desctype'] in toplevel_desc:
                 self.body.append('\\item[')
@@ -772,7 +772,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
     def depart_desc_signature(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             if not node.parent['desctype'] in toplevel_desc:
                 self.body.append(r']')
                 if self.prev_duplicate_sig:
@@ -781,7 +781,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'}{} \justifying \setlength{\parindent}{0mm}')
 
     def visit_desc_addname(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             self.body.append(r'\optemph{')
         else:
             self.body.append(r'\code{')
@@ -802,7 +802,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_desc_name(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             if 'duplicate' in node['classes']:
                 if not node.parent['desctype'] in toplevel_desc:
                     self.body.append(" ]")
@@ -814,25 +814,25 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'\bfcode{')
         self.literal_whitespace += 1
     def depart_desc_name(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             pass
         else:
             self.body.append('}')
         self.literal_whitespace -= 1
 
     def visit_desc_parameterlist(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             self.body.append('(')
         else:
             self.body.append('}{\\raggedright ')
         self.first_param = 1
     def depart_desc_parameterlist(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             self.body.append(')')
 
     def visit_desc_parameter(self, node):
         if not self.first_param:
-            if self.builder.config.latex_doctype == 'collection':
+            if self.builder.config.use_xmoslatex:
                 if 'long_params' in node and node['long_params']:
                     self.body.append(',\\\\ \n\\> ')
                 else:
@@ -840,16 +840,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 self.body.append(',\\\\ ')
         else:
-            if self.builder.config.latex_doctype == 'collection':
+            if self.builder.config.use_xmoslatex:
                 if 'long_params' in node and node['long_params']:
                     self.body.append('\\= ')
             self.first_param = 0
-        if self.builder.config.latex_doctype != 'collection' and \
+        if not self.builder.config.use_xmoslatex and \
            not node.hasattr('noemph'):
             self.body.append(r'\emph{')
 
     def depart_desc_parameter(self, node):
-        if self.builder.config.latex_doctype != 'collection' and \
+        if not self.builder.config.use_xmoslatex and \
            not node.hasattr('noemph'):
             self.body.append('}')
 
@@ -864,7 +864,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('}')
 
     def visit_desc_content(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             if node.parent['desctype'] in toplevel_desc:
                 if node.parent['long_params']:
                     self.body.append('\n\\end{tabbing}')
@@ -898,7 +898,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 # avoid empty desc environment which causes a formatting bug
                 self.body.append('~')
     def depart_desc_content(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             if node.parent['desctype'] in toplevel_desc:
                 if len(node.children) != 0:
                     self.body.append('\n\\end{indentation}\n')
