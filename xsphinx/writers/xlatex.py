@@ -301,6 +301,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.curfilestack = []
         self.in_footnote = False
         self.handled_abbrs = set()
+
         if document.settings.docclass == 'howto':
             self.top_sectionlevel = 2
         else:
@@ -327,6 +328,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.in_reference = False
         self.next_title_indent = False
         self.next_title_fullwidth = False
+        self.section_summary_fullwidth = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -426,9 +428,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
         for p in node.traverse(nodes.paragraph):
             p['margin_items'] = []
 
+        if self.builder.config.latex_doctype != 'collection':
+            self.section_summary_pos = len(self.body)+2
+
 
     def depart_document(self, node):
-
 
         if self.section_summary != []:
             summary = "\\begin{inthisdocument}\n"
@@ -520,7 +524,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                       'fullwidth' in node['classes']):
                     self.fullwidth = True
                     if self.builder.config.latex_doctype != 'collection':
-                        self.body.append('\\begin{fullwidth} % fragment')
+                        self.section_summary_fullwidth = True
+#                        self.body.append('\\begin{fullwidth} % fragment')
                     else:
                         self.body.append('\n% FULLWIDTH SECTION\n')
                     node['started_fullwidth'] = True
@@ -649,8 +654,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.context.append('}\n')
         self.in_title = 1
 
-        if self.builder.config.latex_doctype == 'collection':
-            if self.sectionlevel == self.top_sectionlevel:
+        if self.builder.config.use_xmoslatex:
+            if self.builder.config.latex_doctype == 'collection':
+                tp = self.top_sectionlevel
+            else:
+                tp = self.top_sectionlevel - 1
+            if self.builder.config.latex_doctype == 'collection' and \
+               self.sectionlevel == tp:
+
                 if self.section_summary != []:
                     summary = "\\begin{inthisdocument}\n"
                     for item in self.section_summary:
@@ -665,13 +676,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.section_summary_fullwidth = self.fullwidth
 
                 self.section_summary_pos = len(self.body)+2
-            if self.sectionlevel == self.top_sectionlevel+1:
+            if self.sectionlevel == tp+1:
                 self.section_summary_entry_pos = len(self.body)
 #                self.section_summary.append(str(node[0]))
 
     def depart_title(self, node):
-        if self.builder.config.latex_doctype == 'collection':
-            if self.sectionlevel == self.top_sectionlevel+1:
+        if self.builder.config.use_xmoslatex:
+            if self.builder.config.latex_doctype == 'collection':
+                tp = self.top_sectionlevel + 1
+            else:
+                tp = self.top_sectionlevel
+            if self.sectionlevel == tp:
                 item = ''
                 for x in self.body[self.section_summary_entry_pos:]:
                     item += x
