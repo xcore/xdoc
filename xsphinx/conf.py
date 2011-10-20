@@ -17,10 +17,13 @@ import xsphinx.code
 import xsphinx.images
 import xcomment, srcfile
 import docutils
+from docutils import nodes
 import xroles
 import xdirectives
 from xsphinx.xdoctoctree import XdocTocTree
 import xtable
+import sphinx.domains.std
+import xsphinx.passes
 
 if 'USE_AAFIG' in os.environ:
     use_aafig = (os.environ['USE_AAFIG'] != '0')
@@ -44,8 +47,9 @@ else:
 
 xsphinx_dir = os.environ['XDOC_DIR'] + "/xsphinx"
 
-short_name = os.environ['SPHINX_PROJECT_NAME'].lower()
-short_name = re.sub('[,:. /]','_',short_name)
+#short_name = os.environ['SPHINX_PROJECT_NAME'].lower()
+#short_name = re.sub('[,:. /]','_',short_name)
+short_name = os.path.split(os.environ['SPHINX_MASTER_DOC'])[-1]
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -362,6 +366,9 @@ def setup(app):
     latex_doctype='article'
     app.add_directive('toctree', XdocTocTree)
     app.add_directive('table', xtable.Table)
+    app.add_role("sub",xroles.subscript)
+    app.add_role("sup",xroles.superscript)
+    app.connect('doctree-resolved',xsphinx.passes.format_references)
     xcomment.setup(app, enable_comments)
     for mod in extraconf_modules:
         mod = mod.strip()
@@ -383,6 +390,10 @@ breathe_default_project = 'auto_doxygen'
 
 rst_prolog = '''
 .. highlight:: none
+
+.. role:: ebnf
+   :class: ebnf
+
 '''
 
 
@@ -396,8 +407,8 @@ if current_builder=='xlatex':
 .. |newpage| raw:: latex
 
                \\newpage
-.. role:: ebnf
-   :class: ebnf
+
+
         '''
 else:
         rst_epilog = """

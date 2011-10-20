@@ -329,6 +329,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.next_title_indent = False
         self.next_title_fullwidth = False
         self.section_summary_fullwidth = False
+        self.in_subscript = False
+        self.in_sig = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -784,6 +786,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append(r'\pysiglinewithargsret{')
             else:
                 self.body.append(r'\pysigline{')
+        self.in_sig = True
 
 
     def depart_desc_signature(self, node):
@@ -794,6 +797,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.body.append('\duplicateoption')
         else:
             self.body.append(r'}{} \justifying \setlength{\parindent}{0mm}')
+        self.in_sig = False
 
     def visit_desc_addname(self, node):
         if self.builder.config.use_xmoslatex:
@@ -1941,10 +1945,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'\texttt{%s}' % content)
         elif node.has_key('role') and node['role'] == 'samp':
             self.body.append(r'\samp{%s}' % content)
-        elif self.in_footnote or self.in_reference:
+        elif self.in_footnote or self.in_reference or self.in_subscript:
             self.body.append(r'\code{%s}' % content)
         else:
-            self.body.append(r'\verb`%s`' % node.astext().strip())
+            text = node.astext().strip()
+            text = text.replace(' %','` \\texttt{\\ihjkel}\\verb`')
+            text = text.replace('%','`\\texttt{\\%}\\verb`')
+            text = text.replace('ihjkel','%')
+
+            self.body.append('\\verb`%s`' % text)
         raise nodes.SkipNode
 
     def visit_footnote_reference(self, node):
@@ -2119,14 +2128,19 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_superscript(self, node):
+        self.body[-1] = self.body[-1].rstrip()
         self.body.append('$^{\\text{')
     def depart_superscript(self, node):
         self.body.append('}}$')
 
     def visit_subscript(self, node):
+        self.body[-1] = self.body[-1].rstrip()
         self.body.append('$_{\\text{')
+        self.in_subscript = True
+
     def depart_subscript(self, node):
         self.body.append('}}$')
+        self.in_subscript = False
 
     def visit_substitution_definition(self, node):
         raise nodes.SkipNode
@@ -2199,10 +2213,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.verbatim is not None:
             self.verbatim += node.astext()
         else:
-            text = self.encode(node.astext())
-#            print text
-#            self.body.append(educate_quotes_latex(text))            
-            self.body.append(text)
+            text = node.astext()
+            text = self.encode(text)
+            self.body.append(educate_quotes_latex(text))
+#            self.body.append(text)
 
     def depart_Text(self, node):
         pass
@@ -2241,4 +2255,52 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def depart_squeeze(self, node):
+        pass
+
+    def visit_ebnf(self, node):
+        text= node[0].astext()
+
+        # text = text.replace('\\','jkllslashjkll')
+        # text = text.replace('{','\\{')
+        # text = text.replace('}','\\}')
+        # text = text.replace('%','\\%')
+        # text = text.replace('&','\\&')
+        # text = text.replace('&','\\&')
+        # text = text.replace('jkllslashjkll','\\\\')
+
+
+
+        lhs = ''
+        for x in re.finditer(r'^(.*)::=', text):
+            name = x.groups(0)[0].strip()
+            if len(name) > len(lhs):
+                lhs = name
+
+        for x in re.finditer(r'[\n|^](.*)::=', text):
+            name = x.groups(0)[0].strip()
+            if len(name) > len(lhs):
+                lhs = name
+
+        text = text.replace('::=','!amp! !is! !amp!')
+        text = text.replace('\n','!newline!')
+        text = re.sub(r'!newline![ ]*\|','!newline! !amp! !choice! !amp!', text)
+        text = re.sub(r'``(?P<txt>[^`]*)``','!token!\g<txt>!',text)
+        text = re.sub(r'<(?P<txt>[^>]*)>\?','!opt!\g<txt>!',text)
+        text = re.sub(r'<(?P<txt>[^>]*)>\*','!star!\g<txt>!',text)
+        text = re.sub(r'<(?P<txt>[^>]*)>\+','!plus!\g<txt>!',text)
+        text = self.encode(text)
+        text = text.replace('!amp!','&')
+        text = text.replace('!is!','\\is')
+        text = text.replace('!newline!','\\\\ \n')
+        text = text.replace('!choice!','\\choice')
+        text = re.sub(r'!token!(?P<txt>[^!]*)!','\\\\token{\g<txt>}',text)
+        text = re.sub(r'!opt!(?P<txt>[^!]*)!','\\\\ebnf{opt}{\g<txt>}',text)
+        text = re.sub(r'!star!(?P<txt>[^!]*)!','\\\\ebnf{0}{\g<txt>}',text)
+        text = re.sub(r'!plus!(?P<txt>[^!]*)!','\\\\ebnf{1}{\g<txt>}',text)
+        self.body.append('\\begin{xcsyntax}{%s}\n'%lhs)
+        self.body.append(text)
+        self.body.append('\\end{xcsyntax}\n')
+        raise nodes.SkipNode
+
+    def depart_ebnf(self, node):
         pass
