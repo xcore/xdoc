@@ -991,6 +991,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
                isinstance(child, nodes.bullet_list):
                 self.table.simple = False
 
+        max_width = 0
+        self.table.max_width_col = 0
+        for row in node.traverse(nodes.row):
+            colnum = 0
+            for col in row.traverse(nodes.entry):
+                text = col.astext()
+                if len(text) > max_width:
+                    max_width = len(text)
+                    self.table.max_width_col = colnum
+                colnum=colnum+1
 
 #        self.table.simple = 'simple-content' in node['classes']
 
@@ -1057,7 +1067,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 colwidth = self.table.colspec[i]
                 colwidth = (colwidth / total)
                 if self.table.simple:
-                    if i == len(self.table.colspec)-1:
+                    if i == self.table.max_width_col:
                         colspec_str += 'Y%s' % (linesep)
                     else:
                         colspec_str += 'l%s' % (linesep)
@@ -2214,6 +2224,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.verbatim += node.astext()
         else:
             text = node.astext()
+
             text = self.encode(text)
             self.body.append(educate_quotes_latex(text))
 #            self.body.append(text)

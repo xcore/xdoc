@@ -199,9 +199,12 @@ def xlatex_rearrange_tocs(app, doctree, fromdocname):
                                            or
                                            isinstance(n,nodes.compound)):
         if isinstance(node, addnodes.start_of_file):
-            current_file = node.traverse(nodes.section)[0]
+            try:
+                current_file = node.traverse(nodes.section)[0]
+            except:
+                current_file = None
         else:
-            if node.get('classes')==['toctree-wrapper']:
+            if current_file and node.get('classes')==['toctree-wrapper']:
                 node.parent.remove(node)
                 current_file.append(node)
 
