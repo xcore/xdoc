@@ -54,7 +54,7 @@ _linked:
 
 %._linked: _linked
 	@echo Copying in $*
-	@$(RSYNC) --exclude=**.linked_dirs** $* .linked_dirs
+	$(RSYNC) --exclude=**.linked_dirs** $(abspath $*) .linked_dirs
 
 _linked_dirs: $(foreach x,$(OTHER_DOC_DIRS),$(x)._linked)
 	@echo "Created linked dirs"
