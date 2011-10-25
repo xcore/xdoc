@@ -1,3 +1,16 @@
+#Variable defaults
+APPS_ROOT     ?= $(abspath $(XDOC_DIR)/..)
+SPHINXOPTS    =
+SPHINXBUILD   = python $(XDOC_DIR)/xsphinx/sphinx-build.py
+PAPER         =
+BUILDDIR      = _build
+DOXYGEN_DIRS  ?=
+#SOURCE_INCLUDE_DIRS ?=
+SPHINX_MASTER_DOC ?= index
+_SPHINX_MASTER_DOC ?= $(SPHINX_MASTER_DOC)
+SPHINX_SECTION_NEWPAGE ?= 1
+
+RSYNC = rsync -tur --cvs-exclude --exclude=**.xe --exclude=**.zip --exclude=**_buid** --exclude=**.build**
 # default target
 LATEX_CMD = latex
 
@@ -7,22 +20,42 @@ space :=
 space +=
 
 
-DO_LATEX = echo Running LaTeX;export TEXINPUTS=$(T):_build/xlatex:;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.0;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.1; mv *.aux _build/xlatex; mv *.log _build/xlatex;mv *.idx _build/xlatex;egrep -A 6 "^!" _build/xlatex/latex.log.1; mv *.out _build/xlatex;mv $1 _build/xlatex;
+DO_LATEX = echo Running LaTeX;export TEXINPUTS=$(T):_build/xlatex:;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.0;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.1; mv *.aux _build/xlatex; mv *.log _build/xlatex;mv *.idx _build/xlatex;egrep -A 6 "^!" _build/xlatex/latex.log.1; mv *.out _build/xlatex;mv *.toc _build/xlatex;mv $1 _build/xlatex;
 
+_sources_dir:
+	@mkdir -p .sources
+
+%.sources:
+	@echo Copying source dir $*
+	@-$(RSYNC) $* .sources
+
+ifeq ($(NOCOPY),1)
+_sources:
+	@echo Not copying source directories
+else
+_sources: _sources_dir $(foreach x,$(SOURCE_INCLUDE_DIRS),$(x).sources)
+	@echo Source directories copied
+endif
 
 OTHER_DOC_DIRS_ABS = $(foreach x,$(OTHER_DOC_DIRS),$(abspath $x))
 ifeq ($(OTHER_DOC_DIRS),)
-LINKED_DIRS =
+LINKED_DIRS = _sources
 else
-_link_dir:
-	-mkdir _linked_dirs
+.PHONY: _linked_dirs
 
-%.link: | _link_dir
-	-ln -T -s $(abspath $*) _linked_dirs/$(notdir $(abspath $*))
 
-_linked_dirs: $(foreach x, $(OTHER_DOC_DIRS), $(x).link)
+ifeq ($(NOCOPY),1)
+_linked_dirs:
+	@echo Not copying linked dirs
+else
+_linked_dirs:
+	@-rm -rf .linked_dirs
+	@-mkdir -p .linked_dirs
+	@python $(APPS_ROOT)/xdoc/xsphinx/copy_linked.py $(OTHER_DOC_DIRS)
 	@echo "Created linked dirs"
-LINKED_DIRS = _linked_dirs
+endif
+
+LINKED_DIRS = _linked_dirs _sources
 endif
 
 export LINKED_DIRS
@@ -40,15 +73,6 @@ DOC_DIR = $(abspath .)
 T:=$(XDOC_DIR)/texinput
 
 
-APPS_ROOT     ?= $(abspath $(XDOC_DIR)/..)
-SPHINXOPTS    =
-SPHINXBUILD   = python $(XDOC_DIR)/xsphinx/sphinx-build.py
-PAPER         =
-BUILDDIR      = _build
-DOXYGEN_DIRS  ?=
-#SOURCE_INCLUDE_DIRS ?=
-SPHINX_MASTER_DOC ?= index
-SPHINX_SECTION_NEWPAGE ?= 1
 
 export XDOC_DIR
 export SPHINX_PROJECT_NAME
@@ -58,6 +82,7 @@ export DOXYGEN_DIRS
 export SOURCE_INCLUDE_DIRS
 export SPHINX_LATEX_DOCTYPE
 export SPHINX_MASTER_DOC
+export _SPHINX_MASTER_DOC
 export SPHINX_SECTION_NEWPAGE
 export BREADCRUMB_PREFIX
 export USE_COMMENTS
@@ -65,6 +90,7 @@ export EXTRACONF
 export
 
 PYTHONPATH_EXTRA:=:$(XDOC_DIR)
+
 
 
 
@@ -76,10 +102,17 @@ PYTHONPATH_EXTRA:=:$(XDOC_DIR)
 	rm -rf $*/_doxygen_xml
 	rm $*/Doxyfile
 
-doxygen:
+_doxygen:
+	@-mkdir -p .doxygen
+
+%.copy_doxygen: _doxygen
+	@echo Copying doxygen dir $*
+	@-$(RSYNC) $* .doxygen
+
+doxygen: $(if $(NOCOPY),,$(foreach x, $(DOXYGEN_DIRS), $(x).copy_doxygen))
 	@echo "Running Doxygen"
 	@cp $(XDOC_DIR)/xsphinx/Doxyfile $(DOC_DIR)/Doxyfile
-	@sed -i -e 's/--INPUT--/$(subst /,\/,$(DOXYGEN_DIRS))/g' Doxyfile
+	@sed -i -e 's/--INPUT--/.doxygen/g' Doxyfile
 	@mkdir -p $(DOC_DIR)/_build/doxygen
 	@export PATH=$(PATH):/tools/doxygen/doxygen-1.5.8/bin/ && cd $(DOC_DIR) && doxygen 2>&1 | grep -v "REFERENCE" ; echo "Done"
 	@rm $(DOC_DIR)/Doxyfile
@@ -98,7 +131,7 @@ singlehtml: doxygen | $(LINKED_DIRS)
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/singlehtml."
 
 
-xlatex: doxygen
+xlatex: doxygen | $(LINKED_DIRS)
 	export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX)
 	cp _build/$(XLATEX)/*.tex .
 
@@ -121,7 +154,7 @@ man: doxygen | $(LINKED_DIRS)
 COMMA=,
 #TEXROOT = $(subst $(COMMA),_,$(subst :,_,$(subst /,_,$(subst $(space),_,$(call lc,$(SPHINX_PROJECT_NAME))))))
 
-TEXROOT = $(notdir $(SPHINX_MASTER_DOC))
+TEXROOT = $(notdir $(_SPHINX_MASTER_DOC))
 PDF_TARGET = $(TEXROOT).pdf
 
 pdf: XLATEX=xlatex
@@ -135,7 +168,10 @@ latex_to_pdf:
 	@echo "Build complete"
 
 clean:
+	rm -rf .sources
+	rm -rf .doxygen
 	rm -rf _build
+	-rm -f $(TEXROOT).toc
 	-rm -f $(TEXROOT).tex
 	-rm -f $(TEXROOT).toc
 	-rm -f $(TEXROOT).dvi
@@ -144,6 +180,7 @@ clean:
 	-rm -f $(TEXROOT).log
 	-rm -f $(TEXROOT).out
 	-rm -f $(TEXROOT).aux
+
 
 
 -include $(APPS_ROOT)/infr_docs/Makefile.xdoc_extras

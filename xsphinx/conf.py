@@ -49,7 +49,7 @@ xsphinx_dir = os.environ['XDOC_DIR'] + "/xsphinx"
 
 #short_name = os.environ['SPHINX_PROJECT_NAME'].lower()
 #short_name = re.sub('[,:. /]','_',short_name)
-short_name = os.path.split(os.environ['SPHINX_MASTER_DOC'])[-1]
+short_name = os.path.split(os.environ['_SPHINX_MASTER_DOC'])[-1]
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -86,8 +86,8 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-if 'SPHINX_MASTER_DOC' in os.environ:
-    master_doc = os.environ['SPHINX_MASTER_DOC']
+if '_SPHINX_MASTER_DOC' in os.environ:
+    master_doc = os.environ['_SPHINX_MASTER_DOC']
 else:
     master_doc = 'index'
 
@@ -119,6 +119,7 @@ release = os.environ['VERSION']
 # directories to ignore when looking for source files.
 
 exclude_patterns = [xsphinx_dir + '/_build','.*\.#.*']
+exclude_patterns += ['.support*','.sources*','.doxygen*']
 #,'_linked_dirs/.*/'+os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]+'.*']
 
 exclude_dirnames = [os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]]
@@ -319,9 +320,9 @@ else:
     breadcrumb_prefix = ""
 
 if 'EXTRACONF' in os.environ:
-    extraconf_modules = ['extraconf'] + re.split('\W+',os.environ['EXTRACONF'].strip())
+    extraconf_modules = set(['extraconf'] + re.split('\W+',os.environ['EXTRACONF'].strip()))
 else:
-    extraconf_modules = ['extraconf']
+    extraconf_modules = set(['extraconf'])
 
 
 class Configurator(object):
@@ -370,6 +371,7 @@ def setup(app):
     app.add_role("sup",xroles.superscript)
     app.connect('doctree-resolved',xsphinx.passes.format_references)
     xcomment.setup(app, enable_comments)
+    __import__('xmosconf')
     for mod in extraconf_modules:
         mod = mod.strip()
         if len(mod) > 0:

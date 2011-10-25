@@ -1369,7 +1369,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for f in node.traverse(nodes.field_name):
                 f['classes'].append('action')
             self.sectionlevel += 1
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             node['classes'].append('latex_compact')
             if 'latex_compact' in node['classes']:
                 for f in node.traverse(nodes.field_name):
@@ -1383,7 +1383,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_field_list(self, node):
        if 'actions' in node['classes']:
            self.sectionlevel -= 1
-       if self.builder.config.latex_doctype == 'collection':
+       if self.builder.config.use_xmoslatex:
             if 'latex_compact' in node['classes']:
                 self.body.append('\\end{option}\n\\vspace{-3mm}\n\n')
 
@@ -1893,7 +1893,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.no_contractions -= 1
 
     def visit_strong(self, node):
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.use_xmoslatex:
             if str(node[0]) == 'Enum Values:':
                 node.parent.parent[1]['classes'].append('skip')
                 self.body.append('This type has the following values:\n')

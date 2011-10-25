@@ -13,7 +13,7 @@ class XdocTocTree(TocTree):
         except:
             linked_dirs = []
 
-        linked_dirs = ['_linked_dirs/'+os.path.split(x)[1] for x in linked_dirs]
+        linked_dirs = ['.linked_dirs/'+os.path.split(x)[1] for x in linked_dirs]
 
         for i in range(len(self.content)):
             path = self.content[i]

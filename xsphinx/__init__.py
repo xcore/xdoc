@@ -7,7 +7,7 @@ def miniparse(text):
     ret = []
     text = text.replace('~~','\2')
     text = text.replace('**','\3')
-    constructs = {'\1':nodes.term,
+    constructs = {'\1':nodes.inline,
                   '\2':nodes.literal,
                   '\3':nodes.strong,
                   '*':nodes.emphasis}

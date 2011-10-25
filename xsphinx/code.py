@@ -45,10 +45,13 @@ class LiteralInclude(Directive):
         fns = []
  
         docdir = path.dirname(env.doc2path(env.docname, base=None))
-        dirs = [docdir]
-        dirs += self.state.document.settings.env.config.include_search_dirs
+        dirs = [docdir,os.path.join(docdir,'.sources')]
+        dirs += [os.path.join(docdir,'.sources',x) for x in os.listdir('.sources')]
+
+        #self.state.document.settings.env.config.include_search_dirs
        
         fns = [path.join(x, filename) for x in dirs]
+
 
 #        print fns
 #        if filename.startswith('/') or filename.startswith(os.sep):

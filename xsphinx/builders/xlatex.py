@@ -22,11 +22,49 @@ from sphinx.util import texescape
 from sphinx.locale import _
 from sphinx.builders import Builder
 from sphinx.environment import NoUri
-from sphinx.util.nodes import inline_all_toctrees
+#from sphinx.util.nodes import inline_all_toctrees
 from sphinx.util.osutil import SEP, copyfile
 from sphinx.util.console import bold, darkgreen
 from xsphinx.writers.xlatex import XLaTeXWriter
 from sphinx import addnodes
+
+def inline_all_toctrees(builder, docnameset, docname, tree, colorfunc, toplevel =True):
+    """Inline all toctrees in the *tree*.
+
+    Record all docnames in *docnameset*, and output docnames with *colorfunc*.
+    """
+    tree = tree.deepcopy()
+    for toctreenode in tree.traverse(addnodes.toctree):
+        newnodes = []
+        includefiles = map(str, toctreenode['includefiles'])
+        for includefile in includefiles:
+            try:
+                builder.info(colorfunc(includefile) + " ", nonl=1)
+                subtree = inline_all_toctrees(builder, docnameset, includefile,
+                    builder.env.get_doctree(includefile), colorfunc,toplevel=False)
+                docnameset.add(includefile)
+            except Exception:
+                builder.warn('toctree contains ref to nonexisting '
+                             'file %r' % includefile,
+                             builder.env.doc2path(docname))
+            else:
+                sof = addnodes.start_of_file(docname=includefile)
+                sof.children = subtree.children
+                if toplevel:
+                    for node in sof.traverse(nodes.title):
+                        alt_title = None
+                        for (title, docname) in toctreenode['entries']:
+                            if docname == includefile:
+                                alt_title = title
+
+                        if alt_title:
+                            node.children = [nodes.Text(alt_title)]
+                        break
+
+                newnodes.append(sof)
+        toctreenode.parent.replace(toctreenode, newnodes)
+    return tree
+
 
 class XLaTeXBuilder(Builder):
     """
@@ -134,8 +172,8 @@ class XLaTeXBuilder(Builder):
             largetree.append(appendix)
         self.info()
         self.info("resolving references...")
-#        for node in largetree.traverse(nodes.target):
-#            print node.parent
+        #for node in largetree.traverse(nodes.target):
+        #    print node
 
         self.env.resolve_references(largetree, indexfile, self)
         # resolve :ref:s to distant tex files -- we can't add a cross-reference,
