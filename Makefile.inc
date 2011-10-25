@@ -48,10 +48,15 @@ ifeq ($(NOCOPY),1)
 _linked_dirs:
 	@echo Not copying linked dirs
 else
-_linked_dirs:
-	@-rm -rf .linked_dirs
+
+_linked:
 	@-mkdir -p .linked_dirs
-	@python $(APPS_ROOT)/xdoc/xsphinx/copy_linked.py $(OTHER_DOC_DIRS)
+
+%._linked: _linked
+	@echo Copying in $*
+	@$(RSYNC) --exclude=**.linked_dirs** $* .linked_dirs
+
+_linked_dirs: $(foreach x,$(OTHER_DOC_DIRS),$(x)._linked)
 	@echo "Created linked dirs"
 endif
 
@@ -168,6 +173,7 @@ latex_to_pdf:
 	@echo "Build complete"
 
 clean:
+	rm -rf .linked_dirs
 	rm -rf .sources
 	rm -rf .doxygen
 	rm -rf _build
