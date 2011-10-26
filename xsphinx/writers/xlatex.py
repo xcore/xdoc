@@ -1036,8 +1036,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.table.rowcount > 30:
             self.table.longtable = True
         self.body = self._body
-        self.body.append("\\renewcommand{\\tabcolsep}{1.25mm}\n")
-        self.body.append("\\renewcommand{\\arraystretch}{1.25}\n")
+        
 
         if not self.table.longtable and self.table.caption is not None:
             if self.builder.config.use_sidecaption:
@@ -2350,9 +2349,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         text = re.sub(r'!opt!(?P<txt>[^!]*)!','\\\\ebnf{opt}{\g<txt>}',text)
         text = re.sub(r'!star!(?P<txt>[^!]*)!','\\\\ebnf{0}{\g<txt>}',text)
         text = re.sub(r'!plus!(?P<txt>[^!]*)!','\\\\ebnf{1}{\g<txt>}',text)
-        self.body.append('\\begin{xcsyntax}{%s}\n'%lhs)
+        self.body.append('\n\\begin{grammar}{%s}\n'%lhs)
         self.body.append(text)
-        self.body.append('\\end{xcsyntax}\n')
+        self.body.append('\\end{grammar}\n')
         raise nodes.SkipNode
 
     def depart_ebnf(self, node):
