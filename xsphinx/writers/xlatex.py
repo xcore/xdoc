@@ -2196,7 +2196,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'ebnf' in classes:
             self.body.append('\\emph{')
         if 'cmd' in classes:
-            if isinstance(node.parent,nodes.paragraph) and len(node.parent)==1:
+            if isinstance(node.parent,nodes.paragraph) and len(node.parent)==1 \
+               and not (isinstance(node.parent.parent,nodes.list_item) and \
+                        node.parent.parent[0] == node.parent):
                 self.body.append('\\command{')
             else:
                 self.body.append('\\texttt{')
