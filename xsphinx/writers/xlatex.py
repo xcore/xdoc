@@ -87,7 +87,6 @@ HEADER1 = r'''
 \renewcommand\bfcode\textbf
 \renewcommand\bf\textbf
 \graphicspath{{./}{./images/}}
-\version{%(release)s}
 %(makeindex)s
 '''
 
@@ -699,8 +698,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'compact' in node['classes']:
             self.body.append('\n\\vspace{-\\parsep}\n')
         if self.next_title_indent:
-            self.next_title_indent = False
-            self.body.append('\\begin{indentation}{22mm}{0mm}')
+            self.nexst_title_indent = False
+            self.body.append('\\begin{indentation}{\\blockindentlen}{0mm}')
 
 
     def visit_subtitle(self, node):
@@ -891,9 +890,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                         self.body.append('\\vspace{-3mm}\n')
 
                 if self.fullwidth:
-                    indent = '22mm'
+                    indent = '\\blockindentlen'
                 else:
-                    indent = '11mm'
+                    indent = '\\blockindentlen'
                 self.body.append('}\n\n')
 
                 self.body.append('\\vspace{-2mm}\n')
@@ -1043,6 +1042,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not self.table.longtable and self.table.caption is not None:
             if self.builder.config.use_sidecaption:
                 self.body.append(u'\n\\begin{figure}[H]')
+                if self.fullwidth:
+                    self.body.append(u'\n\\begin{fullwidth}')
                 self.body.append(u'\\begin{sidecaption}{%s}\n'%self.table.caption)
 #                self.body.append(u'\\begin{minipage}{\\textwidth}\n')
                 self.body.append(u'\small')
@@ -1130,7 +1131,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not self.table.longtable and self.table.caption is not None:
             if self.builder.config.use_sidecaption:
 #                self.body.append(u'\\end{minipage}')
-                self.body.append(u'\\end{sidecaption}\\end{figure}\n')
+                self.body.append(u'\\end{sidecaption}\n')
+                if self.fullwidth:
+                    self.body.append(u'\n\\end{fullwidth}')
+                self.body.append('\\end{figure}\n')
             else:
                 self.body.append(u'\\caption{%s}\n' % self.table.caption)
                 self.body.append('\\end{threeparttable}\n\n\\end{center}\n\n')
@@ -1446,11 +1450,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        if isinstance(node.parent,nodes.admonition):
 #            print "ADM"
         self.para_icons = []
+        self.para_inserts = []
         self.para_icon_insert_point = len(self.body)
         if not isinstance(node.parent, nodes.entry):
             self.body.append('\n')
         else:
             self.body.append('')
+
 
     def depart_paragraph(self, node):
         icon_str = ''
@@ -1476,6 +1482,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 for icon in self.para_icons:
                     icon_str += '\\iconmargin{2}{%s} ' % icon
 #        icon_str += ' '
+        icon_str += ' '.join(self.para_inserts)
         self.body[pos+1] = first[:n] + icon_str + first[n:]
 #        self.body = self.body[:pos] + ' gg ' + self.body[pos:]
         if not isinstance(node.parent, nodes.entry):
@@ -1523,7 +1530,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_image(self, node):
         attrs = node.attributes
         if 'iconmargin' in node['classes']:
-            self.para_icons.append(node['uri'])
+            print node['uri']
+            if re.match('.*windowsmargin\.png',node['uri']):
+                self.para_inserts.append('\\windowsmargin')
+            elif re.match('.*linuxmargin\.png',node['uri']):
+                self.para_inserts.append('\\linuxmargin')
+            elif re.match('.*macmargin\.png',node['uri']):
+                self.para_inserts.append('\\macmargin')
+            else:
+                self.para_icons.append(node['uri'])
             return
         pre = []                        # in reverse order
         post = []
@@ -1597,8 +1612,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 cap = c[0]
             node['align'] = 'left'
             self.body.append('\\begin{figure}[H]\n')
+            if self.fullwidth:
+                self.body.append(u'\n\\begin{fullwidth}')
             self.body.append('\\begin{sidecaption}{%s}\n' % cap)
-            self.context.append('\\end{sidecaption}\\end{figure}\n')
+
+            end = '\\end{sidecaption}'
+            if self.fullwidth:
+                end += '\n\\end{fullwidth}'
+            end += '\\end{figure}\n'
+            self.context.append(end)
             if node.has_key('width'):
                 node[0]['width'] = node['width']
             return
@@ -1624,6 +1646,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 align = '\\begin{flush%s}' % node.attributes['align']
                 align_end = '\\end{flush%s}' % node.attributes['align']
             self.body.append('\\begin{figure}[H]%s\n' % align)
+            if self.fullwidth:
+                self.body.append(u'\n\\begin{fullwidth}')
 #            if any(isinstance(child, nodes.caption) for child in node):
 #                self.body.append('\\capstart\n')
             attrs = node.attributes
@@ -1632,8 +1656,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 w = self.latex_image_length(attrs['width'])
                 if w:
                     self.include_graphics_options.append('width=%s' % w)
-
-            self.context.append(ids + align_end + '\\end{figure}\n')
+            fw_end = ''
+            if self.fullwidth:
+                fw_end = '\n\\end{fullwidth}'
+            self.context.append(ids + align_end + fw_end + '\\end{figure}\n')
 
     def depart_figure(self, node):
         self.body.append(self.context.pop())
@@ -1810,15 +1836,22 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if uri.startswith('/'):
                 uri = 'http://www.xmos.com'+uri
 
-            self.body.append('\\href{%s}{' % self.encode_uri(uri))
-            # if configured, put the URL after the link
-            if self.builder.config.latex_show_urls and \
-                   node.astext() != uri:
-                if uri.startswith('mailto:'):
-                    uri = uri[7:]
-                self.context.append('} (%s)' % self.encode_uri(uri))
+            if node.astext() == uri:
+                if isinstance(node.parent,nodes.paragraph) and len(node.parent)==2:
+                    self.body.append('\\triangleurl{%s}' % self.encode_uri(uri))
+                else:
+                    self.body.append('\\xurl{%s}' % self.encode_uri(uri))
+                raise nodes.SkipNode
             else:
-                self.context.append('}')
+                self.body.append('\\href{%s}{' % self.encode_uri(uri))
+            # if configured, put the URL after the link
+                if self.builder.config.latex_show_urls and \
+                        node.astext() != uri:
+                    if uri.startswith('mailto:'):
+                        uri = uri[7:]
+                    self.context.append('} (%s)' % self.encode_uri(uri))
+                else:
+                    self.context.append('}')
         elif uri.startswith('#'):
             # references to labels in the same document
             id = self.curfilestack[-1] + ':' + uri[1:]
@@ -1997,9 +2030,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
             linenos = node['linenos']
 
 #        print code
-        hlcode = self.highlighter.highlight_block(code, lang, linenos)
+#        hlcode = self.highlighter.highlight_block(code, lang, linenos)
 #        print hlcode
 #        hlcode = '\begin{Verbatim}\n' + code + '\n\end{Verbatim}\n'
+        hlcode = '\\begin{lstlisting}[resetmargins=true]\n' + code
         # workaround for Unicode issue
         hlcode = hlcode.replace(u'€', u'@texteuro[]')
         # must use original Verbatim environment and "tabular" environment
@@ -2008,14 +2042,21 @@ class LaTeXTranslator(nodes.NodeVisitor):
                                     '\\begin{OriginalVerbatim}')
             self.table.has_verbatim = True
         else:
-            hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=\\\\\\{\\}]',                                    '\\begin{SaveVerbatim}[commandchars=\\\\\\{\\}]{savedenv}')
-            hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=@\\[\\]]',                                    '\\begin{SaveVerbatim}[commandchars=@\\[\\]]{savedenv}')
+            # hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=\\\\\\{\\}]',
+            #                         '\\begin{SaveVerbatim}[commandchars=\\\\\\{\\}]{savedenv}')
+            # hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=@\\[\\]]',
+            #                         '\\begin{SaveVerbatim}[commandchars=@\\[\\]]{savedenv}')
+
+            hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=\\\\\\{\\}]',
+                                    '\\begin{lstlisting}')
+            hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=@\\[\\]]',
+                                    '\\begin{lstlisting}}')
 #                                    '\begin{Verbatim}[frame=lines,')
 #                                    '\\begin{shaded}\n\\topsep=0ex\\relax\n\\begin{Verbatim}[frame=lines,')
                            
             pass
         # get consistent trailer
-        hlcode = hlcode.rstrip()[:-14] # strip \end{Verbatim}
+#        hlcode = hlcode.rstrip()[:-14] # strip \end{Verbatim}
         hlcode = hlcode.rstrip() + '\n'
 #        self.body.append('\n\\vspace{-0.5cm}\n' + hlcode + '\\end{%sVerbatim}\n\\end{shaded}\n' %  (self.table and 'Original' or ''))
         if self.table:
@@ -2027,7 +2068,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 tinyv = '\\tiny'
             else:
                 tinyv = '\\small'
-            self.body.append('\n\\vspace{0.25\\baselineskip}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{%s \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.25\\baselineskip}\n' % tinyv)
+
+            self.body.append('\n' + hlcode + '\\end{lstlisting}')
+#            self.body.append('\n\\vspace{0.25\\baselineskip}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{%s \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.25\\baselineskip}\n' % tinyv)
         self.verbatim = None
     visit_doctest_block = visit_literal_block
     depart_doctest_block = depart_literal_block
@@ -2072,9 +2115,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if 'commentary' in node['classes']:
                 self.body.append('\\begin{commentary}\n')
             elif not 'skip' in node['classes']:
-                if self.builder.config.use_xmoslatex:
-                    self.body.append('\\vspace{-3mm}\n')
-                self.body.append('\\begin{quote}\n')
+                #if self.builder.config.use_xmoslatex:
+                #   self.body.append('\\vspace{-3mm}\n')
+                #self.body.append('\\begin{quote}\n')
+                self.body.append('\\begin{indentation}{\\forceindentlen}{0mm}')
 
     def depart_block_quote(self, node):
         done = 0
@@ -2087,9 +2131,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if 'commentary' in node['classes']:
                 self.body.append('\\end{commentary}\n')
             elif not 'skip' in node['classes']:
-                self.body.append('\\end{quote}\n')
-                if self.builder.config.use_xmoslatex:
-                    self.body.append('\\vspace{-3mm}\n')
+                self.body.append('\\end{indentation}')
+                #self.body.append('\\end{quote}\n')
+                #if self.builder.config.use_xmoslatex:
+                #    self.body.append('\\vspace{-3mm}\n')
 
     # option node handling copied from docutils' latex writer
 
@@ -2162,11 +2207,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
         classes = node.get('classes', [])
         if 'ebnf' in classes:
             self.body.append('\\emph{')
+        if 'cmd' in classes:
+            if isinstance(node.parent,nodes.paragraph) and len(node.parent)==1:
+                self.body.append('\\command{')
+            else:
+                self.body.append('\\texttt{')
 #        self.body.append(r'\DUspan{%s}{' % ','.join(classes))
 
     def depart_inline(self, node):
         classes = node.get('classes', [])
         if 'ebnf' in classes:
+            self.body.append('}')
+        if 'cmd' in classes:
             self.body.append('}')
 
 #        self.body.append('}')

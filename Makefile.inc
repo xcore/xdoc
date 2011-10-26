@@ -20,7 +20,7 @@ space :=
 space +=
 
 
-DO_LATEX = echo Running LaTeX;export TEXINPUTS=$(T):_build/xlatex:;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.0;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.1; mv *.aux _build/xlatex; mv *.log _build/xlatex;mv *.idx _build/xlatex;egrep -A 6 "^!" _build/xlatex/latex.log.1; mv *.out _build/xlatex;mv *.toc _build/xlatex;mv $1 _build/xlatex;
+DO_LATEX = echo Running LaTeX;export TEXINPUTS=$(T):_build/xlatex:;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.0;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.1;pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.2; mv *.aux _build/xlatex; mv *.log _build/xlatex;mv *.idx _build/xlatex;egrep -A 6 "^!" _build/xlatex/latex.log.1; mv *.out _build/xlatex;mv *.toc _build/xlatex;mv $1 _build/xlatex;
 
 _sources_dir:
 	@mkdir -p .sources

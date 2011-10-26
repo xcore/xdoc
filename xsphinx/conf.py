@@ -369,9 +369,10 @@ def setup(app):
     app.add_directive('table', xtable.Table)
     app.add_role("sub",xroles.subscript)
     app.add_role("sup",xroles.superscript)
+    app.add_role("command",xroles.command)
     app.connect('doctree-resolved',xsphinx.passes.format_references)
     xcomment.setup(app, enable_comments)
-    __import__('xmosconf')
+    #__import__('xmosconf')
     for mod in extraconf_modules:
         mod = mod.strip()
         if len(mod) > 0:
@@ -410,6 +411,13 @@ if current_builder=='xlatex':
 
                \\newpage
 
+.. |sect| raw:: latex
+
+             \\S
+
+.. |plusmn| raw:: latex
+
+             $\\pm$
 
         '''
 else:
@@ -421,8 +429,27 @@ else:
                \\newpage
 .. role:: ebnf
    :class: ebnf
+
+.. |sect| raw:: html
+
+             &sect;
+
+.. |plusmn| raw:: html
+
+             &plusmn;
         """
 
 rst_epilog += """
 .. |-| replace:: ihjsqueezeihj
+
+.. |windowsos| image:: windowsmargin.png
+   :iconmargin:
+
+.. |macos| image:: macmargin.png
+   :iconmargin:
+
+.. |linuxos| image:: linuxmargin.png
+   :iconmargin:
+
+
 """
