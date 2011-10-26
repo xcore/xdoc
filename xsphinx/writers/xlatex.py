@@ -29,15 +29,15 @@ from sphinx.util.pycompat import any
 from sphinx.util.texescape import tex_escape_map, tex_replace_map
 from sphinx.util.smartypants import educate_quotes_latex
 
-xmoslatex_admonitionlabels = { 'attention' : 'warn',
-                               'caution' : 'warn',
-                               'danger' : 'warn',
-                               'error' : 'warn',
-                               'hint' : 'info',
+xmoslatex_admonitionlabels = { 'attention' : 'attention',
+                               'caution' : 'attention',
+                               'danger' : 'danger',
+                               'error' : 'danger',
+                               'hint' : 'tip',
                                'important' : 'info',
                                'note' : 'info',
-                               'tip' : 'info',
-                               'warning' : 'info',
+                               'tip' : 'tip',
+                               'warning' : 'attention',
                                'newinxc' : 'newinxc'}
 
 
