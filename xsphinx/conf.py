@@ -454,14 +454,5 @@ else:
 rst_epilog += """
 .. |-| replace:: ihjsqueezeihj
 
-.. |windowsos| image:: windowsmargin.png
-   :iconmargin:
-
-.. |macos| image:: macmargin.png
-   :iconmargin:
-
-.. |linuxos| image:: linuxmargin.png
-   :iconmargin:
-
 
 """
