@@ -241,7 +241,7 @@ htmlhelp_basename = short_name
 
 # -- Options for LaTeX output --------------------------------------------------
 
-latex_docclass = 'memoir'
+latex_docclass = 'xcore'
 
 try:
     latex_doctype = os.environ['SPHINX_LATEX_DOCTYPE']
@@ -342,6 +342,7 @@ class Configurator(object):
         
 
 
+
 def setup(app):
     app.add_builder(XLaTeXBuilder)
     if current_builder in ['xlatex']:
@@ -370,9 +371,21 @@ def setup(app):
     app.add_role("sub",xroles.subscript)
     app.add_role("sup",xroles.superscript)
     app.add_role("command",xroles.command)
+    app.add_role("tt",xroles.tt)
     app.connect('doctree-resolved',xsphinx.passes.format_references)
     xcomment.setup(app, enable_comments)
     #__import__('xmosconf')
+
+    # global use_xmoslatex;    use_xmoslatex= True
+    # global latex_doctype;    latex_doctype='collection'
+    # global latex_section_numbers;    latex_section_numbers=True
+    # global use_sidecaption;    use_sidecaption=True
+    # global latex_use_chapters;    latex_use_chapters=True
+    # global latex_section_numbers;    latex_section_numbers=True
+    # global latex_docclass;    latex_docclass='xcore'
+    # global latex_font_size;    latex_font_size=''
+
+
     for mod in extraconf_modules:
         mod = mod.strip()
         if len(mod) > 0:
@@ -385,7 +398,6 @@ def setup(app):
                 extra_setup = getattr(mod, 'setup')
                 extra_setup(app, conf, tags)
                 conf.set()
-
 # -- Options for breathe --
 
 breathe_projects = { 'auto_doxygen' : '_build/doxygen/xml' }

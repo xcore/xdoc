@@ -22,3 +22,9 @@ def command(role, rawtext, text, lineno, inliner, options={}, content={}):
     node += miniparse(text)
     return [node],[]
 
+def tt(role, rawtext, text, lineno, inliner, options={}, content={}):
+    node = nodes.inline()
+    node['classes'].append('tt')
+    node += miniparse(text)
+    return [node],[]
+

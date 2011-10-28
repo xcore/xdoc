@@ -92,7 +92,6 @@ HEADER1 = r'''
 
 BEGIN_DOC = r'''
 %(begin)s
-\sloppy
 %(shorthandoff)s
 %(maketitle)s
 %(toc)s
@@ -212,6 +211,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             toc = '\\toc\n'
         else:
             toc = ''
+
         if self.builder.config.latex_doctype == 'collection':
             fullwidth = '\\begin{fullwidth} %preface\n'
         else:
@@ -611,15 +611,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 modifier = ''
             try:
+                if self.builder.config.latex_doctype == 'collection':
+                    if not self.seen_first_title:
+                        self.seen_first_title = True
+                        self.body.append('\\end{fullwidth}\n')
+
                 if (self.builder.config.latex_section_newpage):
                     if (self.sectionlevel <= self.top_sectionlevel):
                         self.body.append('\\clearpage\n');
                 if 'compact' in node['classes']:
                     self.body.append('\n\\vspace{-\\parsep}\n')
-                if self.builder.config.latex_doctype == 'collection':
-                    if not self.seen_first_title:
-                        self.seen_first_title = True
-                        self.body.append('\\end{fullwidth}\n')
 
                 self.body.append(r'\%s%s{' % (self.sectionnames[self.sectionlevel],modifier))
             except IndexError:
@@ -751,7 +752,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 for x in node.traverse(addnodes.desc_parameter):
                     x['long_params'] = long_params
                 if long_params:
-                    self.body.append('\n\\vspace{-2.5\\baselineskip}')
+                    self.body.append('\n\\vspace{-1.5\\baselineskip}')
                 self.body.append('\n\n\\texttt{')
                 if long_params:
                     self.body.append('\\begin{tabbing}')
@@ -896,7 +897,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('}\n\n')
 
                 self.body.append('\\vspace{-2mm}\n')
-
+                self.body.append('\\sloppy\n')
                 if len(node.children) != 0:
                     self.body.append('\\begin{indentation}{%s}{0mm}'%indent)
                 else:
@@ -921,6 +922,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 if len(node.children) != 0:
                     self.body.append('\n\\end{indentation}\n')
                     #self.body.append('\\vspace{u3mm}\n')
+                self.body.append('\\fussy\n')
 
     def visit_refcount(self, node):
         self.body.append("\\emph{")
@@ -1378,8 +1380,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if 'latex_compact' in node['classes']:
                 for f in node.traverse(nodes.field_name):
                     f['classes'].append('latex_compact')
-                self.body.append('\\vspace{-3mm}\n\\begin{option}\n\n')
-
+                self.body.append('\\begin{option}\n\n')
                 #            exit(1)
 #        self.body.append('\\begin{tabular}{ll}')
 #        self.body.append('\\begin{quote}\\begin{description}\n')
@@ -1413,24 +1414,25 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_field_name(self, node):
 #        print self.sectionlevel
-        if 'action' in node['classes']:
+        if 'latex_compact' in node['classes']:
+            self.body.append('\\item[')
+        elif 'action' in node['classes']:
             if self.sectionlevel == 2:
                 self.body.append('\\vspace{\\baselineskip}\n')
             self.body.append('\\%s*{'%self.sectionnames[self.sectionlevel+1])
-        elif 'latex_compact' in node['classes']:
-            self.body.append('\\item[')
         else:
             self.body.append('\\textbf{')
 
     def depart_field_name(self, node):
-        if 'action' in node['classes']:
+        if 'latex_compact' in node['classes']:
+            self.body.append(']')
+
+        elif 'action' in node['classes']:
             if self.sectionlevel == 2:
                 self.body.append('}\n')
                 self.body.append('\\vspace{-\\baselineskip}\n')
             else:
                 self.body.append(':}\n')
-        elif 'latex_compact' in node['classes']:
-            self.body.append(']')
 
         else:
             self.body.append(':}')
@@ -1459,6 +1461,27 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
     def depart_paragraph(self, node):
+
+        if 'windows' in node['classes']:
+            self.para_inserts.append('\\windowsmargin')
+
+        if 'mac' in node['classes']:
+            self.para_inserts.append('\\macmargin')
+
+        if 'linux' in node['classes']:
+            self.para_inserts.append('\\linuxmargin')
+
+        for i in range(self.para_icon_insert_point,len(self.body)):
+            try:
+                pre = self.body[i][-1]
+                post = self.body[i+2][0]
+                mid = self.body[i+1][0:5]
+            except:
+                continue
+
+            if pre == '`' and post == '`' and mid == '\\verb':
+                self.body[i+2] = '\'' + self.body[i+2][1:]
+
         icon_str = ''
 
         for m in node['margin_items']:
@@ -2112,9 +2135,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     isinstance(child, nodes.enumerated_list):
                 done = 1
         if not done:
-            if 'commentary' in node['classes']:
-                self.body.append('\\begin{commentary}\n')
-            elif not 'skip' in node['classes']:
+            #if 'commentary' in node['classes']:
+            #                self.body.append('\\begin{commentary}\n')
+            if not 'skip' in node['classes']:
                 #if self.builder.config.use_xmoslatex:
                 #   self.body.append('\\vspace{-3mm}\n')
                 #self.body.append('\\begin{quote}\n')
@@ -2128,9 +2151,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     isinstance(child, nodes.enumerated_list):
                 done = 1
         if not done:
-            if 'commentary' in node['classes']:
-                self.body.append('\\end{commentary}\n')
-            elif not 'skip' in node['classes']:
+            #if 'commentary' in node['classes']:
+            #    self.body.append('\\end{commentary}\n')
+            if not 'skip' in node['classes']:
                 self.body.append('\\end{indentation}')
                 #self.body.append('\\end{quote}\n')
                 #if self.builder.config.use_xmoslatex:
@@ -2207,7 +2230,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         classes = node.get('classes', [])
         if 'ebnf' in classes:
             self.body.append('\\emph{')
-        if 'cmd' in classes:
+        elif 'tt' in classes:
+            self.body.append('\\texttt{')
+        elif 'cmd' in classes:
             if isinstance(node.parent,nodes.paragraph) and len(node.parent)==1 \
                and not (isinstance(node.parent.parent,nodes.list_item) and \
                         node.parent.parent[0] == node.parent):
@@ -2220,7 +2245,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         classes = node.get('classes', [])
         if 'ebnf' in classes:
             self.body.append('}')
-        if 'cmd' in classes:
+        elif 'tt' in classes:
+            self.body.append('}')
+        elif 'cmd' in classes:
             self.body.append('}')
 
 #        self.body.append('}')

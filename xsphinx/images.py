@@ -44,7 +44,9 @@ class Image(Directive):
                    'align': align,
                    'target': directives.unchanged_required,
                    'class': directives.class_option,
-                   'iconmargin' : directives.flag}
+                   'iconmargin' : directives.flag,
+                   'iconmarginraise' : directives.flag,
+                   'iconmarginheight' : directives.unchanged}
 
     def run(self):
         if 'align' in self.options:
