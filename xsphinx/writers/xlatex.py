@@ -353,7 +353,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        print node['reftitle']
         if 'xmosreftype' in node:
             typ = node['xmosreftype']
-            if typ == 'section':
+            if typ in ['section','option']:
                 return True, '\Sec~\\ref{%s}' % (self.idescape(id))
             if typ == 'figure':
                 return True, 'Figure~\\ref{%s}' % (self.idescape(id))
@@ -1552,7 +1552,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_image(self, node):
         attrs = node.attributes
         if 'iconmargin' in node['classes']:
-            print node['uri']
+            #print node['uri']
             if re.match('.*windowsmargin\.png',node['uri']):
                 self.para_inserts.append('\\windowsmargin')
             elif re.match('.*linuxmargin\.png',node['uri']):
@@ -1756,7 +1756,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_target(self, node):
         def add_target(id):
-            print id
+            #print id
             # indexing uses standard LaTeX index markup, so the targets
             # will be generated differently
             if id.startswith('index-'):
@@ -1871,7 +1871,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         elif uri.startswith('#'):
             # references to labels in the same document
             id = self.curfilestack[-1] + ':' + uri[1:]
-            print node
+            #print node
             skip, link = self.hyperlink(node, id)
             self.body.append(link)
             if skip:
@@ -1889,7 +1889,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 # reference to a label
                 id = uri[1:].replace('#', ':')
-            print node
+            #print node
             skip, link = self.hyperlink(node, id)
             self.body.append(link)
             if skip:

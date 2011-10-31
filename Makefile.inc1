@@ -97,6 +97,10 @@ _doxygen:
 	@echo Copying doxygen dir $*
 	@-$(RSYNC) $* .doxygen
 
+ifeq ($(DOXYGEN_DIRS),)
+doxygen:
+	@echo
+else
 doxygen: $(if $(NOCOPY),,$(foreach x, $(DOXYGEN_DIRS), $(x).copy_doxygen))
 	@echo "Running Doxygen"
 	@cp $(XDOC_DIR)/xsphinx/Doxyfile $(DOC_DIR)/Doxyfile
@@ -106,25 +110,25 @@ doxygen: $(if $(NOCOPY),,$(foreach x, $(DOXYGEN_DIRS), $(x).copy_doxygen))
 	@rm $(DOC_DIR)/Doxyfile
 
 html: doxygen | $(SOURCES)
-	export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b html $(ALLSPHINXOPTS) . $(BUILDDIR)/html
+	@export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b html $(ALLSPHINXOPTS) . $(BUILDDIR)/html
 	@echo ".nojekyll" > _build/html/.nojekyll
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
-
+endif
 
 
 singlehtml: doxygen | $(SOURCES)
-	export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b singlehtml $(ALLSPHINXOPTS) . $(BUILDDIR)/singlehtml
+	@export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b singlehtml $(ALLSPHINXOPTS) . $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/singlehtml."
 
 
 xlatex: doxygen | $(SOURCES)
-	export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX)
+	@export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX)
 	cp _build/$(XLATEX)/*.tex .
 
 man: doxygen | $(SOURCES)
-	export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b man $(ALLSPHINXOPTS) . $(BUILDDIR)/man
+	@export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b man $(ALLSPHINXOPTS) . $(BUILDDIR)/man
 	@echo
 	@echo "Build finished. The man pages are in $(BUILDDIR)/man."
 
