@@ -348,14 +348,19 @@ class LaTeXTranslator(nodes.NodeVisitor):
         return (anchor and '\\phantomsection' or '') + \
                '\\label{%s}' % self.idescape(id)
 
-    def hyperlink(self, id):
+    def hyperlink(self, node, id):
 #        self.no_emph = 1
+#        print node['reftitle']
+        if 'xmosreftype' in node:
+            typ = node['xmosreftype']
+            if typ == 'section':
+                return True, '\Sec~\\ref{%s}' % (self.idescape(id))
+            if typ == 'figure':
+                return True, 'Figure~\\ref{%s}' % (self.idescape(id))
+
+        return False, '{\\hyperref[%s]{' % (self.idescape(id))
 
 
-        if id.find('sec-') != -1:
-            return '\Sec~\\ref{%s}{{' % (self.idescape(id))
-        else:
-            return '{\\hyperref[%s]{' % (self.idescape(id))
 
     def hyperpageref(self, id):
         return '\\autopageref*{%s}' % (self.idescape(id))
@@ -1623,6 +1628,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_figure(self, node):
+        ids = ''
+        for id in self.next_figure_ids:
+            ids += self.hypertarget(id, anchor=False)
+        self.next_figure_ids.clear()
+
         if self.builder.config.use_sidecaption:
             cap = ""
             for c in node.traverse(nodes.caption):
@@ -1631,16 +1641,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('\\begin{figure}[H]\n')
             self.body.append('\\begin{sidecaption}{%s}\n' % cap)
 
-            end = '\\end{sidecaption}'
+            end = ids + '\\end{sidecaption}'
             end += '\\end{figure}\n'
             self.context.append(end)
             if node.has_key('width'):
                 node[0]['width'] = node['width']
             return
-        ids = ''
-        for id in self.next_figure_ids:
-            ids += self.hypertarget(id, anchor=False)
-        self.next_figure_ids.clear()
         if not node.has_key('width'):
             node['width'] = '100%'
         if node.has_key('width') and node.get('align', '') in ('left', 'right'):
@@ -1658,7 +1664,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 # TODO non vertical space for other alignments.
                 align = '\\begin{flush%s}' % node.attributes['align']
                 align_end = '\\end{flush%s}' % node.attributes['align']
-            self.body.append('\\begin{figure}[H]%s\n' % align)
+            self.body.append(ids + '\\begin{figure}[H]%s\n' % align)
 #            if any(isinstance(child, nodes.caption) for child in node):
 #                self.body.append('\\capstart\n')
             attrs = node.attributes
@@ -1750,6 +1756,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_target(self, node):
         def add_target(id):
+            print id
             # indexing uses standard LaTeX index markup, so the targets
             # will be generated differently
             if id.startswith('index-'):
@@ -1864,7 +1871,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
         elif uri.startswith('#'):
             # references to labels in the same document
             id = self.curfilestack[-1] + ':' + uri[1:]
-            self.body.append(self.hyperlink(id))
+            print node
+            skip, link = self.hyperlink(node, id)
+            self.body.append(link)
+            if skip:
+                raise nodes.SkipNode
             if self.builder.config.latex_show_pagerefs:
                 self.context.append('}} (%s)' % self.hyperpageref(id))
             else:
@@ -1878,7 +1889,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 # reference to a label
                 id = uri[1:].replace('#', ':')
-            self.body.append(self.hyperlink(id))
+            print node
+            skip, link = self.hyperlink(node, id)
+            self.body.append(link)
+            if skip:
+                raise nodes.SkipNode
             if len(node) and hasattr(node[0], 'attributes') and \
                    'std-term' in node[0].get('classes', []):
                 # don't add a pageref for glossary terms

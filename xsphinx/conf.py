@@ -332,10 +332,16 @@ class Configurator(object):
     def set_value(self, name, val):
         self._settings[name] = val
 
+    def set_value_eval(self, name, val):
+        self._settings[name] = "eval:" + val
+
     def set(self):
         for key, val in self._settings.items():                        
             if isinstance(val,str):
-                cmd = "global %s;%s = '%s'" % (key, key, val) 
+                if val[0:5] == "eval:":
+                    cmd = "global %s;%s = %s" % (key, key, val[5:])
+                else:
+                    cmd = "global %s;%s = '%s'" % (key, key, val)
             else:
                 cmd = "global %s;%s = %s" % (key, key, val) 
             exec(cmd)
@@ -374,7 +380,10 @@ def setup(app):
     app.add_role("tt",xroles.tt)
     app.connect('doctree-resolved',xsphinx.passes.format_references)
     xcomment.setup(app, enable_comments)
-    #__import__('xmosconf')
+    try:
+        __import__('xmosconf')
+    except:
+        pass
 
     # global use_xmoslatex;    use_xmoslatex= True
     # global latex_doctype;    latex_doctype='collection'
