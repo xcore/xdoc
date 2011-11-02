@@ -31,8 +31,8 @@ endif
 
 # Now just call Makefile.inc1
 define DISPATCH
-$1: $(LINKED_DIRS)
+$1: $(if $(filter clean,$1),,$(LINKED_DIRS))
 	@make --no-print-directory -f $(XDOC_DIR)/Makefile.inc1 $1
 endef
 
-$(eval $(foreach goal,$(MAKECMDGOALS),$(call DISPATCH,$(goal))))
+$(foreach goal,$(MAKECMDGOALS),$(eval $(call DISPATCH,$(goal))))
