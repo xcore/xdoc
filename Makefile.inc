@@ -35,4 +35,4 @@ $1: $(if $(filter clean,$1),,$(LINKED_DIRS))
 	@make --no-print-directory -f $(XDOC_DIR)/Makefile.inc1 $1
 endef
 
-$(foreach goal,$(MAKECMDGOALS),$(eval $(call DISPATCH,$(goal))))
+$(foreach goal,$(sort html pdf xmoshtml xmospdf xref $(MAKECMDGOALS)),$(eval $(call DISPATCH,$(goal))))

@@ -353,6 +353,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def hyperlink(self, node, id):
 #        self.no_emph = 1
 #        print node['reftitle']
+
         if 'xmosreftype' in node:
             typ = node['xmosreftype']
             if typ in ['section','option']:
@@ -370,7 +371,19 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 else:
                     return True, 'Figure~\\ref{%s}' % (self.idescape(id)),''
 
-        pre = '{\\hyperref[%s]{' % (self.idescape(id))
+        m = re.match('.*:doc:X?M?(\d*)',id)
+        if m:
+            docnum = m.groups(0)[0]
+            url = 'http://www.xmos.com/docnum/XM%s' % docnum
+            if 'refexplicit' in node and node['refexplicit']:
+                pre = ''
+                post = ' (see \\href{%s}{XM%s})' % (url,docnum)
+                return False, pre, post
+            else:
+                pre = '\\href{%s}{XM%s}' % (url,docnum)
+                return True, pre, ''
+
+        pre = '{\\href[%s]{' % (self.idescape(id))
         post = '}}'
         return False, pre, post
 
