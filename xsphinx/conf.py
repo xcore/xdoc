@@ -430,7 +430,7 @@ if current_builder=='xlatex':
 
 .. |newpage| raw:: latex
 
-               \\newpage
+               \\finalnewpage
 
 .. |sect| raw:: latex
 
@@ -447,7 +447,8 @@ else:
 
 .. |newpage| raw:: latex
 
-               \\newpage
+               \\pfinalnewpage
+
 .. role:: ebnf
    :class: ebnf
 
