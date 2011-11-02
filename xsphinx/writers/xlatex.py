@@ -2389,6 +2389,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         # text = text.replace('jkllslashjkll','\\\\')
 
 
+        clauses = [m.group(0) for m in re.finditer('(.*\s*::=((.|\n)(?!.*\s*::=))*)',text)]
+
 
         lhs = ''
         for x in re.finditer(r'^(.*)::=', text):
@@ -2401,25 +2403,27 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if len(name) > len(lhs):
                 lhs = name
 
-        text = text.replace('::=','!amp! !is! !amp!')
-        text = text.replace('\n','!newline!')
-        text = re.sub(r'!newline![ ]*\|','!newline! !amp! !choice! !amp!', text)
-        text = re.sub(r'``(?P<txt>[^`]*)``','!token!\g<txt>!',text)
-        text = re.sub(r'<(?P<txt>[^>]*)>\?','!opt!\g<txt>!',text)
-        text = re.sub(r'<(?P<txt>[^>]*)>\*','!star!\g<txt>!',text)
-        text = re.sub(r'<(?P<txt>[^>]*)>\+','!plus!\g<txt>!',text)
-        text = self.encode(text)
-        text = text.replace('!amp!','&')
-        text = text.replace('!is!','\\is')
-        text = text.replace('!newline!','\\\\ \n')
-        text = text.replace('!choice!','\\choice')
-        text = re.sub(r'!token!(?P<txt>[^!]*)!','\\\\token{\g<txt>}',text)
-        text = re.sub(r'!opt!(?P<txt>[^!]*)!','\\\\ebnf{opt}{\g<txt>}',text)
-        text = re.sub(r'!star!(?P<txt>[^!]*)!','\\\\ebnf{0}{\g<txt>}',text)
-        text = re.sub(r'!plus!(?P<txt>[^!]*)!','\\\\ebnf{1}{\g<txt>}',text)
-        self.body.append('\n\\begin{grammar}{%s}\n'%lhs)
-        self.body.append(text)
-        self.body.append('\\end{grammar}\n')
+        for clause in clauses:
+            clause = clause.replace('::=','!amp! !is! !amp!')
+            clause = clause.replace('\n','!newline!')
+            clause = re.sub(r'!newline![ ]*\|','!newline! !amp! !choice! !amp!', clause)
+            clause = re.sub(r'``(?P<txt>[^`]*)``','!token!\g<txt>!',clause)
+            clause = re.sub(r'<(?P<txt>[^>]*)>\?','!opt!\g<txt>!',clause)
+            clause = re.sub(r'<(?P<txt>[^>]*)>\*','!star!\g<txt>!',clause)
+            clause = re.sub(r'<(?P<txt>[^>]*)>\+','!plus!\g<txt>!',clause)
+            clause = self.encode(clause)
+            clause = clause.replace('!amp!','&')
+            clause = clause.replace('!is!','\\is')
+            clause = clause.replace('!newline!','\\\\ \n')
+            clause = clause.replace('!choice!','\\choice')
+            clause = re.sub(r'!token!(?P<txt>[^!]*)!','\\\\token{\g<txt>}',clause)
+            clause = re.sub(r'!opt!(?P<txt>[^!]*)!','\\\\ebnf{opt}{\g<txt>}',clause)
+            clause = re.sub(r'!star!(?P<txt>[^!]*)!','\\\\ebnf{0}{\g<txt>}',clause)
+            clause = re.sub(r'!plus!(?P<txt>[^!]*)!','\\\\ebnf{1}{\g<txt>}',clause)
+            self.body.append('\n\\begin{grammar}{%s}\n'%lhs)
+            self.body.append(clause)
+            self.body.append('\\end{grammar}\n')
+
         raise nodes.SkipNode
 
     def depart_ebnf(self, node):
