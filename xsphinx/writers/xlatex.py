@@ -2353,7 +2353,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             text = node.astext()
 
             text = self.encode(text)
-            self.body.append(educate_quotes_latex(text))
+            if not self.in_sig:
+                text = educate_quotes_latex(text)
+            self.body.append(text)
 #            self.body.append(text)
 
     def depart_Text(self, node):
