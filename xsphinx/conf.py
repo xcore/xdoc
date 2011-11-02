@@ -440,6 +440,16 @@ if current_builder=='xlatex':
 
              $\\pm$
 
+.. |infinity| raw:: latex
+
+             $\infty$
+
+
+.. |ne| raw:: latex
+
+             $!=$
+
+
         '''
 else:
         rst_epilog = """
@@ -459,6 +469,14 @@ else:
 .. |plusmn| raw:: html
 
              &plusmn;
+
+.. |infinity| raw:: html
+
+             &#8734;
+
+.. |ne| raw:: html
+
+             &ne;
         """
 
 rst_epilog += """
