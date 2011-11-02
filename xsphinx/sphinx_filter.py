@@ -15,7 +15,9 @@ while True:
         sys.stdout.write(line)
         continue
 
-    if not re.match('.*WARNING.*',line) and not re.match('.*ERROR.*',line):
+    if not (re.match('.*WARNING.*',line) or \
+            re.match('.*ERROR.*',line) or \
+            re.match('.*DEBUG.*',line)):
         continue
 
     if re.match('.*included in any toctree.*',line):

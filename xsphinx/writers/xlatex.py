@@ -356,11 +356,23 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'xmosreftype' in node:
             typ = node['xmosreftype']
             if typ in ['section','option']:
-                return True, '\Sec~\\ref{%s}' % (self.idescape(id))
+                if 'refexplicit' in node and node['refexplicit']:
+                    pre = ''
+                    post = ' (see \Sec~\\ref{%s})' % (self.idescape(id))
+                    return False, pre, post
+                else:
+                    return True, '\Sec~\\ref{%s}' % (self.idescape(id)),''
             if typ == 'figure':
-                return True, 'Figure~\\ref{%s}' % (self.idescape(id))
+                if 'refexplicit' in node and node['refexplicit']:
+                    pre = ''
+                    post = ' (see Figure~\\ref{%s})' % (self.idescape(id))
+                    return False, pre, post
+                else:
+                    return True, 'Figure~\\ref{%s}' % (self.idescape(id)),''
 
-        return False, '{\\hyperref[%s]{' % (self.idescape(id))
+        pre = '{\\hyperref[%s]{' % (self.idescape(id))
+        post = '}}'
+        return False, pre, post
 
 
 
@@ -1885,14 +1897,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
             # references to labels in the same document
             id = self.curfilestack[-1] + ':' + uri[1:]
             #print node
-            skip, link = self.hyperlink(node, id)
+            skip, link, post = self.hyperlink(node, id)
             self.body.append(link)
             if skip:
                 raise nodes.SkipNode
-            if self.builder.config.latex_show_pagerefs:
-                self.context.append('}} (%s)' % self.hyperpageref(id))
-            else:
-                self.context.append('}}')
+            self.context.append(post)
         elif uri.startswith('%'):
             # references to documents or labels inside documents
             hashindex = uri.find('#')
@@ -1903,19 +1912,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 # reference to a label
                 id = uri[1:].replace('#', ':')
             #print node
-            skip, link = self.hyperlink(node, id)
+            skip, link,post = self.hyperlink(node, id)
             self.body.append(link)
             if skip:
                 raise nodes.SkipNode
-            if len(node) and hasattr(node[0], 'attributes') and \
-                   'std-term' in node[0].get('classes', []):
-                # don't add a pageref for glossary terms
-                self.context.append('}}')
-            else:
-                if self.builder.config.latex_show_pagerefs:
-                    self.context.append('}} (%s)' % self.hyperpageref(id))
-                else:
-                    self.context.append('}}')
+            self.context.append(post)
         elif uri.startswith('@token'):
             if self.in_production_list:
                 self.body.append('\\token{')
