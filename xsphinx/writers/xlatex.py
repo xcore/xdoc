@@ -1039,7 +1039,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_table(self, node):
         linesep = self.table.linesep
         hline = self.table.hline
-        if self.table.rowcount > 30:
+        if self.table.rowcount > 50:
             self.table.longtable = True
         self.body = self._body
         
