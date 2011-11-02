@@ -1404,7 +1404,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_field_list(self, node):
         self.body.append('\n\n')
         if 'actions' in node['classes']:
-#            self.body.append('\\begin{actions}\n\n')
+            self.body.append('\\begin{actions}\n\n')
             for f in node.traverse(nodes.field):
                 f['classes'].append('action')
             for f in node.traverse(nodes.field_body):
@@ -1412,7 +1412,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for f in node.traverse(nodes.field_name):
                 f['classes'].append('action')
             self.sectionlevel += 1
-        if self.builder.config.use_xmoslatex:
+        elif self.builder.config.use_xmoslatex:
             node['classes'].append('latex_compact')
             if 'latex_compact' in node['classes']:
                 for f in node.traverse(nodes.field_name):
@@ -1425,11 +1425,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_field_list(self, node):
        if 'actions' in node['classes']:
            self.sectionlevel -= 1
-       if self.builder.config.use_xmoslatex:
+           self.body.append('\\end{actions}\n\n')
+       elif self.builder.config.use_xmoslatex:
             if 'latex_compact' in node['classes']:
                 self.body.append('\\end{option}\n\\vspace{-3mm}\n\n')
 
-#            self.body.append('\\end{actions}\n\n')
+
 #        self.body.append('\\end{description}\\end{quote}\n')
 #        self.body.append('\\end{tabular} \n \n')
        pass
@@ -1454,9 +1455,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'latex_compact' in node['classes']:
             self.body.append('\\item[')
         elif 'action' in node['classes']:
-            if self.sectionlevel == 2:
-                self.body.append('\\vspace{\\baselineskip}\n')
-            self.body.append('\\%s*{'%self.sectionnames[self.sectionlevel+1])
+#            if self.sectionlevel == 2:
+#                self.body.append('\\vspace{\\baselineskip}\n')
+#            self.body.append('\\%s*{'%self.sectionnames[self.sectionlevel+1])
+            self.body.append('\\item \\textbf{')
         else:
             self.body.append('\\textbf{')
 
@@ -1465,11 +1467,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(']')
 
         elif 'action' in node['classes']:
-            if self.sectionlevel == 2:
-                self.body.append('}\n')
-                self.body.append('\\vspace{-\\baselineskip}\n')
-            else:
-                self.body.append(':}\n')
+#            if self.sectionlevel == 2:
+#                self.body.append('}\n')
+#                self.body.append('\\vspace{-\\baselineskip}\n')
+#            else:
+                self.body.append(':} ')
 
         else:
             self.body.append(':}')
