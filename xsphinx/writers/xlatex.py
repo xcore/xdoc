@@ -1518,6 +1518,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'linux' in node['classes']:
             self.para_inserts.append('\\linuxmargin')
 
+
         for i in range(self.para_icon_insert_point,len(self.body)):
             try:
                 pre = self.body[i][-1]
@@ -1541,9 +1542,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body[i] = ''
                 self.body[i+1] = self.body[i+1].lstrip()
 
+
         first = self.body[pos+1]
-        n = len(first) - len(first.lstrip())
-        n = string.find(first,' ',n)
+        if first == '\\textbf{':
+            i = string.find(self.body[pos+2],' ')
+            first = '\\textbf{%s}'%self.body[pos+2][0:i]
+            self.body[pos+2] = '\\textbf{'+self.body[pos+2][i+1:]
+            n = len(first)
+        else:
+            n = len(first) - len(first.lstrip())
+            n = string.find(first,' ',n)
         if self.para_icons:
             if len(self.para_icons) == 2:
                 icon_str += "\\doubleiconmargin{2}{%s}{%s}" % (self.para_icons[0],

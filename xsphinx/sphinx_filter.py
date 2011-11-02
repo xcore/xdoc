@@ -3,6 +3,7 @@ import re
 
 output = False
 seen_exception = False
+seen_debug = False
 while True:
     line = sys.stdin.readline()
     if line == '':
@@ -11,13 +12,15 @@ while True:
     if re.match('Exception.*',line):
         seen_exception = True
 
-    if seen_exception:
+    if re.match('.*DEBUG.*',line):
+        seen_debug = True
+
+    if seen_exception or seen_debug:
         sys.stdout.write(line)
         continue
 
     if not (re.match('.*WARNING.*',line) or \
-            re.match('.*ERROR.*',line) or \
-            re.match('.*DEBUG.*',line)):
+            re.match('.*ERROR.*',line)):
         continue
 
     if re.match('.*included in any toctree.*',line):
