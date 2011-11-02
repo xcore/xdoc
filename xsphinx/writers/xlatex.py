@@ -2199,8 +2199,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not done:
             #if 'commentary' in node['classes']:
             #    self.body.append('\\end{commentary}\n')
-            if 'commentary' in node['classes']:
-                self.body.append('\normalsize\n')
             if not 'skip' in node['classes']:
                 self.body.append('\\end{indentation}')
                 #self.body.append('\\end{quote}\n')
