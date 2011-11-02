@@ -99,7 +99,7 @@ _doxygen:
 
 ifeq ($(DOXYGEN_DIRS),)
 doxygen:
-	@echo
+	@echo -n
 else
 doxygen: $(if $(NOCOPY),,$(foreach x, $(DOXYGEN_DIRS), $(x).copy_doxygen))
 	@echo "Running Doxygen"
@@ -124,8 +124,10 @@ singlehtml: doxygen | $(SOURCES)
 
 
 xlatex: doxygen | $(SOURCES)
-	@export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX)
-	cp _build/$(XLATEX)/*.tex .
+	@echo "Running Sphinx"
+	@mkdir -p _build/$(XLATEX)
+	@export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX) 2> _build/$(XLATEX)/sphinx.STDERR > _build/$(XLATEX)/sphinx.STDOUT;cat _build/$(XLATEX)/sphinx.STDERR | python $(XDOC_DIR)/xsphinx/sphinx_filter.py
+	@cp _build/$(XLATEX)/*.tex .
 
 man: doxygen | $(SOURCES)
 	@export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b man $(ALLSPHINXOPTS) . $(BUILDDIR)/man

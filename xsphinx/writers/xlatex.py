@@ -289,6 +289,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.bibitems = []
         self.table = None
         self.next_table_colspec = None
+        self.next_table_tabularcolumns = None
         # stack of [language, linenothreshold] settings per file
         # the first item here is the default and must not be changed
         # the second item is the default for the master file and can be changed
@@ -329,6 +330,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.section_summary_fullwidth = False
         self.in_subscript = False
         self.in_sig = False
+        self.section_summary_pos = None
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -434,20 +436,22 @@ class LaTeXTranslator(nodes.NodeVisitor):
             p['margin_items'] = []
 
         if self.builder.config.latex_doctype != 'collection':
-            self.section_summary_pos = len(self.body)+2
+            self.section_summary_pos = len(self.body)+1
 
 
     def depart_document(self, node):
 
+        summary = '%last summary\n'
         if self.section_summary != []:
-            summary = "\\begin{inthisdocument}\n"
+            summary += "\\begin{inthisdocument}\n"
             for item in self.section_summary:
                 summary += "\item %s\n"%item
             summary += "\\end{inthisdocument}\n\n"
-            if self.section_summary_fullwidth:
-                summary += '\\begin{fullwidth} % chapter\n'
 
-            self.body.insert(self.section_summary_pos, summary)
+        if self.section_summary_fullwidth:
+            summary += '\\begin{fullwidth} % chapter!!\n'
+
+        self.body.insert(self.section_summary_pos, summary)
 
         if self.builder.config.latex_doctype == 'collection':
             if not self.seen_first_title:
@@ -668,15 +672,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if self.builder.config.latex_doctype == 'collection' and \
                self.sectionlevel == tp:
 
+                summary = '%summary!\n'
                 if self.section_summary != []:
-                    summary = "\\begin{inthisdocument}\n"
+                    summary += "\\begin{inthisdocument}\n"
                     for item in self.section_summary:
                         summary += "\item %s\n"%item
                     summary += "\\end{inthisdocument}\n\n"
 
-                    if self.section_summary_fullwidth:
-                        summary += '\\begin{fullwidth} % chapter\n'
 
+                if self.section_summary_fullwidth:
+                    summary += '\\begin{fullwidth} % chapter!\n'
+
+                if self.section_summary_pos:
                     self.body.insert(self.section_summary_pos, summary)
                 self.section_summary = []
                 self.section_summary_fullwidth = self.fullwidth
@@ -970,7 +977,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_tabular_col_spec(self, node):
-        self.next_table_colspec = node['spec']
+        self.next_table_tabularcolumns = node['spec']
         raise nodes.SkipNode
 
     def visit_table(self, node):
@@ -1064,7 +1071,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.body.append('\n\\begin{tabularx}{\linewidth}')
 #            self.body.append('\n\\begin{center}\\begin{tabulary}{\\linewidth}')
-        if self.table.colspec:
+
+
+        if self.next_table_tabularcolumns:
+            colspec_str = self.next_table_tabularcolumns
+            self.body.append('{' + colspec_str + '}\n')
+        elif self.table.colspec:
             total = float(sum(self.table.colspec))
             colspec_str = ''
             for i in range(len(self.table.colspec)):
@@ -1141,6 +1153,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\\end{threeparttable}\n\n\\end{center}\n\n')
         self.table = None
         self.tablebody = None
+        self.next_table_tabularcolumns = None
 
     def visit_colspec(self, node):
         pass
@@ -1229,8 +1242,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         #                            (self.curfilestack[-1], node.line or ''))
         if node.has_key('morecols') and node.has_key('morerows'):
              raise UnsupportedError('%s:%s: ceels that span columns and rows'
-                                    ' are not yet implemented.' %
-                                    (self.curfilestack[-1], node.line or ''))
+                                    ' are not yet implemented (%s).' %
+                                    (self.curfilestack[-1], node.line or '',self.table.caption))
 
         while self.table.skipcols[self.table.col] > 0:
             self.table.skipcols[self.table.col] = self.table.skipcols[self.table.col]-1
