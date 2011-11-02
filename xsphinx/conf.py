@@ -449,7 +449,6 @@ if current_builder=='xlatex':
 
              $!=$
 
-
         '''
 else:
         rst_epilog = """
@@ -482,5 +481,12 @@ else:
 rst_epilog += """
 .. |-| replace:: ihjsqueezeihj
 
+.. |beginmbox| raw:: latex
+
+              \\mbox{
+
+.. |endmbox| raw:: latex
+
+              }
 
 """
