@@ -1,5 +1,6 @@
 from xsphinx import miniparse
 from docutils import nodes
+import sys
 
 def subscript(role, rawtext, text, lineno, inliner, options={}, content={}):
     sub = nodes.subscript()
@@ -25,6 +26,6 @@ def command(role, rawtext, text, lineno, inliner, options={}, content={}):
 def tt(role, rawtext, text, lineno, inliner, options={}, content={}):
     node = nodes.inline()
     node['classes'].append('tt')
-    node += miniparse(text)
+    node += miniparse(rawtext[5:-1])
     return [node],[]
 

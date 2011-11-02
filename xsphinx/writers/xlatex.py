@@ -2181,13 +2181,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     isinstance(child, nodes.enumerated_list):
                 done = 1
         if not done:
-            #if 'commentary' in node['classes']:
-            #                self.body.append('\\begin{commentary}\n')
             if not 'skip' in node['classes']:
                 #if self.builder.config.use_xmoslatex:
                 #   self.body.append('\\vspace{-3mm}\n')
                 #self.body.append('\\begin{quote}\n')
                 self.body.append('\\begin{indentation}{\\forceindentlen}{0mm}')
+            if 'commentary' in node['classes']:
+                self.body.append('\small\n')
 
     def depart_block_quote(self, node):
         done = 0
@@ -2199,6 +2199,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not done:
             #if 'commentary' in node['classes']:
             #    self.body.append('\\end{commentary}\n')
+            if 'commentary' in node['classes']:
+                self.body.append('\normalsize\n')
             if not 'skip' in node['classes']:
                 self.body.append('\\end{indentation}')
                 #self.body.append('\\end{quote}\n')
