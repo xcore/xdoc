@@ -33,3 +33,6 @@ while True:
 
 if output:
     print "Full details of errors/warnings can be found in _build/.../sphinx.STDERR"
+
+if seen_exception:
+    exit(1)

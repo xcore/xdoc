@@ -1058,6 +1058,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.table.linesep = ''
 
+        if self.table.vertical_borders:
+            self.table.toprule = '\\Hline'
+            self.table.midrule = '\\hline'
+            self.table.bottomrule = '\\hline'
+        else:
+            self.table.toprule = '\\Toprule'
+            self.table.midrule = '\\midrule'
+            self.table.bottomrule = '\\bottomrule'
 #        if self.builder.config.latex_doctype == 'collection':
             linesep = ''
         # Redirect body output until table is finished.
@@ -1156,8 +1164,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('%s\n'%hline)
             self.body.append('\\endlastfoot\n\n')
         else:
-            self.body.append('\\Hline\n')
-            #self.body.append('%s\n'%hline)
+            #self.body.append('\\Hline\n')
+            self.body.append('%s\n'%self.table.toprule)
         self.body.extend(self.tablebody)
         if self.table.longtable:
             self.body.append('\\end{longtable}\n\n')
@@ -1198,13 +1206,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body.append('\\hline\n')
 #        self.table.had_head = True
     def depart_thead(self, node):
-        self.body.append('%s\n'%self.hline)
+        self.body.append('%s\n'%self.table.midrule)
 
     def visit_tbody(self, node):
         if not self.table.had_head:
             self.visit_thead(node)
     def depart_tbody(self, node):
-        self.body.append('%s\n'%self.hline)
+        self.body.append('%s\n'%self.table.bottomrule)
 
     def visit_row(self, node):
 #        for c in node.children:
@@ -1244,7 +1252,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             found_content = True
 
         if not found_content and not self.table.horizontal_borders:
-            self.body.append('\\hline\n')
+            self.body.append('%s\n'%self.table.midrule)
             raise nodes.SkipNode
 
     def depart_row(self, node):
