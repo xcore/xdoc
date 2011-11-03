@@ -330,6 +330,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.section_summary_fullwidth = False
         self.in_subscript = False
         self.in_sig = False
+        self.in_strong = False
         self.in_tt = False
         self.section_summary_pos = None
 
@@ -1538,7 +1539,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.para_inserts.append('\\linuxmargin')
 
 
-
         for i in range(self.para_icon_insert_point,len(self.body)):
             try:
                 pre = self.body[i][-1]
@@ -1567,15 +1567,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body[pos] = self.body[pos] + '\\sloppy\n'
 
 
-        first = self.body[pos+1]
-        if first == '\\textbf{':
-            i = string.find(self.body[pos+2],' ')
-            first = '\\textbf{%s}'%self.body[pos+2][0:i]
-            self.body[pos+2] = '\\textbf{'+self.body[pos+2][i+1:]
-            n = len(first)
-        else:
-            n = len(first) - len(first.lstrip())
-            n = string.find(first,' ',n)
         if self.para_icons:
             if len(self.para_icons) == 2:
                 icon_str += "\\doubleiconmargin{2}{%s}{%s}" % (self.para_icons[0],
@@ -1584,7 +1575,19 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 for icon in self.para_icons:
                     icon_str += '\\iconmargin{2}{%s} ' % icon
 #        icon_str += ' '
+
         icon_str += ' '.join(self.para_inserts)
+
+        first = self.body[pos+1]
+        if first == '\\textbf{' and icon_str != '':
+            i = string.find(self.body[pos+2],' ')
+            first = '\\textbf{%s}'%self.body[pos+2][0:i]
+            self.body[pos+2] = '\\textbf{'+self.body[pos+2][i+1:]
+            n = len(first)
+        else:
+            n = len(first) - len(first.lstrip())
+            n = string.find(first,' ',n)
+
         self.body[pos+1] = first[:n] + icon_str + first[n:]
 #        self.body = self.body[:pos] + ' gg ' + self.body[pos:]
         if not isinstance(node.parent, nodes.entry):
@@ -2031,8 +2034,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 raise nodes.SkipNode
 
         self.body.append(r'\textbf{')
+        self.in_strong = True
+
     def depart_strong(self, node):
         self.body.append('}')
+        self.in_strong = False
 
     def visit_abbreviation(self, node):
         abbr = node.astext()
@@ -2083,7 +2089,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'\texttt{%s}' % content)
         elif node.has_key('role') and node['role'] == 'samp':
             self.body.append(r'\samp{%s}' % content)
-        elif self.in_footnote or self.in_reference or self.in_subscript:
+        elif self.in_footnote or self.in_reference or self.in_subscript or self.in_strong:
             self.body.append(r'\code{%s}' % content)
         else:
             text = node.astext().strip()
