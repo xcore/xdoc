@@ -1044,7 +1044,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 #        self.table.simple = 'simple-content' in node['classes']
 
+
+
         self.table.vertical_borders = 'vertical-borders' in node['classes']
+
+        if self.next_table_tabularcolumns and \
+           self.next_table_tabularcolumns.find('|') != -1:
+            self.table.vertical_borders = True
+
         self.table.horizontal_borders = 'horizontal-borders' in node['classes']
 
 
@@ -1069,10 +1076,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.table.toprule = '\\Hline'
             self.table.midrule = '\\hline'
             self.table.bottomrule = '\\hline'
+            self.table.crule = '\\cline'
         else:
             self.table.toprule = '\\Toprule'
             self.table.midrule = '\\midrule'
             self.table.bottomrule = '\\bottomrule'
+            self.table.crule = '\\cmidrule'
 #        if self.builder.config.latex_doctype == 'collection':
             linesep = ''
         # Redirect body output until table is finished.
@@ -1185,7 +1194,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
             #self.body.append('\\Hline\n')
             self.body.append('%s\n'%self.table.toprule)
         self.body.extend(self.tablebody)
-        if self.table.longtable:
+        if self.next_table_tabularcolumns:
+            tc = self.next_table_tabularcolumns
+            if tc.find('X') != -1 or tc.find('Y') != -1:
+                self.body.append('\n\\end{tabularx}')
+            else:
+                self.body.append('\n\\end{tabular}')
+        elif self.table.longtable:
             self.body.append('\\end{longtable}\n\n')
         elif self.table.has_verbatim:
             self.body.append('\\end{tabular}\n\n')
@@ -1252,14 +1267,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
            not isinstance(node.parent,nodes.thead):
             for i in range(self.table.colcount):
                 if self.table.skipcols[i] == 0:
-                    self.body.append('\\cline{%d-%d} %%\n'%(i+1,i+1))
+                    self.body.append('\\%s{%d-%d} %%\n'%(self.table.crule,i+1,i+1))
         elif not self.table.no_hlines:
          if spanning_header or \
                 (self.table.prev_colcount != None and \
                  colcount != self.table.prev_colcount):
             for i in range(self.table.colcount):
                 if self.table.skipcols[i] == 0:
-                    self.body.append('\\cline{%d-%d}\n'%(i+1,i+1))
+                    self.body.append('\\%s{%d-%d}\n'%(self.table.crule,i+1,i+1))
 
 
 
