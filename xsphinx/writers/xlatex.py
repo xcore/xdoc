@@ -1116,6 +1116,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 #        self.body.append('\\begin{center}')
 
+        ids = ''
+        for id in self.next_table_ids:
+            ids += self.hypertarget(id, anchor=False) + "\n"
+        self.next_table_ids.clear()
+
+        self.body.append(ids)
+
 
         if self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
@@ -1172,10 +1179,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        if self.table.longtable and self.table.caption is not None:
 #            self.body.append(u'\\capstart\\caption{%s} \\\\\n' %
 #                             self.table.caption)
-        if self.table.caption is not None:
-            for id in self.next_table_ids:
-                self.body.append(self.hypertarget(id, anchor=False))
-            self.next_table_ids.clear()
+#        if self.table.caption is not None:
+#            for id in self.next_table_ids:
+#                self.body.append(self.hypertarget(id, anchor=False))
+#            self.next_table_ids.clear()
+
+
+
+
+
         if self.table.longtable:
             self.body.append('%sn'%hline)
             self.body.append('\\endfirsthead\n\n')
@@ -1897,12 +1909,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 return
             elif isinstance(next, nodes.table):
                 # same for tables, but only if they have a caption
-                for n in node:
-                    if isinstance(n, nodes.title):
-                        if node.get('refid'):
-                            self.next_table_ids.add(node['refid'])
-                        self.next_table_ids.update(node['ids'])
-                        return
+                if node.get('refid'):
+                    self.next_table_ids.add(node['refid'])
+                self.next_table_ids.update(node['ids'])
+                return
         except IndexError:
             pass
         if 'refuri' in node:
