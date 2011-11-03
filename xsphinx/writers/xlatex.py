@@ -330,6 +330,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.section_summary_fullwidth = False
         self.in_subscript = False
         self.in_sig = False
+        self.in_tt = False
         self.section_summary_pos = None
 
     def astext(self):
@@ -1006,6 +1007,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         raise nodes.SkipNode
 
     def visit_table(self, node):
+        print >>sys.stderr,'DEBUG'
+        print >>sys.stderr,node['classes']
+
         if 'pdf-no-border' in node['classes'] or 'no-border' in node['classes']:
             self.hline = ''
         else:
@@ -1043,6 +1047,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.table.vertical_borders = 'vertical-borders' in node['classes']
         self.table.horizontal_borders = 'horizontal-borders' in node['classes']
+
+        print >>sys.stderr, self.table.horizontal_borders
 
         self.table.no_hlines = not self.table.horizontal_borders
 
@@ -1097,7 +1103,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 #        self.body.append('\\begin{center}')
 
-        if self.table.longtable:
+
+        if self.next_table_tabularcolumns:
+            tc = self.next_table_tabularcolumns
+            if tc.find('X') != -1 or tc.find('Y') != -1:
+                self.body.append('\n\\begin{tabularx}{\linewidth}')
+            else:
+                self.body.append('\n\\begin{tabular}')
+        elif self.table.longtable:
             self.body.append('\n\\begin{longtable}')
         elif self.table.has_verbatim:
             self.body.append('\n\\begin{tabular}')
@@ -1206,7 +1219,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body.append('\\hline\n')
 #        self.table.had_head = True
     def depart_thead(self, node):
-        self.body.append('%s\n'%self.table.midrule)
+        if not self.table.horizontal_borders:
+            self.body.append('%s\n'%self.table.midrule)
 
     def visit_tbody(self, node):
         if not self.table.had_head:
@@ -1223,13 +1237,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #                print 0
 #        print self.table.colcount
 #        print len(node.children)
+
         colcount = len(node.children)
         spanning_header = (self.table.prev_colcount != self.table.colcount and \
                            self.table.prev_colcount == 1) 
 
 
-
-        if not self.table.no_hlines:
+        if self.table.horizontal_borders and self.table.rowcount != 0 and \
+           not isinstance(node.parent,nodes.thead):
+            for i in range(self.table.colcount):
+                if self.table.skipcols[i] == 0:
+                    self.body.append('\\cline{%d-%d} %%\n'%(i+1,i+1))
+        elif not self.table.no_hlines:
          if spanning_header or \
                 (self.table.prev_colcount != None and \
                  colcount != self.table.prev_colcount):
@@ -1237,7 +1256,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 if self.table.skipcols[i] == 0:
                     self.body.append('\\cline{%d-%d}\n'%(i+1,i+1))
 
-#        self.body.append('\hline\n')
+
+
 
         self.table.prev_colcount = colcount
         # if (self.table.colcount != colcount):
@@ -1501,6 +1521,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.para_icons = []
         self.para_inserts = []
         self.para_icon_insert_point = len(self.body)
+        self.para_sloppy = False
         if not isinstance(node.parent, nodes.entry):
             self.body.append('\n')
         else:
@@ -1517,6 +1538,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'linux' in node['classes']:
             self.para_inserts.append('\\linuxmargin')
+
 
 
         for i in range(self.para_icon_insert_point,len(self.body)):
@@ -1543,6 +1565,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body[i+1] = self.body[i+1].lstrip()
 
 
+        if self.para_sloppy:
+            self.body[pos] = self.body[pos] + '\\sloppy\n'
+
+
         first = self.body[pos+1]
         if first == '\\textbf{':
             i = string.find(self.body[pos+2],' ')
@@ -1565,6 +1591,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body = self.body[:pos] + ' gg ' + self.body[pos:]
         if not isinstance(node.parent, nodes.entry):
             self.body.append('\n')
+        if self.para_sloppy:
+            self.body.append('\\fussy\n')
         self.para_icons = None
 
     def visit_centered(self, node):
@@ -2277,13 +2305,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'ebnf' in classes:
             self.body.append('\\emph{')
         elif 'tt' in classes:
+            self.in_tt = True
             self.body.append('\\texttt{')
         elif 'cmd' in classes:
+            self.in_tt = True
             if isinstance(node.parent,nodes.paragraph) and len(node.parent)==1 \
                and not (isinstance(node.parent.parent,nodes.list_item) and \
                         node.parent.parent[0] == node.parent):
                 self.body.append('\\command{')
             else:
+                self.para_sloppy = True
                 self.body.append('\\texttt{')
 #        self.body.append(r'\DUspan{%s}{' % ','.join(classes))
 
@@ -2293,8 +2324,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('}')
         elif 'tt' in classes:
             self.body.append('}')
+            self.in_tt = False
         elif 'cmd' in classes:
             self.body.append('}')
+            self.in_tt = False
 
 #        self.body.append('}')
         pass
@@ -2353,8 +2386,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             text = node.astext()
 
             text = self.encode(text)
-            if not self.in_sig:
+            if not self.in_sig and not self.in_tt:
                 text = educate_quotes_latex(text)
+            text = text.replace('ijkhyphenateijk','\\-')
             self.body.append(text)
 #            self.body.append(text)
 

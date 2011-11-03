@@ -26,6 +26,7 @@ def miniparse(text):
     ret = nodes.inline()
     text = text.replace('~~','\2')
     text = text.replace('**','\3')
+    text = text.replace('\\-','ijkhyphenateijk')
     constructs = {'\1':nodes.inline,
                   '\2':nodes.literal,
                   '\3':nodes.strong,
