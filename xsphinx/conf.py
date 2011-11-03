@@ -447,7 +447,7 @@ if current_builder=='xlatex':
 
 .. |ne| raw:: latex
 
-             $!=$
+             $\\ne$
 
         '''
 else:
