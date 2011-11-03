@@ -1418,12 +1418,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('}\n')
 
     def visit_definition_list(self, node):
-        #self.body.append('\\begin{description}\n')
-        pass
+        self.body.append('\\begin{description}\n')
+
 
     def depart_definition_list(self, node):
-        #self.body.append('\\end{description}\n')
-        pass
+        self.body.append('\\end{description}\n')
+
 
     def visit_definition_list_item(self, node):
         pass
@@ -1432,10 +1432,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_term(self, node):
 #        ctx = '}] \\leavevmode'
-        ctx = ''
+        self.body.append('\\item{')
+        ctx = '}'
         if node.has_key('ids') and node['ids']:
             ctx += self.hypertarget(node['ids'][0])
 #        self.body.append('\\item[{')
+
         self.context.append(ctx)
     def depart_term(self, node):
         self.body.append(self.context.pop())
@@ -1531,10 +1533,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #    visit_field_name = visit_term
 #    depart_field_name = depart_term
 
-    visit_field_body = visit_definition
+    def visit_field_body(self, node):
+        pass
     def depart_field_body(self,node):
-        self.depart_definition(node)
-#        self.body.append('\\\\ \n')
+        self.body.append('\n')
 
     def visit_paragraph(self, node):
 #        if isinstance(node.parent,nodes.admonition):
