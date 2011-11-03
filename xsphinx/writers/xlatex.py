@@ -1397,10 +1397,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('}\n')
 
     def visit_definition_list(self, node):
-#        self.body.append('\\begin{description}\n')
+        #self.body.append('\\begin{description}\n')
         pass
+
     def depart_definition_list(self, node):
-#        self.body.append('\\end{description}\n')
+        #self.body.append('\\end{description}\n')
         pass
 
     def visit_definition_list_item(self, node):
@@ -1521,7 +1522,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.para_inserts = []
         self.para_icon_insert_point = len(self.body)
         self.para_sloppy = False
-        if not isinstance(node.parent, nodes.entry):
+        if not isinstance(node.parent, nodes.entry) and \
+           not isinstance(node.parent, nodes.strong):
             self.body.append('\n')
         else:
             self.body.append('')
