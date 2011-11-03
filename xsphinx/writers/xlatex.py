@@ -1098,12 +1098,21 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.table.rowcount > 50:
             self.table.longtable = True
         self.body = self._body
-        
+
+        if self.next_table_ids:
+            id = self.next_table_ids.pop()
+            main_id = '['+self.curfilestack[-1] + ':' + id+']'
+            if len(self.next_table_ids) > 0:
+                print >>sys.stderr,"WARNING: multiple ids for figure %s" % id
+        else:
+            main_id = None
+        self.next_table_ids.clear()
 
         if not self.table.longtable and self.table.caption is not None:
             if self.builder.config.use_sidecaption:
-                self.body.append(u'\n\\begin{figure}[H]')
-                self.body.append(u'\\begin{sidecaption}{%s}\n'%self.table.caption)
+                self.body.append(u'\n\\begin{figure}[h]')
+
+                self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(self.table.caption,main_id))
 #                self.body.append(u'\\begin{minipage}{\\textwidth}\n')
                 if self.table.smaller:
                     self.body.append('\n\\footnotesize \\loosertables\n')
@@ -1116,12 +1125,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 #        self.body.append('\\begin{center}')
 
-        ids = ''
-        for id in self.next_table_ids:
-            ids += self.hypertarget(id, anchor=False) + "\n"
-        self.next_table_ids.clear()
+#        self.body.append(ids)
+        
 
-        self.body.append(ids)
 
 
         if self.next_table_tabularcolumns:
@@ -1760,7 +1766,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for c in node.traverse(nodes.caption):
                 cap = c[0]
             node['align'] = 'left'
-            self.body.append('\\begin{figure}[H]\n')
+            self.body.append('\\begin{figure}[h]\n')
             self.body.append('\\begin{sidecaption}{%s}\n' % cap)
 
             end = ids + '\\end{sidecaption}'
@@ -1786,7 +1792,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 # TODO non vertical space for other alignments.
                 align = '\\begin{flush%s}' % node.attributes['align']
                 align_end = '\\end{flush%s}' % node.attributes['align']
-            self.body.append(ids + '\\begin{figure}[H]%s\n' % align)
+            self.body.append(ids + '\\begin{figure}[h]%s\n' % align)
 #            if any(isinstance(child, nodes.caption) for child in node):
 #                self.body.append('\\capstart\n')
             attrs = node.attributes
