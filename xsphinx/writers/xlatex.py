@@ -1051,7 +1051,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.table.no_hlines = not self.table.horizontal_borders
 
-
+        self.table.smaller = 'smaller' in node['classes']
+        self.table.bigger = 'bigger' in node['classes'] or \
+                            'larger' in node['classes']
 
         if self.table.horizontal_borders:
             self.table.hline = '\\hline'
@@ -1094,7 +1096,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append(u'\n\\begin{figure}[H]')
                 self.body.append(u'\\begin{sidecaption}{%s}\n'%self.table.caption)
 #                self.body.append(u'\\begin{minipage}{\\textwidth}\n')
-                self.body.append(u'\small')
+                if self.table.smaller:
+                    self.body.append('\n\\footnotesize \\loosertables\n')
+                elif not self.table.bigger:
+                    self.body.append(u'\small')
             else:
                 self.body.append(u'\n\\begin{center}\\begin{threeparttable}\n')
 #                             u'\\capstart\\caption{%s}\n' % self.table.caption)
@@ -1116,6 +1121,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.body.append('\n\\begin{tabularx}{\linewidth}')
 #            self.body.append('\n\\begin{center}\\begin{tabulary}{\\linewidth}')
+
 
 
         if self.next_table_tabularcolumns:
