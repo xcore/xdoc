@@ -330,6 +330,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.section_summary_fullwidth = False
         self.in_subscript = False
         self.in_sig = False
+        self.in_term = False
         self.in_strong = False
         self.in_tt = False
         self.section_summary_pos = None
@@ -1450,15 +1451,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_term(self, node):
 #        ctx = '}] \\leavevmode'
-        self.body.append('\\item{')
-        ctx = '}'
+        self.body.append('\\item[')
+        ctx = ']'
         if node.has_key('ids') and node['ids']:
             ctx += self.hypertarget(node['ids'][0])
 #        self.body.append('\\item[{')
-
+        self.in_term = True
         self.context.append(ctx)
     def depart_term(self, node):
         self.body.append(self.context.pop())
+        self.in_term = False
 
     def visit_classifier(self, node):
         self.body.append('{[}')
@@ -2130,7 +2132,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'\texttt{%s}' % content)
         elif node.has_key('role') and node['role'] == 'samp':
             self.body.append(r'\samp{%s}' % content)
-        elif self.in_footnote or self.in_reference or self.in_subscript or self.in_strong:
+        elif self.in_term:
+            self.body.append(r'\ttfamily %s' % content)
+        elif self.in_footnote or self.in_reference or self.in_subscript or self.in_strong or self.in_term:
             self.body.append(r'\code{%s}' % content)
         else:
             text = node.astext().strip()
