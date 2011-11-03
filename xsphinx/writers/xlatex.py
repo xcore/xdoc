@@ -1007,8 +1007,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         raise nodes.SkipNode
 
     def visit_table(self, node):
-        print >>sys.stderr,'DEBUG'
-        print >>sys.stderr,node['classes']
 
         if 'pdf-no-border' in node['classes'] or 'no-border' in node['classes']:
             self.hline = ''
@@ -1048,7 +1046,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table.vertical_borders = 'vertical-borders' in node['classes']
         self.table.horizontal_borders = 'horizontal-borders' in node['classes']
 
-        print >>sys.stderr, self.table.horizontal_borders
+
 
         self.table.no_hlines = not self.table.horizontal_borders
 
