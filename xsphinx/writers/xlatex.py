@@ -1122,7 +1122,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if len(self.next_table_ids) > 0:
                 print >>sys.stderr,"WARNING: multiple ids for figure %s" % id
         else:
-            main_id = None
+            main_id = ''
         self.next_table_ids.clear()
 
         if not self.table.longtable and self.table.caption is not None:
@@ -1311,14 +1311,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
            not isinstance(node.parent,nodes.thead):
             for i in range(self.table.colcount):
                 if self.table.skipcols[i] == 0:
-                    self.body.append('\\%s{%d-%d} %%\n'%(self.table.crule,i+1,i+1))
+                    self.body.append('%s{%d-%d} %%\n'%(self.table.crule,i+1,i+1))
         elif not self.table.no_hlines:
          if spanning_header or \
                 (self.table.prev_colcount != None and \
                  colcount != self.table.prev_colcount):
             for i in range(self.table.colcount):
                 if self.table.skipcols[i] == 0:
-                    self.body.append('\\%s{%d-%d}\n'%(self.table.crule,i+1,i+1))
+                    self.body.append('%s{%d-%d}\n'%(self.table.crule,i+1,i+1))
 
 
 
@@ -1380,10 +1380,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 init_div=self.table.linesep
             else:
                 init_div=''
-            if self.table.col+n == len(self.table.colspec):
-                final_div=self.table.linesep
-            else:
-                final_div=''
+            #if self.table.col+n == len(self.table.colspec):
+            #    final_div=self.table.linesep
+            #else:
+            #    final_div=''
+            final_div=self.table.linesep
             if self.table.simple:
                 self.body.append('\\multicolumn{%d}{%sl%s}{' % (n,init_div,final_div) )
             else:
