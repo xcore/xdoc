@@ -2012,15 +2012,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.body.append('\\xurl{%s}' % self.encode_uri(uri))
                 raise nodes.SkipNode
             else:
-                self.body.append('\\href{%s}{' % self.encode_uri(uri))
-            # if configured, put the URL after the link
-                if self.builder.config.latex_show_urls and \
-                        node.astext() != uri:
-                    if uri.startswith('mailto:'):
-                        uri = uri[7:]
-                    self.context.append('} (%s)' % self.encode_uri(uri))
-                else:
-                    self.context.append('}')
+                self.context.append('\\footnote{\\xurl{%s}}' % self.encode_uri(uri))
+
+            #     self.body.append('\\href{%s}{' % self.encode_uri(uri))
+            # # if configured, put the URL after the link
+            #     if self.builder.config.latex_show_urls and \
+            #             node.astext() != uri:
+            #         if uri.startswith('mailto:'):
+            #             uri = uri[7:]
+            #         self.context.append('} (%s)' % self.encode_uri(uri))
+            #     else:
+            #         self.context.append('}')
         elif uri.startswith('#'):
             # references to labels in the same document
             id = self.curfilestack[-1] + ':' + uri[1:]
