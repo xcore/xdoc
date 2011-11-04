@@ -9,7 +9,7 @@ while True:
     if line == '':
         break
 
-    if re.match('Exception.*',line):
+    if re.match('Exception.*',line) or re.match('Configuration error.*',line):
         seen_exception = True
 
     if re.match('.*DEBUG.*',line):

@@ -1010,6 +1010,19 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_table(self, node):
 
+        if 'raw' in node['classes']:
+            self.body.append('%Raw Table\n')
+            self.table = Table()
+            self._body = self.body
+            self.tablebody=[]
+            self.body = self.tablebody
+            self.table.longtable = False
+            self.table.caption = node['caption']
+            self.table.smaller = False
+            self.table.bigger = True
+            return
+        #raise nodes.SkipNode
+
         if 'pdf-no-border' in node['classes'] or 'no-border' in node['classes']:
             self.hline = ''
         else:
@@ -1094,10 +1107,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table.skipcols = [0 for x in range(self.table.colcount)]
 
     def depart_table(self, node):
-        linesep = self.table.linesep
-        hline = self.table.hline
-        if self.table.rowcount > 50:
-            self.table.longtable = True
+
+        if not 'raw' in node['classes']:
+            linesep = self.table.linesep
+            hline = self.table.hline
+            if self.table.rowcount > 50:
+                self.table.longtable = True
+
         self.body = self._body
 
         if self.next_table_ids:
@@ -1130,8 +1146,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         
 
 
-
-        if self.next_table_tabularcolumns:
+        if 'raw' in node['classes']:
+            self.body.append('%Raw Table\n')
+        elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
             if tc.find('X') != -1 or tc.find('Y') != -1:
                 self.body.append('\n\\begin{tabularx}{\linewidth}')
@@ -1146,8 +1163,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #            self.body.append('\n\\begin{center}\\begin{tabulary}{\\linewidth}')
 
 
-
-        if self.next_table_tabularcolumns:
+        if 'raw' in node['classes']:
+            pass
+        elif self.next_table_tabularcolumns:
             colspec_str = self.next_table_tabularcolumns
             self.body.append('{' + colspec_str + '}\n')
         elif self.table.colspec:
@@ -1194,8 +1212,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
 
-
-        if self.table.longtable:
+        if 'raw' in node['classes']:
+            pass
+        elif self.table.longtable:
             self.body.append('%sn'%hline)
             self.body.append('\\endfirsthead\n\n')
             self.body.append('\\multicolumn{%s}{c}%%\n' % self.table.colcount)
@@ -1212,8 +1231,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             #self.body.append('\\Hline\n')
             self.body.append('%s\n'%self.table.toprule)
+
+
         self.body.extend(self.tablebody)
-        if self.next_table_tabularcolumns:
+
+        if 'raw' in node['classes']:
+            pass
+        elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
             if tc.find('X') != -1 or tc.find('Y') != -1:
                 self.body.append('\n\\end{tabularx}')
@@ -1236,6 +1260,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 self.body.append(u'\\caption{%s}\n' % self.table.caption)
                 self.body.append('\\end{threeparttable}\n\n\\end{center}\n\n')
+
         self.table = None
         self.tablebody = None
         self.next_table_tabularcolumns = None
