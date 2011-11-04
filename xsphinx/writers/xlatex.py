@@ -1785,9 +1785,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_figure(self, node):
         ids = ''
-        for id in self.next_figure_ids:
-            ids += self.hypertarget(id, anchor=False)
+
+        if self.next_figure_ids:
+            id = self.next_figure_ids.pop()
+            main_id = '['+self.curfilestack[-1] + ':' + id+']'
+            if len(self.next_figure_ids) > 0:
+                print >>sys.stderr,"WARNING: multiple ids for figure %s" % id
+        else:
+            main_id = ''
         self.next_figure_ids.clear()
+
 
         if self.builder.config.use_sidecaption:
             cap = ""
@@ -1795,7 +1802,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 cap = c[0]
             node['align'] = 'left'
             self.body.append('\\begin{figure}[h]\n')
-            self.body.append('\\begin{sidecaption}{%s}\n' % cap)
+            self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))
 
             end = ids + '\\end{sidecaption}'
             end += '\\end{figure}\n'
@@ -2380,9 +2387,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_inline(self, node):
         classes = node.get('classes', [])
-        if 'ebnf' in classes:
-            self.body.append('\\emph{')
-        elif 'tt' in classes:
+        if 'tt' in classes:
             self.in_tt = True
             self.body.append('\\texttt{')
         elif 'cmd' in classes:
@@ -2398,9 +2403,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def depart_inline(self, node):
         classes = node.get('classes', [])
-        if 'ebnf' in classes:
-            self.body.append('}')
-        elif 'tt' in classes:
+
+        if 'tt' in classes:
             self.body.append('}')
             self.in_tt = False
         elif 'cmd' in classes:
@@ -2521,7 +2525,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
         # text = text.replace('jkllslashjkll','\\\\')
 
 
-        clauses = [m.group(0) for m in re.finditer('(.*\s*::=((.|\n)(?!.*\s*::=))*)',text)]
+        if 'inline' in node['classes']:
+            clauses = [text]
+        else:
+            clauses = [m.group(0) for m in re.finditer('(.*\s*::=((.|\n)(?!.*\s*::=))*)',text)]
 
 
         lhs = ''
@@ -2540,6 +2547,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             clause = clause.replace('\n','!newline!')
             clause = re.sub(r'!newline![ ]*\|','!newline! !amp! !choice! !amp!', clause)
             clause = re.sub(r'``(?P<txt>[^`]*)``','!token!\g<txt>!',clause)
+            clause = re.sub(r'~~(?P<txt>[^~]*)~~','!token!\g<txt>!',clause)
             clause = re.sub(r'<(?P<txt>[^>]*)>\?','!opt!\g<txt>!',clause)
             clause = re.sub(r'<(?P<txt>[^>]*)>\*','!star!\g<txt>!',clause)
             clause = re.sub(r'<(?P<txt>[^>]*)>\+','!plus!\g<txt>!',clause)
@@ -2552,9 +2560,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
             clause = re.sub(r'!opt!(?P<txt>[^!]*)!','\\\\ebnf{opt}{\g<txt>}',clause)
             clause = re.sub(r'!star!(?P<txt>[^!]*)!','\\\\ebnf{0}{\g<txt>}',clause)
             clause = re.sub(r'!plus!(?P<txt>[^!]*)!','\\\\ebnf{1}{\g<txt>}',clause)
-            self.body.append('\n\\begin{grammar}{%s}\n'%lhs)
+            if 'inline' in node['classes']:
+                self.body.append('\\emph{')
+            else:
+                self.body.append('\n\\begin{grammar}{%s}\n'%lhs)
             self.body.append(clause)
-            self.body.append('\\end{grammar}\n')
+            if 'inline' in node['classes']:
+                self.body.append('}')
+            else:
+                self.body.append('\\end{grammar}\n')
 
         raise nodes.SkipNode
 

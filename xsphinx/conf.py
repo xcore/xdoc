@@ -44,6 +44,7 @@ if 'USE_COMMENTS' in os.environ and os.environ['USE_COMMENTS']=='1':
 else:
     enable_comments = False
 
+keep_warnings = True
 
 xsphinx_dir = os.environ['XDOC_DIR'] + "/xsphinx"
 
@@ -415,9 +416,6 @@ breathe_default_project = 'auto_doxygen'
 rst_prolog = '''
 .. highlight:: none
 
-.. role:: ebnf
-   :class: ebnf
-
 '''
 
 
@@ -458,8 +456,6 @@ else:
 
                \\pfinalnewpage
 
-.. role:: ebnf
-   :class: ebnf
 
 .. |sect| raw:: html
 
