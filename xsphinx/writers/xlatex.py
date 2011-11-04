@@ -90,6 +90,7 @@ HEADER1 = r'''
 '''
 
 BEGIN_DOC = r'''
+\setlength{\emergencystretch}{8em}
 %(begin)s
 %(shorthandoff)s
 %(maketitle)s
@@ -386,7 +387,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 pre = '\\href{%s}{XM%s}' % (url,docnum)
                 return True, pre, ''
 
-        pre = '{\\href[%s]{' % (self.idescape(id))
+        pre = '{\\href{%s}{' % (self.idescape(id))
         post = '}}'
         return False, pre, post
 
@@ -938,7 +939,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\\vspace{-2mm}\n')
                 self.body.append('\\sloppy\n')
                 if len(node.children) != 0:
-                    self.body.append('\\begin{indentation}{%s}{0mm}'%indent)
+                    self.body.append('\\begin{indentation*}{%s}{0mm}'%indent)
                 else:
                     for x in node.parent.traverse(
                         condition=lambda x: not isinstance(x, addnodes.index),
@@ -959,7 +960,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.builder.config.use_xmoslatex:
             if node.parent['desctype'] in toplevel_desc:
                 if len(node.children) != 0:
-                    self.body.append('\n\\end{indentation}\n')
+                    self.body.append('\n\\end{indentation*}\n')
                     #self.body.append('\\vspace{u3mm}\n')
                 self.body.append('\\fussy\n')
 
@@ -1386,7 +1387,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             #    final_div=''
             final_div=self.table.linesep
             if self.table.simple:
-                self.body.append('\\multicolumn{%d}{%sl%s}{' % (n,init_div,final_div) )
+                width = '>{\\setlength{\\hsize}{%d\\hsize}\\addtolength{\\hsize}{%d\\tabcolsep}}X' % (n,n)
+                self.body.append('\\multicolumn{%d}{%s%s%s}{' % (n,init_div,width,final_div) )
             else:
                 self.body.append('\\multicolumn{%d}{%sp{%.3f\linewidth}%s}{' % (n,init_div,colwidth,final_div) )
 
@@ -2211,11 +2213,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if node.has_key('linenos'):
             linenos = node['linenos']
 
+        max_line_width = max([len(x) for x in code.split('\n')])
+
+        options=''
+        if max_line_width > 65:
+            options='basicstyle=\\ttfamily\\Smaller,'
+
 #        print code
 #        hlcode = self.highlighter.highlight_block(code, lang, linenos)
 #        print hlcode
 #        hlcode = '\begin{Verbatim}\n' + code + '\n\end{Verbatim}\n'
-        hlcode = '\\begin{lstlisting}[resetmargins=true]\n' + code
+        hlcode = '\\begin{lstlisting}[%sresetmargins=true]\n'%options + code
         # workaround for Unicode issue
         hlcode = hlcode.replace(u'€', u'@texteuro[]')
         # must use original Verbatim environment and "tabular" environment
