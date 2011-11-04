@@ -1593,7 +1593,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.para_sloppy = False
         if not isinstance(node.parent, nodes.entry) and \
            not isinstance(node.parent, nodes.strong):
-            self.body.append('\n')
+            self.body.append('\n\n')
         else:
             self.body.append('')
 
@@ -2168,6 +2168,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             text = node.astext().strip()
             text = text.replace(' %','` \\texttt{\\ihjkel}\\verb`')
             text = text.replace('%','`\\texttt{\\%}\\verb`')
+            text = text.replace('@','`\\texttt{\\tiny{\\MVAt}}\\verb`')
             text = text.replace('ihjkel','%')
 
             self.body.append('\\verb`%s`' % text)
