@@ -335,6 +335,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.in_strong = False
         self.in_tt = False
         self.section_summary_pos = None
+        self.not_fullwidth = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -549,7 +550,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'testplan_item' in node['classes']:
             self.next_title_indent = True
 
-        if not self.fullwidth:
+        if 'not-fullwidth' in node['classes']:
+            self.not_fullwidth = True
+
+        if not self.fullwidth and not self.not_fullwidth:
           if self.builder.config.latex_doctype != 'collection' or self.sectionlevel == self.top_sectionlevel:
             for n in node.traverse():
                 has_toplevel_desc = \
@@ -577,11 +581,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'testplan_item' in node['classes']:
             self.body.append('\\end{indentation}')
-        if 'started_fullwidth' in node:
-            self.body.append('\\end{fullwidth}')
+        if 'started_fullwidth' in node and node['started_fullwidth']:
+            self.body.append('\\end{fullwidth}%')
             self.fullwidth = False
         if 'xc-spec' in node['classes']:
             self.body.append('\\end{spec}')
+
+        if 'not-fullwidth' in node['classes']:
+            self.not_fullwidth = False
 
     def visit_problematic(self, node):
         self.body.append(r'{\color{red}\bfseries{}')
@@ -740,8 +747,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'compact' in node['classes']:
             self.body.append('\n\\vspace{-\\parsep}\n')
         if self.next_title_indent:
-            self.nexst_title_indent = False
-            self.body.append('\\begin{indentation}{\\blockindentlen}{0mm}')
+            self.next_title_indent = False
+            self.body.append('\\begin{indentation}{\\blockindentlen}{0mm}%%')
 
 
     def visit_subtitle(self, node):
