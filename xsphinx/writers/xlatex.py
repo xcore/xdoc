@@ -387,6 +387,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 pre = '\\href{%s}{XM%s}' % (url,docnum)
                 return True, pre, ''
 
+
         pre = '{\\href{%s}{' % (self.idescape(id))
         post = '}}'
         return False, pre, post
@@ -2037,6 +2038,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 else:
                     self.body.append('\\xurl{%s}' % self.encode_uri(uri))
                 raise nodes.SkipNode
+            elif 'xmosxref' in node:
+                self.body.append('\\href{%s}{' % self.encode_uri(uri))
+                self.context.append('}')
             else:
                 self.context.append('\\footnote{\\xurl{%s}}' % self.encode_uri(uri))
 
