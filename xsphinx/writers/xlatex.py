@@ -412,7 +412,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 for entry in entries:
                     if not entry[3]:
                         continue
-                    ret.append('\\item {\\texttt{%s}}' % self.encode(entry[0]))
+                    ret.append('\\item \\texttt{%s}' % self.encode(entry[0]))
                     if entry[4]:
                         # add "extra" info
                         ret.append(' \\emph{(%s)}' % self.encode(entry[4]))
@@ -1460,9 +1460,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_list_item(self, node):
         # Append "{}" in case the next character is "[", which would break
         # LaTeX's list environment (no numbering and the "[" is not printed).
-        self.body.append(r'\item {  ')
+        self.body.append(r'\item   ')
     def depart_list_item(self, node):
-        self.body.append('}\n')
+        self.body.append('\n')
 
     def visit_definition_list(self, node):
         self.body.append('\\begin{description}\n')
