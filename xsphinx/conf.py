@@ -428,7 +428,7 @@ if current_builder=='xlatex':
 
 .. |newpage| raw:: latex
 
-               \\finalnewpage
+               \\wfinalnewpage
 
 .. |sect| raw:: latex
 
@@ -440,9 +440,13 @@ if current_builder=='xlatex':
 
 .. |infinity| raw:: latex
 
-             $\infty$
+             $\\infty$
 
 
+.. |cloverleaf| raw:: latex
+
+             \\CloverLeaf
+			 
 .. |ne| raw:: latex
 
              $\\ne$
@@ -454,7 +458,7 @@ else:
 
 .. |newpage| raw:: latex
 
-               \\pfinalnewpage
+               \\wfinalnewpage
 
 
 .. |sect| raw:: html
@@ -468,6 +472,10 @@ else:
 .. |infinity| raw:: html
 
              &#8734;
+
+.. |cloverleaf| raw:: html
+
+             &cloverleaf;
 
 .. |ne| raw:: html
 
