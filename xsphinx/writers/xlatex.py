@@ -1639,14 +1639,20 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.para_sloppy:
             self.body[pos] = self.body[pos] + '\\sloppy\n'
 
+        if len(node.astext()) > 70:
+            default_icon_command = '\\iconmargin{2}'
+        else:
+            default_icon_command = '\\iconmarginraise{1}'
 
         if self.para_icons:
             if len(self.para_icons) == 2:
-                icon_str += "\\doubleiconmargin{2}{%s}{%s}" % (self.para_icons[0],
-                                                               self.para_icons[1])
+                icon_str += "\\doubleiconmargin{2}{%s}{%s}" % (self.para_icons[0][0],
+                                                               self.para_icons[1][0])
             else:
-                for icon in self.para_icons:
-                    icon_str += '\\iconmargin{2}{%s} ' % icon
+                for icon,command in self.para_icons:
+                    if not command:
+                        command = default_icon_command
+                    icon_str += '%s{%s} ' % (command, icon)
 #        icon_str += ' '
 
         icon_str += ' '.join(self.para_inserts)
@@ -1718,7 +1724,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
             elif re.match('.*macmargin\.png',node['uri']):
                 self.para_inserts.append('\\macmargin')
             else:
-                self.para_icons.append(node['uri'])
+                command = None
+                if 'iconmarginraise' in node:
+                    if 'iconmarginheight' in node:
+                        command = '\\iconmarginraise{%d}' \
+                                            % node['iconmarginheight']
+                    else:
+                        command = '\\iconmarginraise{1}'
+                elif 'iconmarginheight' in node:
+                    command = '\\iconmargin{%d}' % node['iconmarginheight']
+
+                self.para_icons.append((node['uri'], command))
             return
         pre = []                        # in reverse order
         post = []
@@ -2204,7 +2220,27 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.verbatim = ''
 
     def depart_literal_block(self, node):
+        def ispragma(line):
+            return (len(line)>0 and line[0] == '#')
+        def isblankline(line):
+            return (re.match('\s*$',line)!=None)
+
         code = self.verbatim.rstrip('\n')
+        if 'iscode' in node and node['iscode']:
+            lines = code.split('\n')
+            min_indent=1000
+            for line in lines:
+                if not isblankline(line) and not ispragma(line):
+                    indent = len(re.match('(\s*).*',line).groups(0)[0])
+                    min_indent = min(min_indent, indent)
+
+            for i in range(len(lines)):
+                if not ispragma(lines[i]) and not isblankline(lines[i]):
+                    lines[i] = lines[i][min_indent:]
+
+            code = '\n'.join(lines)
+
+
         lang = self.hlsettingstack[-1][0]
         linenos = code.count('\n') >= self.hlsettingstack[-1][1] - 1
         if node.has_key('language'):
@@ -2524,15 +2560,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_ebnf(self, node):
         text= node[0].astext()
 
-        # text = text.replace('\\','jkllslashjkll')
-        # text = text.replace('{','\\{')
-        # text = text.replace('}','\\}')
-        # text = text.replace('%','\\%')
-        # text = text.replace('&','\\&')
-        # text = text.replace('&','\\&')
-        # text = text.replace('jkllslashjkll','\\\\')
-
-
         if 'inline' in node['classes']:
             clauses = [text]
         else:
@@ -2551,7 +2578,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 lhs = name
 
         for clause in clauses:
+            clause = clause.replace('!','!exclaim!')
             clause = clause.replace('::=','!amp! !is! !amp!')
+            clause = re.sub(r'\*one of\*\s*\n','!oneof!',clause)
             clause = clause.replace('\n','!newline!')
             clause = re.sub(r'!newline![ ]*\|','!newline! !amp! !choice! !amp!', clause)
             clause = re.sub(r'``(?P<txt>[^`]*)``','!token!\g<txt>!',clause)
@@ -2564,6 +2593,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             clause = clause.replace('!is!','\\is')
             clause = clause.replace('!newline!','\\\\ \n')
             clause = clause.replace('!choice!','\\choice')
+            clause = clause.replace('!oneof!','\\oneof \\\\ &&')
+            clause = clause.replace('!exclaim!','!')
             clause = re.sub(r'!token!(?P<txt>[^!]*)!','\\\\token{\g<txt>}',clause)
             clause = re.sub(r'!opt!(?P<txt>[^!]*)!','\\\\ebnf{opt}{\g<txt>}',clause)
             clause = re.sub(r'!star!(?P<txt>[^!]*)!','\\\\ebnf{0}{\g<txt>}',clause)

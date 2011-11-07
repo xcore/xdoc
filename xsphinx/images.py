@@ -95,6 +95,14 @@ class Image(Directive):
 
         set_classes(self.options)
 
+        if 'iconmarginheight' in self.options:
+            image_node['iconmarginheight'] = \
+               int(self.options['iconmarginheight'])
+
+        if 'iconmarginraise' in self.options:
+            image_node['iconmarginraise'] = True
+
+
         if reference_node:
             reference_node += image_node
             return messages + [reference_node]
