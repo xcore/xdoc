@@ -677,10 +677,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append(indent)
             self.context.append('}\n')
 
+            node['ids'] = self.next_section_ids.copy()
             if self.next_section_ids:
                 for id in self.next_section_ids:
                     self.context[-1] += self.hypertarget(id, anchor=False)
                 self.next_section_ids.clear()
+
+
 
         elif isinstance(parent, (nodes.topic, nodes.sidebar)):
             self.body.append(r'\textbf{')
@@ -740,6 +743,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 item = ''
                 for x in self.body[self.section_summary_entry_pos:]:
                     item += x
+                if node['ids'] != set([]):
+                    id = self.curfilestack[-1] + ':' + node['ids'].pop()
+                    item = '\\nameref{%s}' % id
+
                 self.section_summary.append(item)
 
         self.in_title = 0
@@ -1395,7 +1402,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
             #    final_div=''
             final_div=self.table.linesep
             if self.table.simple:
-                width = '>{\\setlength{\\hsize}{%d\\hsize}\\addtolength{\\hsize}{%d\\tabcolsep}}X' % (n,n)
+                if self.table.col <= self.table.max_width_col and \
+                   self.table.col + n > self.table.max_width_col:
+                    tabspec = 'X'
+                else:
+                    tabspec = 'l'
+
+                width = '>{\\setlength{\\hsize}{%d\\hsize}\\addtolength{\\hsize}{%d\\tabcolsep}}%s' % (n,n,tabspec)
                 self.body.append('\\multicolumn{%d}{%s%s%s}{' % (n,init_div,width,final_div) )
             else:
                 self.body.append('\\multicolumn{%d}{%sp{%.3f\linewidth}%s}{' % (n,init_div,colwidth,final_div) )
@@ -1548,6 +1561,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body.append('\n\n\\textbf{')
 #        self.body.append('abc ')
 #        self.context.append('}')
+        try:
+            body_start = node[1][0][0]
+        except:
+            body_start = None
+
+        self.field_start_pos = len(self.body)
+        if isinstance(body_start, nodes.image) and 'iconmargin' in body_start['classes']:
+            node[1][0]['hoist_icons'] = True
         pass
 
     def depart_field(self, node):
@@ -1565,7 +1586,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #            if self.sectionlevel == 2:
 #                self.body.append('\\vspace{\\baselineskip}\n')
 #            self.body.append('\\%s*{'%self.sectionnames[self.sectionlevel+1])
-            self.body.append('\\item \\textbf{')
+            self.body.append('\\item ')
+            self.body.append('\\textbf{')
         else:
             self.body.append('\\textbf{')
 
@@ -1602,7 +1624,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.para_icon_insert_point = len(self.body)
         self.para_sloppy = False
         if not isinstance(node.parent, nodes.entry) and \
-           not isinstance(node.parent, nodes.strong):
+           not isinstance(node.parent, nodes.strong) and \
+           not isinstance(node.parent, nodes.field_body):
             self.body.append('\n\n')
         else:
             self.body.append('')
@@ -1618,6 +1641,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'linux' in node['classes']:
             self.para_inserts.append('\\linuxmargin')
+
+
+
 
 
         for i in range(self.para_icon_insert_point,len(self.body)):
@@ -1644,23 +1670,32 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body[i+1] = self.body[i+1].lstrip()
 
 
+
         if self.para_sloppy:
             self.body[pos] = self.body[pos] + '\\sloppy\n'
 
+        if 'hoist_icons' in node:
+            pos = self.field_start_pos
+
+
         if len(node.astext()) > 70:
-            default_icon_command = '\\iconmargin{2}'
+            default_icon_command = 'iconmargin{2}'
         else:
-            default_icon_command = '\\iconmarginraise{1}'
+            default_icon_command = 'iconmarginraise{1}'
 
         if self.para_icons:
             if len(self.para_icons) == 2:
-                icon_str += "\\doubleiconmargin{2}{%s}{%s}" % (self.para_icons[0][0],
-                                                               self.para_icons[1][0])
+                command = self.para_icons[0][1]
+                if not command:
+                    command = default_icon_command
+                icon_str += "\\double%s{%s}{%s}" % (command,
+                                                       self.para_icons[0][0],
+                                                       self.para_icons[1][0])
             else:
                 for icon,command in self.para_icons:
                     if not command:
                         command = default_icon_command
-                    icon_str += '%s{%s} ' % (command, icon)
+                    icon_str += '\\%s{%s} ' % (command, icon)
 #        icon_str += ' '
 
         icon_str += ' '.join(self.para_inserts)
@@ -1680,7 +1715,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not isinstance(node.parent, nodes.entry):
             self.body.append('\n')
         if self.para_sloppy:
-            self.body.append('\\fussy\n')
+            self.body.append('\n\\fussy\n\n')
         self.para_icons = None
 
     def visit_centered(self, node):
@@ -1735,12 +1770,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 command = None
                 if 'iconmarginraise' in node:
                     if 'iconmarginheight' in node:
-                        command = '\\iconmarginraise{%d}' \
+                        command = 'iconmarginraise{%d}' \
                                             % node['iconmarginheight']
                     else:
-                        command = '\\iconmarginraise{1}'
+                        command = 'iconmarginraise{1}'
                 elif 'iconmarginheight' in node:
-                    command = '\\iconmargin{%d}' % node['iconmarginheight']
+                    command = 'iconmargin{%d}' % node['iconmarginheight']
 
                 self.para_icons.append((node['uri'], command))
             return
