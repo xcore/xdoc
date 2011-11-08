@@ -1625,7 +1625,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.para_sloppy = False
         if not isinstance(node.parent, nodes.entry) and \
            not isinstance(node.parent, nodes.strong) and \
-           not isinstance(node.parent, nodes.field_body):
+           not isinstance(node.parent, nodes.field_body) and \
+           not isinstance(node.parent, collected_footnote):
             self.body.append('\n\n')
         else:
             self.body.append('')
@@ -1712,7 +1713,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.body[pos+1] = first[:n] + icon_str + first[n:]
 #        self.body = self.body[:pos] + ' gg ' + self.body[pos:]
-        if not isinstance(node.parent, nodes.entry):
+        if not isinstance(node.parent, nodes.entry) and \
+           not isinstance(node.parent, collected_footnote):
             self.body.append('\n')
         if self.para_sloppy:
             self.body.append('\n\\fussy\n\n')
