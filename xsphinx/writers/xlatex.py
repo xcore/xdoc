@@ -506,6 +506,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.bibitems = []
 
     def visit_start_of_file(self, node):
+        try:
+            self.part = self.builder.env.partmap[node['docname']]
+        except:
+            self.part = None
+
+
         # collect new footnotes
         self.footnotestack.append(self.collect_footnotes(node))
         # also add a document target
@@ -633,6 +639,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_title(self, node):
         parent = node.parent
+
         if isinstance(parent, addnodes.seealso):
             # the environment already handles this
             raise nodes.SkipNode
@@ -660,6 +667,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     if not self.seen_first_title:
                         self.seen_first_title = True
                         self.body.append('\\end{fullwidth}\n')
+
+
+                        if self.sectionlevel == self.top_sectionlevel:
+                            if self.part:
+                                self.body.append('\n\\part{%s}\n\\clearemptypage\n'%self.part)
+                                self.part = None
+
 
                 if (self.builder.config.latex_section_newpage):
                     if (self.sectionlevel <= self.top_sectionlevel):
