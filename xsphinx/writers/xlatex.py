@@ -671,7 +671,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
                         if self.sectionlevel == self.top_sectionlevel:
                             if self.part:
-                                self.body.append('\n\\part{%s}\n\\clearemptypage\n'%self.part)
+                                self.body.append('\n\\part{%s}\n\\clearemptydoublepage\n'%self.part)
                                 self.part = None
 
 
@@ -706,8 +706,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('{')
             self.context.append('}\n')
         elif isinstance(parent, nodes.table):
-            self.table.caption = self.encode(node.astext())
-            raise nodes.SkipNode
+            self._caption_saved_body = self.body
+            self.body = []
+            self.in_title = True
+            return
         else:
             self.builder.warn(
                 'encountered title node not in section, topic, table, '
@@ -748,6 +750,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #                self.section_summary.append(str(node[0]))
 
     def depart_title(self, node):
+        if isinstance(node.parent, nodes.table):
+            self.table.caption = ''.join(self.body)
+            self.body = self._caption_saved_body
+            self.in_title = False
+            return
+
         if self.builder.config.use_xmoslatex:
             if self.builder.config.latex_doctype == 'collection':
                 tp = self.top_sectionlevel + 1
