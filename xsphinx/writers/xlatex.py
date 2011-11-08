@@ -1932,8 +1932,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
         def visit_admonition(self, node):
             if self.builder.config.use_xmoslatex:
 #                print node
+
+                if 'no-raise' in node['classes']:
+                    raise_txt = ''
+                elif len(node.astext()) < 70 or 'raise' in node['classes']:
+                    raise_txt = 'raise'
+                else:
+                    raise_txt = ''
+
                 for p in node.traverse(nodes.paragraph):
-                    p['margin_items'].append("\%smargin" % xmoslatex_admonitionlabels[name])
+
+                    p['margin_items'].append("\%smargin%s" % (xmoslatex_admonitionlabels[name],raise_txt))
                     break
 #                self.body.append('\n\n \\ \\hspace{-0.35cm} \%smarginraise '%xmoslatex_admonitionlabels[name])
             else:
