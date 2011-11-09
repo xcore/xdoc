@@ -1294,7 +1294,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if self.builder.config.use_sidecaption:
 #                self.body.append(u'\\end{minipage}')
                 self.body.append(u'\\end{sidecaption}\n')
-                self.body.append('\\end{figure}\n')
+                self.body.append('\\end{figure} \\DocumentFooterFix\n')
             else:
                 self.body.append(u'\\caption{%s}\n' % self.table.caption)
                 self.body.append('\\end{threeparttable}\n\n\\end{center}\n\n')
@@ -1890,7 +1890,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))
 
             end = ids + '\\end{sidecaption}'
-            end += '\\end{figure}\n'
+            end += '\\end{figure} \\DocumentFooterFix\n'
             self.context.append(end)
             if node.has_key('width'):
                 node[0]['width'] = node['width']
@@ -1922,7 +1922,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 if w:
                     self.include_graphics_options.append('width=%s' % w)
             fw_end = ''
-            self.context.append(ids + align_end + fw_end + '\\end{figure}\n')
+            self.context.append(ids + align_end + fw_end + '\\end{figure} \\DocumentFooterFix\n\n')
 
     def depart_figure(self, node):
         self.body.append(self.context.pop())
@@ -2272,7 +2272,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             text = node.astext().strip()
             text = text.replace(' %','` \\texttt{\\ihjkel}\\verb`')
             text = text.replace('%','`\\texttt{\\%}\\verb`')
-            text = text.replace('@','`\\texttt{\\tiny{\\MVAt}}\\verb`')
+            text = text.replace('@','`\texttt{\raisebox{0.05em}{\footnotesize{\MVAt}}}`')
             text = text.replace('ihjkel','%')
 
             self.body.append('\\verb`%s`' % text)
