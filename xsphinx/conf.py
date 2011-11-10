@@ -464,7 +464,9 @@ else:
 
              &micro;
 
-.. |newpage| 
+.. |newpage|  raw:: latex
+
+               \\wfinalnewpage
 
 .. |sect| raw:: html
 
