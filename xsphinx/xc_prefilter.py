@@ -1,7 +1,7 @@
 import sys, re
 
 # A list of regex substitutions to make
-substs =  [ ('port:(\d+)','___port___port___\\1') ]
+substs =  [ ('port:(\d+)','___port___port___\\1')]
 
 
 mult_ret_subs = [ ('\{','obrace'),
@@ -17,10 +17,15 @@ if __name__ == "__main__":
     property) to handle some awkward XC features. In particular it
     replaces port types with something doxygen can parse.
     """
+    in_code_section = False
     fname = sys.argv[1]
     f = open(fname)
     while True:
         x = f.readline()
+        x = x.replace('\\code','\\verbatim')
+        x = x.replace('\\endcode','\\endverbatim')
+
+
         if x == '':
             break
         for pattern, repl in substs:

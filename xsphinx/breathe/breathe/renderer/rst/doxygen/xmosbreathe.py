@@ -2,7 +2,7 @@ from breathe.parser.doxygen.compound import *
 from breathe.parser.doxygen.compoundsuper import *
 from docutils import nodes
 import re
-
+import sys
 # This code is really strange since I'm refusing to follow what seem to be 
 # some overly engineered design patterns in breathe but I'm not rewriting from 
 # scratch either. The result is some rather hacky code
@@ -71,6 +71,9 @@ def render_content(data_object, tab):
     elif (hasattr(data_object, 'content_')):
         s += ''.join([render_content(x, tab) for x in data_object.content_])
 
+    if (hasattr(data_object, 'verbatim')):
+        s += ''.join([render_content(x, tab) for x in data_object.verbatim])
+
 
     if (hasattr(data_object, 'parameterlist')):
         s += '\n\n' + ''.join([render_content(x, tab) for x in data_object.parameterlist])
@@ -89,8 +92,6 @@ def render_content(data_object, tab):
     if (hasattr(data_object, 'simplesects')):
         s += ''.join([render_content(x, tab) for x in data_object.simplesects])
 
-    if (hasattr(data_object, 'verbatim')):
-        s += ''.join([render_content(x, tab) for x in data_object.verbatim])
 
 
 
@@ -196,7 +197,6 @@ def render(data_object, state, content, content_offset):
 
     content.data = render_content(data_object,'').split("\n")
 
-#    print str.join("\n",content.data)
 
     term = nodes.Element()
     state.nested_parse(content, content_offset,term)
