@@ -193,11 +193,13 @@ def render_compoundtype(type_data_object, data_object, state, content, content_o
 
 def render(data_object, state, content, content_offset):
 
+
     content.data = render_content(data_object,'').split("\n")
 
 #    print str.join("\n",content.data)
 
     term = nodes.Element()
     state.nested_parse(content, content_offset,term)
+
     return term.children
 

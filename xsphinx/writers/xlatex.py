@@ -379,13 +379,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
         m = re.match('.*:doc:X?M?(\d*)',id)
         if m:
             docnum = m.groups(0)[0]
-            url = 'http://www.xmos.com/docnum/XM%s' % docnum
+            url = 'http://www.xmos.com/docnum/X%s' % docnum
             if 'refexplicit' in node and node['refexplicit']:
                 pre = ''
-                post = ' (see \\href{%s}{XM%s})' % (url,docnum)
+                post = ' (see \\href{%s}{X%s})' % (url,docnum)
                 return False, pre, post
             else:
-                pre = '\\href{%s}{XM%s}' % (url,docnum)
+                pre = '\\href{%s}{X%s}' % (url,docnum)
                 return True, pre, ''
 
 
@@ -510,7 +510,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.part = self.builder.env.partmap[node['docname']]
         except:
             self.part = None
-
 
         # collect new footnotes
         self.footnotestack.append(self.collect_footnotes(node))
@@ -664,15 +663,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 modifier = ''
             try:
                 if self.builder.config.latex_doctype == 'collection':
+
                     if not self.seen_first_title:
                         self.seen_first_title = True
                         self.body.append('\\end{fullwidth}\n')
 
-
-                        if self.sectionlevel == self.top_sectionlevel:
-                            if self.part:
-                                self.body.append('\n\\part{%s}\n\\clearemptydoublepage\n'%self.part)
-                                self.part = None
+                if self.sectionlevel == self.top_sectionlevel:
+                    if self.part:
+                        self.body.append('\n\\part{%s}\n\\clearemptydoublepage\n'%self.part)
+                        self.part = None
 
 
                 if (self.builder.config.latex_section_newpage):
@@ -687,6 +686,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 for i in range(1 + self.sectionlevel - len(self.sectionnames)):
                     indent += "\ \ "
                 # just use "subparagraph", it's not nu mbered anyway
+
+                if self.builder.config.latex_doctype == 'collection' and \
+                        self.sectionlevel == self.top_sectionlevel:
+                    if self.part:
+                        self.body.append('\n\\part{%s}\n\\clearemptydoublepage\n'%self.part)
+                        self.part = None
+
                 self.body.append(r'\%s%s{' % (self.sectionnames[-1],modifier))
                 self.body.append(indent)
             self.context.append('}\n')
@@ -2272,7 +2278,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             text = node.astext().strip()
             text = text.replace(' %','` \\texttt{\\ihjkel}\\verb`')
             text = text.replace('%','`\\texttt{\\%}\\verb`')
-            text = text.replace('@','`\texttt{\raisebox{0.05em}{\footnotesize{\MVAt}}}`')
+            text = text.replace('@','`\texttt{\raisebox{0.05em}{\\footnotesize{\\MVAt}}}`')
             text = text.replace('ihjkel','%')
 
             self.body.append('\\verb`%s`' % text)

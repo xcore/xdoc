@@ -16,6 +16,7 @@ class DoxygenTypeSubItemFinder(ItemFinder):
 
         return results
 
+_parser_cache = {}
 class CompoundTypeSubItemFinder(ItemFinder):
 
     def __init__(self, matcher_factory, compound_parser, *args):
@@ -23,6 +24,7 @@ class CompoundTypeSubItemFinder(ItemFinder):
 
         self.matcher_factory = matcher_factory
         self.compound_parser = compound_parser
+
 
     def find(self, matcher):
 
@@ -38,9 +40,16 @@ class CompoundTypeSubItemFinder(ItemFinder):
 
         # If there are members in this compound that match the criteria 
         # then load up the file for this compound and get the member data objects
+        # HACK alert (but only because I can't understand this inside out
+        # overly abstracted code)
+        global _parser_cache
         if member_results:
+            try:
+                file_data = _parser_cache[self.data_object.refid]
+            except:
+                file_data = self.compound_parser.parse(self.data_object.refid)
+                _parser_cache[self.data_object.refid] = file_data
 
-            file_data = self.compound_parser.parse(self.data_object.refid)
             finder = self.item_finder_factory.create_finder(file_data)
 
             for member_data in member_results:
@@ -49,6 +58,7 @@ class CompoundTypeSubItemFinder(ItemFinder):
 
         elif matcher.match(self.data_object):
             results.append(self.data_object)
+
 
         return results
 

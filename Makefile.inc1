@@ -122,12 +122,15 @@ singlehtml: doxygen | $(SOURCES)
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/singlehtml."
 
-
+ifeq ($(VERBOSE),1)
+else
+FILTER = 2> _build/$(XLATEX)/sphinx.STDERR > _build/$(XLATEX)/sphinx.STDOUT;cat _build/$(XLATEX)/sphinx.STDERR | python $(XDOC_DIR)/xsphinx/sphinx_filter.py
+endif
 xlatex: doxygen | $(SOURCES)
 	@echo "Running Sphinx"
 	@mkdir -p _build/$(XLATEX)
 	@rm -rf _build/$(XLATEX)/.doctrees
-	@export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX) 2> _build/$(XLATEX)/sphinx.STDERR > _build/$(XLATEX)/sphinx.STDOUT;cat _build/$(XLATEX)/sphinx.STDERR | python $(XDOC_DIR)/xsphinx/sphinx_filter.py
+	@export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX) $(FILTER)
 	@cp _build/$(XLATEX)/*.tex .
 
 man: doxygen | $(SOURCES)

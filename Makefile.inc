@@ -4,7 +4,11 @@ RSYNC = rsync -tur --cvs-exclude --exclude=**.xe --exclude=**.zip --exclude=**_b
 
 # Need to copy in linked dirs before anything else
 ifeq ($(OTHER_DOC_DIRS),)
-LINKED_DIRS =
+_linked_dirs:
+	@-mkdir -p .linked_dirs
+	@python $(XDOC_DIR)/xsphinx/create_link_map.py $(OTHER_DOC_DIRS)
+
+LINKED_DIRS = _linked_dirs
 else
 .PHONY: _linked_dirs
 
@@ -16,11 +20,15 @@ else
 _linked:
 	@-mkdir -p .linked_dirs
 
+%.ignore:
+	@echo Ignoring $*
+	@rm `find .linked_dirs -iname $*`
+
 %._linked: _linked
 	@echo Copying in $*
 	@$(RSYNC) --exclude=**.linked_dirs** $(abspath $*) .linked_dirs
 
-_linked_dirs: $(foreach x,$(OTHER_DOC_DIRS),$(x)._linked)
+_linked_dirs: $(foreach x,$(OTHER_DOC_DIRS),$(x)._linked) $(foreach x,$(EXCLUDE_FILES),$(x).ignore)
 	@python $(XDOC_DIR)/xsphinx/create_link_map.py $(OTHER_DOC_DIRS)
 	@echo "Created linked dirs"
 endif

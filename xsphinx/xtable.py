@@ -19,10 +19,8 @@ class Table(RSTTable):
             table = nodes.table()
             table['classes'] = ['raw']
 
-            print >>sys.stderr, content
             content_split = re.split('.. raw:: (.*)',content)
             content_split = content_split[1:]
-            print >>sys.stderr, content_split
             raw_nodes = []
             while content_split != []:
                 format = content_split[0]
