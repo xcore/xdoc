@@ -2279,7 +2279,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             text = node.astext().strip()
             text = text.replace(' %','` \\texttt{\\ihjkel}\\verb`')
             text = text.replace('%','`\\texttt{\\%}\\verb`')
-            text = text.replace('@','`\texttt{\raisebox{0.05em}{\\footnotesize{\\MVAt}}}`')
+            text = text.replace('@','`\\texttt{\\raisebox{0.05em}{\\footnotesize{\\MVAt}}}`')
             text = text.replace('ihjkel','%')
 
             self.body.append('\\verb`%s`' % text)
