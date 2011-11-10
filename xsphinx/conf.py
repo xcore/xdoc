@@ -424,7 +424,11 @@ if current_builder=='xlatex':
 
 .. |submenu| raw:: latex
  
-         \submenu
+         \\submenu
+
+.. |micro| raw:: latex
+ 
+         \\micro
 
 .. |newpage| raw:: latex
 
@@ -456,10 +460,11 @@ else:
         rst_epilog = """
 .. |submenu| replace:: **>**
 
-.. |newpage| raw:: latex
+.. |micro| raw:: html
 
-               \\wfinalnewpage
+             &micro;
 
+.. |newpage| 
 
 .. |sect| raw:: html
 
