@@ -336,6 +336,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.in_tt = False
         self.section_summary_pos = None
         self.not_fullwidth = False
+        self.part = None
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -2119,7 +2120,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 else:
                     self.body.append('\\xurl{%s}' % self.encode_uri(uri))
                 raise nodes.SkipNode
-            elif 'xmosxref' in node:
+            elif 'xmosxref' in node or node.astext()=='???':
                 self.body.append('\\href{%s}{' % self.encode_uri(uri))
                 self.context.append('}')
             else:
@@ -2516,6 +2517,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_inline(self, node):
         classes = node.get('classes', [])
+        #print >>sys.stderr,"DEBUG"
+        #print >>sys.stderr,node
+        #print >>sys.stderr,node['classes']
         if 'tt' in classes:
             self.in_tt = True
             self.body.append('\\texttt{')
@@ -2528,6 +2532,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 self.para_sloppy = True
                 self.body.append('\\texttt{')
+        elif 'missing-reference' in classes:
+            self.body.append('{\color{red}')
 #        self.body.append(r'\DUspan{%s}{' % ','.join(classes))
 
     def depart_inline(self, node):
@@ -2539,6 +2545,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         elif 'cmd' in classes:
             self.body.append('}')
             self.in_tt = False
+        elif 'missing-reference' in classes:
+            self.body.append('}')
 
 #        self.body.append('}')
         pass
