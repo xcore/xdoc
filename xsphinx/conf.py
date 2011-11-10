@@ -461,6 +461,13 @@ else:
 .. |submenu| replace:: **>**
 
 .. |micro| raw:: html
+<<<<<<< HEAD:xsphinx/conf.py
+=======
+
+             &micro;
+
+.. |newpage| raw:: latex
+>>>>>>> c310af1c98351822ce9737916d16ef00e401e4b3:xsphinx/conf.py
 
              &micro;
 

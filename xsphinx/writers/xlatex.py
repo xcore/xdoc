@@ -336,6 +336,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.in_tt = False
         self.section_summary_pos = None
         self.not_fullwidth = False
+        self.part = None
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -379,13 +380,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
         m = re.match('.*:doc:X?M?(\d*)',id)
         if m:
             docnum = m.groups(0)[0]
-            url = 'http://www.xmos.com/docnum/XM%s' % docnum
+            url = 'http://www.xmos.com/docnum/X%s' % docnum
             if 'refexplicit' in node and node['refexplicit']:
                 pre = ''
-                post = ' (see \\href{%s}{XM%s})' % (url,docnum)
+                post = ' (see \\href{%s}{X%s})' % (url,docnum)
                 return False, pre, post
             else:
-                pre = '\\href{%s}{XM%s}' % (url,docnum)
+                pre = '\\href{%s}{X%s}' % (url,docnum)
                 return True, pre, ''
 
 
@@ -510,7 +511,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.part = self.builder.env.partmap[node['docname']]
         except:
             self.part = None
-
 
         # collect new footnotes
         self.footnotestack.append(self.collect_footnotes(node))
@@ -664,15 +664,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 modifier = ''
             try:
                 if self.builder.config.latex_doctype == 'collection':
+
                     if not self.seen_first_title:
                         self.seen_first_title = True
                         self.body.append('\\end{fullwidth}\n')
 
-
-                        if self.sectionlevel == self.top_sectionlevel:
-                            if self.part:
-                                self.body.append('\n\\part{%s}\n\\clearemptydoublepage\n'%self.part)
-                                self.part = None
+                if self.sectionlevel == self.top_sectionlevel:
+                    if self.part:
+                        self.body.append('\n\\part{%s}\n\\clearemptydoublepage\n'%self.part)
+                        self.part = None
 
 
                 if (self.builder.config.latex_section_newpage):
@@ -687,6 +687,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 for i in range(1 + self.sectionlevel - len(self.sectionnames)):
                     indent += "\ \ "
                 # just use "subparagraph", it's not nu mbered anyway
+
+                if self.builder.config.latex_doctype == 'collection' and \
+                        self.sectionlevel == self.top_sectionlevel:
+                    if self.part:
+                        self.body.append('\n\\part{%s}\n\\clearemptydoublepage\n'%self.part)
+                        self.part = None
+
                 self.body.append(r'\%s%s{' % (self.sectionnames[-1],modifier))
                 self.body.append(indent)
             self.context.append('}\n')
@@ -2113,7 +2120,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 else:
                     self.body.append('\\xurl{%s}' % self.encode_uri(uri))
                 raise nodes.SkipNode
-            elif 'xmosxref' in node:
+            elif 'xmosxref' in node or node.astext()=='???':
                 self.body.append('\\href{%s}{' % self.encode_uri(uri))
                 self.context.append('}')
             else:
@@ -2272,7 +2279,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             text = node.astext().strip()
             text = text.replace(' %','` \\texttt{\\ihjkel}\\verb`')
             text = text.replace('%','`\\texttt{\\%}\\verb`')
-            text = text.replace('@','`\texttt{\raisebox{0.05em}{\footnotesize{\MVAt}}}`')
+            text = text.replace('@','`\texttt{\raisebox{0.05em}{\\footnotesize{\\MVAt}}}`')
             text = text.replace('ihjkel','%')
 
             self.body.append('\\verb`%s`' % text)
@@ -2522,6 +2529,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 self.para_sloppy = True
                 self.body.append('\\texttt{')
+        elif 'missing-reference' in classes:
+            self.body.append('{\\begingroup \\hypersetup{urlcolor=red} ')
 #        self.body.append(r'\DUspan{%s}{' % ','.join(classes))
 
     def depart_inline(self, node):
@@ -2533,6 +2542,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         elif 'cmd' in classes:
             self.body.append('}')
             self.in_tt = False
+        elif 'missing-reference' in classes:
+            self.body.append('\\endgroup}')
 
 #        self.body.append('}')
         pass

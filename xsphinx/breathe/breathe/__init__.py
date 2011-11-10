@@ -42,9 +42,11 @@ class DoxygenIndexDirective(BaseDirective):
 
     def run(self):
 
+
         project_info = self.project_info_factory.create_project_info(self.options)
 
         finder = self.finder_factory.create_finder(project_info)
+
 
         # try:
         data_object = finder.root()
@@ -57,6 +59,7 @@ class DoxygenIndexDirective(BaseDirective):
         
 
         builder = self.builder_factory.create_builder(project_info, self.state.document)
+
 
         nodes = builder.build(data_object, self.state, self.content, self.content_offset)
 
@@ -77,11 +80,15 @@ class DoxygenFunctionDirective(BaseDirective):
 
         function_name = self.arguments[0]
 
+
         project_info = self.project_info_factory.create_project_info(self.options)
+
 
         finder = self.finder_factory.create_finder(project_info)
 
+
         matcher = self.matcher_factory.create_name_type_matcher(function_name, "function")
+
 
         try:
             data_object = finder.find_one(matcher)

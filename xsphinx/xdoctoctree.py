@@ -23,6 +23,11 @@ class XdocTocTree(TocTree):
         to_remove = 0
         for i in range(len(self.content)):
             line = self.content[i]
+            if re.match('\s*$',line):
+                self.content = self.content[i:i+1] + self.content[:i] + self.content[i+1:]
+                to_remove = to_remove + 1
+                continue
+
             m = re.match('.*:part:(.*)',line)
             if m:
                 part = m.groups(0)[0].strip()

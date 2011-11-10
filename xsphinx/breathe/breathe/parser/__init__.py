@@ -2,6 +2,7 @@
 import breathe.parser.doxygen.index
 import breathe.parser.doxygen.compound
 import os
+import sys
 
 class Parser(object):
 
@@ -13,7 +14,12 @@ class DoxygenIndexParser(Parser):
     def parse(self, project_info):
 
         filename = os.path.join(project_info.path(), "index.xml")
-        return breathe.parser.doxygen.index.parse(filename)
+        try:
+            return breathe.parser.doxygen.index.parse(filename)
+        except:
+            sys.stderr.write("ERROR: cannot find doxygen information\n")
+            exit(1)
+
 
 
 class DoxygenCompoundParser(Parser):
