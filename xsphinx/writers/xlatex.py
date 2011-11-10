@@ -2517,9 +2517,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_inline(self, node):
         classes = node.get('classes', [])
-        #print >>sys.stderr,"DEBUG"
-        #print >>sys.stderr,node
-        #print >>sys.stderr,node['classes']
         if 'tt' in classes:
             self.in_tt = True
             self.body.append('\\texttt{')
@@ -2533,7 +2530,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.para_sloppy = True
                 self.body.append('\\texttt{')
         elif 'missing-reference' in classes:
-            self.body.append('{\color{red}')
+            self.body.append('{\\begingroup \\hypersetup{urlcolor=red} ')
 #        self.body.append(r'\DUspan{%s}{' % ','.join(classes))
 
     def depart_inline(self, node):
@@ -2546,7 +2543,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('}')
             self.in_tt = False
         elif 'missing-reference' in classes:
-            self.body.append('}')
+            self.body.append('\\endgroup}')
 
 #        self.body.append('}')
         pass
