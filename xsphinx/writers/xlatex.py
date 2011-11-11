@@ -378,10 +378,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 else:
                     return True, 'Figure~\\ref{%s}' % (self.idescape(id)),''
 
-        m = re.match('.*:doc:X?M?(\d*)',id)
+        m = re.match('.*doc:X?M?(\d*)(.*)',id)
         if m:
             docnum = m.groups(0)[0]
-            url = 'http://www.xmos.com/docnum/X%s' % docnum
+            rest= m.groups(0)[1]
+            url = 'http://www.xmos.com/docnum/X%s%s' % (docnum,rest)
             if 'refexplicit' in node and node['refexplicit']:
                 pre = ''
                 post = ' (see \\href{%s}{X%s})' % (url,docnum)
@@ -1178,8 +1179,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not self.table.longtable and self.table.caption is not None:
             if self.builder.config.use_sidecaption:
                 self.body.append(u'\n\\begin{figure}[h]')
-
-                self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(self.table.caption,main_id))
+                cap = self.table.caption.strip()
+                self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))
 #                self.body.append(u'\\begin{minipage}{\\textwidth}\n')
                 if self.table.smaller:
                     self.body.append('\n\\footnotesize \\loosertables\n')
@@ -1902,7 +1903,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         node['align'] = 'left'
         self.body.append('\\begin{figure}[h]\n')
-        self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(self.caption,main_id))
+        cap = self.caption.strip()
+
+        self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))
 
         end = ids + '\\end{sidecaption}'
         end += '\\end{figure} \\DocumentFooterFix\n'
@@ -2087,9 +2090,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             uri = '%' + self.curfilestack[-1] + '#' + node['refid']
         if self.in_title or not uri:
             self.context.append('')
-        elif uri.startswith('mailto:') or uri.startswith('http:') or \
+        elif not 'xmosxref' in node and (uri.startswith('mailto:') or uri.startswith('http:') or \
                  uri.startswith('https:') or uri.startswith('ftp:') or \
-                 uri.startswith('/'):
+                 uri.startswith('/')):
 
             if uri.startswith('/'):
                 uri = 'http://www.xmos.com'+uri
@@ -2124,15 +2127,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if skip:
                 raise nodes.SkipNode
             self.context.append(post)
-        elif uri.startswith('%'):
+        elif uri.startswith('%') or 'xmosxref' in node:
             # references to documents or labels inside documents
             hashindex = uri.find('#')
             if hashindex == -1:
                 # reference to the document
                 id = uri[1:] + '::doc'
-            else:
+            elif not 'xmosxref' in node:
                 # reference to a label
                 id = uri[1:].replace('#', ':')
+            else:
+                id = uri
             #print node
             skip, link,post = self.hyperlink(node, id)
             self.body.append(link)
@@ -2153,6 +2158,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.context.append('')
         self.in_reference = True
     def depart_reference(self, node):
+        self.body[-1] = self.body[-1].strip()
+        if self.body[-1][-1] == '.':
+            self.body[-1]=self.body[-1][:-1]
+
         self.in_reference = False
         self.body.append(self.context.pop())
 
