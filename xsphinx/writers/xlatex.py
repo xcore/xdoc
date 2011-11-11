@@ -1881,7 +1881,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_figure(self, node):
+        self._figsavedbody = self.body
+        self.body = []
+
+    def depart_figure(self, node):
         ids = ''
+        figbody = self.body
+        self.body = self._figsavedbody
+
 
         if self.next_figure_ids:
             id = self.next_figure_ids.pop()
@@ -1893,61 +1900,29 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.next_figure_ids.clear()
 
 
-        if self.builder.config.use_sidecaption:
-            cap = ""
-            for c in node.traverse(nodes.caption):
-                cap = c[0]
-            node['align'] = 'left'
-            self.body.append('\\begin{figure}[h]\n')
-            self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))
+        node['align'] = 'left'
+        self.body.append('\\begin{figure}[h]\n')
+        self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(self.caption,main_id))
 
-            end = ids + '\\end{sidecaption}'
-            end += '\\end{figure} \\DocumentFooterFix\n'
-            self.context.append(end)
-            if node.has_key('width'):
-                node[0]['width'] = node['width']
-            return
-        if not node.has_key('width'):
-            node['width'] = '100%'
-        if node.has_key('width') and node.get('align', '') in ('left', 'right'):
-            self.body.append('\\begin{wrapfigure}{%s}{%s}\n\\centering' %
-                             (node['align'] == 'right' and 'r' or 'l',
-                              node['width']))
-            self.context.append(ids + '\\end{wrapfigure}\n')
-        else:
-            if (not node.attributes.has_key('align') or
-                node.attributes['align'] == 'center'):
-                # centering does not add vertical space like center.
-                align = '\n\\centering'
-                align_end = ''
-            else:
-                # TODO non vertical space for other alignments.
-                align = '\\begin{flush%s}' % node.attributes['align']
-                align_end = '\\end{flush%s}' % node.attributes['align']
-            self.body.append(ids + '\\begin{figure}[h]%s\n' % align)
-#            if any(isinstance(child, nodes.caption) for child in node):
-#                self.body.append('\\capstart\n')
-            attrs = node.attributes
-            self.include_graphics_options=[]
-            if attrs.has_key('width'):
-                w = self.latex_image_length(attrs['width'])
-                if w:
-                    self.include_graphics_options.append('width=%s' % w)
-            fw_end = ''
-            self.context.append(ids + align_end + fw_end + '\\end{figure} \\DocumentFooterFix\n\n')
+        end = ids + '\\end{sidecaption}'
+        end += '\\end{figure} \\DocumentFooterFix\n'
+        self.context.append(end)
+        if node.has_key('width'):
+            node[0]['width'] = node['width']
 
-    def depart_figure(self, node):
+        self.body += figbody
+
         self.body.append(self.context.pop())
 
     def visit_caption(self, node):
-        if self.builder.config.use_sidecaption:
-            raise nodes.SkipNode
-        else:
-            self.body.append('\\caption{')
+        self._savedcapbody = self.body
+        self.body = []
+        self.in_title = True
 
     def depart_caption(self, node):
-        if not self.builder.config.use_sidecaption:
-            self.body.append('}')
+        self.caption = ''.join(self.body)
+        self.body = self._savedcapbody
+        self.in_title = False
 
     def visit_legend(self, node):
         self.body.append('{\\small ')
