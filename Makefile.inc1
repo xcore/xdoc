@@ -108,13 +108,14 @@ doxygen: $(if $(NOCOPY),,$(foreach x, $(DOXYGEN_DIRS), $(x).copy_doxygen))
 	@mkdir -p $(DOC_DIR)/_build/doxygen
 	@export PATH=$(PATH):/tools/doxygen/doxygen-1.5.8/bin/ && cd $(DOC_DIR) && doxygen 2>&1 | grep -v "REFERENCE" ; echo "Done"
 	@rm $(DOC_DIR)/Doxyfile
+endif
 
 html: doxygen | $(SOURCES)
 	@export CURRENT_BUILDER=html && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b html $(ALLSPHINXOPTS) . $(BUILDDIR)/html
 	@echo ".nojekyll" > _build/html/.nojekyll
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
-endif
+
 
 
 singlehtml: doxygen | $(SOURCES)

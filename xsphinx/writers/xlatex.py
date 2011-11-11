@@ -337,6 +337,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.section_summary_pos = None
         self.not_fullwidth = False
         self.part = None
+        self.in_options = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -807,6 +808,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 pass
             elif desctype != None:
                 self.body.append('\\begin{option}\n\n')
+                self.body.append('\\addtolength{\\codeindent}{22mm}')
+                self.in_options = True
             else:
                 pass
 #                print node
@@ -817,7 +820,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if desctype in toplevel_desc:
                 pass
             elif desctype != None:
+                self.body.append('\\addtolength{\\codeindent}{-22mm}')
                 self.body.append('\\end{option}\n\n')
+                self.in_options = False
 
     def visit_desc(self, node):
         if not self.builder.config.use_xmoslatex:
