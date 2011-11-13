@@ -392,7 +392,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 return True, pre, ''
 
 
-        pre = '{\\href{%s}{' % (self.idescape(id))
+        pre = '{\\hyperref[%s]{' % (self.idescape(id))
         post = '}}'
         return False, pre, post
 
@@ -772,10 +772,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 tp = self.top_sectionlevel
             if self.sectionlevel == tp:
                 item = ''
-                for x in self.body[self.section_summary_entry_pos:]:
-                    item += x
-                if node['ids'] != set([]):
-                    id = self.curfilestack[-1] + ':' + node['ids'].pop()
+                valid_ids = [x for x in node['ids'] if x != '']
+                if valid_ids != []:
+                    id = self.curfilestack[-1] + ':' + valid_ids[0]
                     item = '\\nameref{%s}' % id
 
                 self.section_summary.append(item)
@@ -1916,6 +1915,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body += figbody
 
         self.body.append(self.context.pop())
+
+    visit_general_figure = visit_figure
+    depart_general_figure = depart_figure
 
     def visit_caption(self, node):
         self._savedcapbody = self.body

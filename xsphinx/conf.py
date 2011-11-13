@@ -25,6 +25,7 @@ import xtable
 import sphinx.domains.std
 import xsphinx.passes
 
+
 if 'USE_AAFIG' in os.environ:
     use_aafig = (os.environ['USE_AAFIG'] != '0')
 else:
@@ -44,7 +45,7 @@ if 'USE_COMMENTS' in os.environ and os.environ['USE_COMMENTS']=='1':
 else:
     enable_comments = False
 
-keep_warnings = True
+#keep_warnings = True
 
 xsphinx_dir = os.environ['XDOC_DIR'] + "/xsphinx"
 
@@ -357,6 +358,7 @@ def setup(app):
     app.add_directive('literalinclude', xsphinx.code.LiteralInclude)
     app.add_directive('figure', xsphinx.images.Figure)
     app.add_directive('image', xsphinx.images.Image)
+    app.add_directive('generalfigure', xdirectives.GeneralFigure)
     app.add_config_value('include_search_dirs',[],False)
     app.add_config_value('latex_doctype',[],False)
     app.add_config_value('latex_section_newpage',[],False)
