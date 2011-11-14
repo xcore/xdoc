@@ -1096,15 +1096,35 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.table.simple = False
 
         max_width = 0
+        total_width = 0
+        max_col_widths = {}
         self.table.max_width_col = 0
         for row in node.traverse(nodes.row):
             colnum = 0
             for col in row.traverse(nodes.entry):
+                if not colnum in max_col_widths:
+                    max_col_widths[colnum] = 0
                 text = col.astext()
-                if len(text) > max_width:
+                width = len(text)
+                if width > max_col_widths[colnum]:
+                    max_col_widths[colnum] = width
+                if width > max_width:
                     max_width = len(text)
                     self.table.max_width_col = colnum
                 colnum=colnum+1
+
+        total_width = 0
+        for col,width in max_col_widths.iteritems():
+            total_width += width
+
+
+        self.table.narrow = total_width < 70
+
+        if 'narrow' in node['classes']:
+            self.table.narrow = True
+        if 'wide' in node['classes']:
+            self.table.narrow = False
+
 
 #        self.table.simple = 'simple-content' in node['classes']
 
@@ -1206,7 +1226,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\n\\begin{tabular}')
         elif self.table.longtable:
             self.body.append('\n\\begin{longtable}')
-        elif self.table.has_verbatim:
+        elif self.table.has_verbatim or self.table.narrow:
             self.body.append('\n\\begin{tabular}')
         else:
             self.body.append('\n\\begin{tabularx}{\linewidth}')
@@ -1225,7 +1245,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 colwidth = self.table.colspec[i]
                 colwidth = (colwidth / total)
                 if self.table.simple:
-                    if i == self.table.max_width_col:
+                    if not self.table.narrow and i == self.table.max_width_col:
                         colspec_str += 'Y%s' % (linesep)
                     else:
                         colspec_str += 'l%s' % (linesep)
@@ -1289,13 +1309,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
             pass
         elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
-            if tc.find('X') != -1 or tc.find('Y') != -1:
+            if not self.table.narrow or tc.find('X') != -1 or tc.find('Y') != -1:
                 self.body.append('\n\\end{tabularx}')
             else:
                 self.body.append('\n\\end{tabular}')
         elif self.table.longtable:
             self.body.append('\\end{longtable}\n\n')
-        elif self.table.has_verbatim:
+        elif self.table.has_verbatim or self.table.narrow:
             self.body.append('\\end{tabular}\n\n')
         else:
             self.body.append('\\end{tabularx}\n\n')
@@ -1436,7 +1456,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             #    final_div=''
             final_div=self.table.linesep
             if self.table.simple:
-                if self.table.col <= self.table.max_width_col and \
+                if not self.table.narrow and \
+                   self.table.col <= self.table.max_width_col and \
                    self.table.col + n > self.table.max_width_col:
                     tabspec = 'X'
                 else:
