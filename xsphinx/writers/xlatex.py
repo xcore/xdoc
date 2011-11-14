@@ -2028,7 +2028,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.next_section_ids.add(node['refid'])
                 self.next_section_ids.update(node['ids'])
                 return
-            elif isinstance(next, nodes.figure):
+            elif isinstance(next, nodes.figure) or \
+                 next.__class__.__name__ == 'general_figure':
                 # labels for figures go in the figure body, not before
                 if node.get('refid'):
                     self.next_figure_ids.add(node['refid'])
