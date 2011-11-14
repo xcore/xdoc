@@ -1,3 +1,6 @@
+no_target:
+	echo "Please enter target to build: pdf html xmospdf xmoshtml"
+
 export
 
 RSYNC = rsync -tur --cvs-exclude --exclude=**.xe --exclude=**.zip --exclude=**_buid** --exclude=**.build**
