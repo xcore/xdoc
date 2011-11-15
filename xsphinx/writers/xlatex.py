@@ -1517,7 +1517,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if 'nopoints' in node['classes']:
                 self.body.append('\\end{nopoints}\n' )
             else:
-                self.body.append('\\end{itemize}\n' )
+                self.body.append('\\end{itemize}\n\n' )
 
 
     def visit_enumerated_list(self, node):
@@ -1788,7 +1788,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                          '\\setlength{\\parskip}{0pt}\n')
     def depart_hlist(self, node):
         self.compact_list -= 1
-        self.body.append('\\end{itemize}\n')
+        self.body.append('\\end{itemize}\n\n')
 
     def visit_hlistcol(self, node):
         pass
