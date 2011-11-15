@@ -1515,7 +1515,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_bullet_list(self, node):
         if not self.compact_list:
             if 'nopoints' in node['classes']:
-                self.body.append('\\end{nopoints}\n' )
+                self.body.append('\\end{nopoints}\n\n' )
             else:
                 self.body.append('\\end{itemize}\n\n' )
 
@@ -1529,9 +1529,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('\\setcounter{enumi}{%d}\n' % (node['start'] - 1))
     def depart_enumerated_list(self, node):
         if 'steps' in node['classes']:
-            self.body.append('\\end{steps}\n' )
+            self.body.append('\\end{steps}\n\n' )
         else:
-            self.body.append('\\end{enumerate}\n' )
+            self.body.append('\\end{enumerate}\n\n' )
 
     def visit_list_item(self, node):
         # Append "{}" in case the next character is "[", which would break
@@ -1545,7 +1545,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
     def depart_definition_list(self, node):
-        self.body.append('\\end{description}\n')
+        self.body.append('\\end{description}\n\n')
 
 
     def visit_definition_list_item(self, node):
