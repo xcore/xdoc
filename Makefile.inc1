@@ -6,7 +6,12 @@ PAPER         =
 BUILDDIR      = _build
 DOXYGEN_DIRS  ?=
 #SOURCE_INCLUDE_DIRS ?=
+ifeq ($(filter index.rst,$(wildcard *.rst)),)
+SPHINX_MASTER_DOC ?= $(subst .rst,,$(wildcard *.rst))
+else
 SPHINX_MASTER_DOC ?= index
+endif
+
 _SPHINX_MASTER_DOC ?= $(SPHINX_MASTER_DOC)
 SPHINX_SECTION_NEWPAGE ?= 1
 
