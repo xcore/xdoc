@@ -1218,14 +1218,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'raw' in node['classes']:
             self.body.append('%Raw Table\n')
+        elif self.table.longtable:
+            self.body.append('\n\\begin{longtable}[l]')
         elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
             if tc.find('X') != -1 or tc.find('Y') != -1:
                 self.body.append('\n\\begin{tabularx}{\linewidth}')
             else:
                 self.body.append('\n\\begin{tabular}')
-        elif self.table.longtable:
-            self.body.append('\n\\begin{longtable}')
         elif self.table.has_verbatim or self.table.narrow:
             self.body.append('\n\\begin{tabular}')
         else:
@@ -1245,7 +1245,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 colwidth = self.table.colspec[i]
                 colwidth = (colwidth / total)
                 if self.table.simple:
-                    if not self.table.narrow and i == self.table.max_width_col:
+                    if not self.table.narrow and not self.table.longtable and \
+                       i == self.table.max_width_col:
                         colspec_str += 'Y%s' % (linesep)
                     else:
                         colspec_str += 'l%s' % (linesep)
@@ -1285,16 +1286,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'raw' in node['classes']:
             pass
         elif self.table.longtable:
-            self.body.append('%sn'%hline)
+            self.body.append('%s\n'%self.table.toprule)
             self.body.append('\\endfirsthead\n\n')
-            self.body.append('\\multicolumn{%s}{c}%%\n' % self.table.colcount)
-            self.body.append(r'{{\bfseries \tablename\ \thetable{} -- %s}} \\'
-                             % _('continued from previous page'))
+            #self.body.append('\\multicolumn{%s}{c}%%\n' % self.table.colcount)
+            #self.body.append(r'{{\bfseries \tablename\ \thetable{} -- %s}} \\'
+            #                             % _('continued'))
+            self.body.append('%s\n'%self.table.toprule)
+            self.body.extend(self.table.thead)
             self.body.append('\n%s\n'%hline)
             self.body.append('\\endhead\n\n')
             self.body.append(ur'%s \multicolumn{%s}{%sr%s}{{%s}} \\ %s'
-                             % (hline, linesep, linesep,self.table.colcount,
-                                _('Continued on next page'),hline))
+                             % (hline, self.table.colcount, '','',
+                                _('(continued)'),''))
             self.body.append('\n\\endfoot\n\n')
             self.body.append('%s\n'%hline)
             self.body.append('\\endlastfoot\n\n')
@@ -1307,14 +1310,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'raw' in node['classes']:
             pass
+        elif self.table.longtable:
+            self.body.append('\\end{longtable}\n\n')
         elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
             if not self.table.narrow or tc.find('X') != -1 or tc.find('Y') != -1:
                 self.body.append('\n\\end{tabularx}')
             else:
                 self.body.append('\n\\end{tabular}')
-        elif self.table.longtable:
-            self.body.append('\\end{longtable}\n\n')
         elif self.table.has_verbatim or self.table.narrow:
             self.body.append('\\end{tabular}\n\n')
         else:
@@ -1350,11 +1353,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.next_table_colspec:
             self.table.colspec = '{%s}\n' % self.next_table_colspec
         self.next_table_colspec = None
+        self.table.thead_start = len(self.body)
 #        self.body.append('\\hline\n')
 #        self.table.had_head = True
     def depart_thead(self, node):
         if not self.table.horizontal_borders:
             self.body.append('%s\n'%self.table.midrule)
+        self.table.thead = self.body[self.table.thead_start:]
 
     def visit_tbody(self, node):
         if not self.table.had_head:
