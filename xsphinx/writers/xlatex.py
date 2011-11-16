@@ -2638,6 +2638,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             text = self.encode(text)
             if not self.in_sig and not self.in_tt:
                 text = educate_quotes_latex(text)
+            else:
+                text = text.replace("'","\\textquotesingle")
             text = text.replace('ijkhyphenateijk','\\-')
             self.body.append(text)
 #            self.body.append(text)
