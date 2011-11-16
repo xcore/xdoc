@@ -11,7 +11,6 @@ class Table(RSTTable):
                    'position': directives.unchanged}
 
     def run(self):
-        #print >>sys.stderr,"DEBUG:table"
         content = ''
         for x in self.content:
             content += x + "\n"

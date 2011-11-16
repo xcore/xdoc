@@ -2384,6 +2384,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        print hlcode
 #        hlcode = '\begin{Verbatim}\n' + code + '\n\end{Verbatim}\n'
         hlcode = '\\begin{lstlisting}[%sresetmargins=true]\n'%options + code
+
         # workaround for Unicode issue
         hlcode = hlcode.replace(u'€', u'@texteuro[]')
         # must use original Verbatim environment and "tabular" environment
@@ -2756,3 +2757,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def depart_ebnf(self, node):
         pass
+
+    def visit_tools_output(self, node):
+        code = node.astext()
+        max_line_width = max([len(x) for x in code.split('\n')])
+
+        options=''
+        if max_line_width > 65:
+            options='basicstyle=\\ttfamily\\Smaller,'
+
+        self.body.append('\\begin{lstlisting}[%srulecolor=\\color{white},backgroundcolor=\\color{white},resetmargins=true]\n'%options)
+        self.body.append(node.astext())
+        self.body.append('\\end{lstlisting}\n\n')
+        raise nodes.SkipNode
+
