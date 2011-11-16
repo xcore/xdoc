@@ -7,7 +7,8 @@ from docutils import nodes
 
 class Table(RSTTable):
 
-    option_spec = {'class': directives.class_option}
+    option_spec = {'class': directives.class_option,
+                   'position': directives.unchanged}
 
     def run(self):
         #print >>sys.stderr,"DEBUG:table"
@@ -32,7 +33,8 @@ class Table(RSTTable):
 
 
             table['caption'] = self.arguments[0]
-
+            if 'position' in self.options:
+                table['position'] = self.options['position']
 
             caption = nodes.title()
             caption.append(nodes.Text(self.arguments[0]))

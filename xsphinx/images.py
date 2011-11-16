@@ -128,10 +128,12 @@ class Figure(Image):
     option_spec['figwidth'] = figwidth_value
     option_spec['figclass'] = directives.class_option
     option_spec['align'] = align
+    option_spec['position'] = directives.unchanged
     has_content = True
 
     def run(self):
         figwidth = self.options.pop('figwidth', None)
+        position = self.options.pop('position', None)
         figclasses = self.options.pop('figclass', None)
         align = self.options.pop('align', None)
         (image_node,) = Image.run(self)
@@ -155,6 +157,8 @@ class Figure(Image):
             figure_node['classes'] += figclasses
         if align:
             figure_node['align'] = align
+        if position:
+            figure_node['position'] = position
         if self.content:
             node = nodes.Element()          # anonymous container for parsing
             self.state.nested_parse(self.content, self.content_offset, node)

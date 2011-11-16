@@ -162,6 +162,7 @@ class Table(object):
         self.prev_colcount = None
 
 
+
 class LaTeXTranslator(nodes.NodeVisitor):
     sectionnames = ["chapter", "section", "subsection",
                     "subsubsection", "paragraph", "subparagraph"]
@@ -1070,6 +1071,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.table.caption = node['caption']
             self.table.smaller = False
             self.table.bigger = True
+            self.table.position = 'h'
+            if 'position' in node:
+                self.table.position = node['position']
+
             return
         #raise nodes.SkipNode
 
@@ -1094,6 +1099,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
                isinstance(child, nodes.field_list) or \
                isinstance(child, nodes.bullet_list):
                 self.table.simple = False
+
+        self.table.position = 'h'
+        if 'position' in node:
+            self.table.position = node['position']
+
 
         max_width = 0
         total_width = 0
@@ -1197,7 +1207,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if not self.table.longtable and self.table.caption is not None:
             if self.builder.config.use_sidecaption:
-                self.body.append(u'\n\\begin{figure}[h]')
+                self.body.append(u'\n\\begin{figure}[%s]'%self.table.position)
                 cap = self.table.caption.strip()
                 self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))
 #                self.body.append(u'\\begin{minipage}{\\textwidth}\n')
@@ -1914,7 +1924,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         ids = ''
         figbody = self.body
         self.body = self._figsavedbody
-
+        position = 'h'
+        if 'position' in node:
+            position = node['position']
 
         if self.next_figure_ids:
             id = self.next_figure_ids.pop()
@@ -1927,7 +1939,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
         node['align'] = 'left'
-        self.body.append('\\begin{figure}[h]\n')
+        self.body.append('\\begin{figure}[%s]\n'%position)
         cap = self.caption.strip()
 
         self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))
