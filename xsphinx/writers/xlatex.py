@@ -2187,7 +2187,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.context.append('')
         self.in_reference = True
     def depart_reference(self, node):
-        self.body[-1] = self.body[-1].strip()
+        self.body[-1] = self.body[-1].rstrip()
         if self.body[-1][-1] == '.':
             self.body[-1]=self.body[-1][:-1]
 
