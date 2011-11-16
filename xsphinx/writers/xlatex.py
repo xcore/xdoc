@@ -367,14 +367,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if typ in ['section','option']:
                 if 'refexplicit' in node and node['refexplicit']:
                     pre = ''
-                    post = ' (see \Sec~\\ref{%s})' % (self.idescape(id))
+                    post = ' (see~\Sec~\\ref{%s})' % (self.idescape(id))
                     return False, pre, post
                 else:
                     return True, '\Sec~\\ref{%s}' % (self.idescape(id)),''
             if typ == 'figure':
                 if 'refexplicit' in node and node['refexplicit']:
                     pre = ''
-                    post = ' (see Figure~\\ref{%s})' % (self.idescape(id))
+                    post = ' (see~Figure~\\ref{%s})' % (self.idescape(id))
                     return False, pre, post
                 else:
                     return True, 'Figure~\\ref{%s}' % (self.idescape(id)),''
@@ -386,7 +386,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             url = 'http://www.xmos.com/docnum/X%s%s' % (docnum,rest)
             if 'refexplicit' in node and node['refexplicit']:
                 pre = ''
-                post = ' (see \\href{%s}{X%s})' % (url,docnum)
+                post = ' (see~\\href{%s}{X%s})' % (url,docnum)
                 return False, pre, post
             else:
                 pre = '\\href{%s}{X%s}' % (url,docnum)
@@ -2130,6 +2130,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
         raise nodes.SkipNode
 
     def visit_reference(self, node):
+
+        if re.match('[s|S]ee[ |\n]',self.body[-1][-4:]):
+            self.body[-1] = self.body[-1][:-1] + '~'
+
         uri = node.get('refuri', '')
         if not uri and node.get('refid'):
             uri = '%' + self.curfilestack[-1] + '#' + node['refid']
