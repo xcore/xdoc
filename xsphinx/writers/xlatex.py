@@ -1219,7 +1219,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'raw' in node['classes']:
             self.body.append('%Raw Table\n')
         elif self.table.longtable:
-            self.body.append('\n\\begin{longtable}[l]')
+            self.body.append('\n\\small \\begin{longtable}[l]')
         elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
             if tc.find('X') != -1 or tc.find('Y') != -1:
@@ -1311,7 +1311,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'raw' in node['classes']:
             pass
         elif self.table.longtable:
-            self.body.append('\\end{longtable}\n\n')
+            self.body.append('\\end{longtable}\n\n\\normalsize\n')
         elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
             if not self.table.narrow or tc.find('X') != -1 or tc.find('Y') != -1:
