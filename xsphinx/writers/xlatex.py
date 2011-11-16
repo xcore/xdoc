@@ -2690,10 +2690,19 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_ebnf(self, node):
         text= node[0].astext()
 
+        indent = False
+        if text.find('::=') == -1:
+            if not 'inline' in node['classes']:
+                node['classes'].append('inline')
+                indent = True
+                text = text.strip()
+
         if 'inline' in node['classes']:
             clauses = [text]
         else:
             clauses = [m.group(0) for m in re.finditer('(.*\s*::=((.|\n)(?!.*\s*::=))*)',text)]
+
+
 
 
         lhs = ''
@@ -2730,12 +2739,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
             clause = re.sub(r'!star!(?P<txt>[^!]*)!','\\\\ebnf{0}{\g<txt>}',clause)
             clause = re.sub(r'!plus!(?P<txt>[^!]*)!','\\\\ebnf{1}{\g<txt>}',clause)
             if 'inline' in node['classes']:
+                if indent:
+                    self.body.append('\\begin{indentation}{\\forceindentlen}{0mm}')
                 self.body.append('\\emph{')
             else:
                 self.body.append('\n\\begin{grammar}{%s}\n'%lhs)
             self.body.append(clause)
             if 'inline' in node['classes']:
                 self.body.append('}')
+                if indent:
+                    self.body.append('\\end{indentation}')
             else:
                 self.body.append('\\end{grammar}\n')
 
