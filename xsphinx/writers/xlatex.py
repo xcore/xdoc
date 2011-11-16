@@ -1496,11 +1496,15 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table.col += 1
         if isinstance(node.parent.parent, nodes.thead):
             self.body.append('\\textbf{')
+            self.in_strong = True
             self.context.append('}')
         else:
             self.context.append('')
 
     def depart_entry(self, node):
+        if isinstance(node.parent.parent, nodes.thead):
+            self.in_strong = False
+
         if node.has_key('morecols'):
             self.body.append('}')
         if node.has_key('morerows'):
