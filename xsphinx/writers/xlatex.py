@@ -704,13 +704,24 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if self.parts != []:
                 self.body.append('\\begin{inthiscollection}\n')
                 if self.has_parts:
-                    parts = [x for (x,y) in self.parts]
+                    parts = ['\\hyperref[part:%s]{%s}'%(x,x) for (x,y) in self.parts]
                 else:
                     parts = ['\\nameref{%s}'%x for x in self.parts]
                 for p in parts:
-                    #self.body.append('\\hspace*{-\\alen}\\color{arrowcolor}{\\Forward}\\hspace*{4pt} \\nameref{%s} \\\\ \\vspace*{3pt}\n'%p)
                     self.body.append('\\item %s\n'%p)
                 self.body.append('\\end{inthiscollection}\n')
+
+    def output_part_index(self, part):
+        chaps = None
+        for (p,cs) in self.parts:
+            if p==part:
+                chaps = cs
+        if chaps:
+            self.body.append('\\begin{inthispart}\n')
+            parts = ['\\nameref{%s}'%x for x in chaps]
+            for p in parts:
+                self.body.append('\\item %s\n'%p)
+            self.body.append('\\end{inthispart}\n')
 
 
     def visit_title(self, node):
@@ -745,7 +756,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
                 if self.sectionlevel == self.top_sectionlevel:
                     if self.part:
-                        self.body.append('\n\\part{%s}\n\\clearemptydoublepage\n'%self.part)
+                        self.body.append('\n\\part{%s}\n\\label{part:%s}\n'%(self.part,self.part))
+                        self.output_part_index(self.part)
+                        self.body.append('\\clearemptydoublepage\n')
                         self.part = None
 
 
