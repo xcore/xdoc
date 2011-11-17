@@ -94,13 +94,14 @@ BEGIN_DOC = r'''
 %(begin)s
 %(shorthandoff)s
 %(maketitle)s
-%(toc)s
 %(fullwidth)s
 '''
 
 FOOTER = r'''
 \renewcommand{\indexname}{%(indexname)s}
 %(printindex)s
+\newpage
+%(toc)s
 %(enddoc)s
 '''
 
@@ -214,7 +215,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
             toc = ''
 
         if self.builder.config.latex_doctype == 'collection':
-            fullwidth = '\\begin{fullwidth} %preface\n'
+            first_title = document.traverse(nodes.title)[0]
+            title_index = first_title.parent.index(first_title)
+            next = first_title.parent[title_index+1]
+            self.has_preface = \
+                  not isinstance(next,nodes.substitution_definition)
+        else:
+            self.has_preface = False
+
+
+        if self.has_preface:
+            fullwidth = '\\clearpage\n\\begin{fullwidth} %preface\n'
         else:
             fullwidth = ''
 
@@ -379,7 +390,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 else:
                     return True, 'Figure~\\ref{%s}' % (self.idescape(id)),''
 
-        m = re.match('.*doc:X?M?(\d*)(.*)',id)
+        m = re.match('.*doc:[xX]?[mM]?(\d*)(.*)',id)
         if m:
             docnum = m.groups(0)[0]
             rest= m.groups(0)[1]
@@ -488,7 +499,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.body.insert(self.section_summary_pos, summary)
 
-        if self.builder.config.latex_doctype == 'collection':
+        if self.builder.config.latex_doctype == 'collection' and self.has_preface:
             if not self.seen_first_title:
                 self.seen_first_title = True
                 self.body.append('\\end{fullwidth}\n')
@@ -668,7 +679,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             try:
                 if self.builder.config.latex_doctype == 'collection':
 
-                    if not self.seen_first_title:
+                    if not self.seen_first_title and self.has_preface:
                         self.seen_first_title = True
                         self.body.append('\\end{fullwidth}\n')
 

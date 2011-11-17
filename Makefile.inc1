@@ -176,7 +176,9 @@ clean:
 	rm -rf .sources
 	rm -rf .doxygen
 	rm -rf _build
-	-rm -f $(TEXROOT).toc
+	rm -rf html
+	rm -rf web-output
+	-rm -f $(TEXROOT).toc$
 	-rm -f $(TEXROOT).tex
 	-rm -f $(TEXROOT).toc
 	-rm -f $(TEXROOT).dvi
@@ -186,6 +188,9 @@ clean:
 	-rm -f $(TEXROOT).out
 	-rm -f $(TEXROOT).aux
 
+
+realclean: clean
+	-rm -rf .support
 
 
 -include $(APPS_ROOT)/infr_docs/Makefile.xdoc_extras
