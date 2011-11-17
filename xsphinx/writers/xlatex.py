@@ -482,7 +482,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.section_summary = []
 
         if self.builder.config.latex_doctype == 'collection':
-            print >>sys.stderr,"DEBUG"
+            #print >>sys.stderr,"DEBUG"
             self.has_parts = False
             for sof in node.traverse(addnodes.start_of_file):
                 try:
@@ -491,10 +491,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 except:
                     pass
 
-            if self.has_parts:
-                self.parts = {}
-            else:
-                self.parts = []
+
+            self.parts = []
 
             current_part = None
             current_chapters = []
@@ -507,7 +505,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                         new_part = self.builder.env.partmap[sof['docname']]
                         print >>sys.stderr, new_part
                         if new_part:
-                            self.parts[current_part] = current_chapters
+                            if current_part:
+                                self.parts.append((current_part,
+                                                   current_chapters))
                             current_part = new_part
                             current_chapters = []
                     except:
@@ -518,7 +518,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.parts.append(id)
 
             if self.has_parts:
-                self.parts[current_part] = current_chapters
+                self.parts.append((current_part, current_chapters))
 
             print >>sys.stderr, current_chapters
             print >>sys.stderr, self.parts
@@ -704,12 +704,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if self.parts != []:
                 self.body.append('\\begin{inthiscollection}\n')
                 if self.has_parts:
-                    parts = [x for x in self.parts.iterkeys()]
+                    parts = [x for (x,y) in self.parts]
                 else:
                     parts = ['\\nameref{%s}'%x for x in self.parts]
-                for p in self.parts:
+                for p in parts:
                     #self.body.append('\\hspace*{-\\alen}\\color{arrowcolor}{\\Forward}\\hspace*{4pt} \\nameref{%s} \\\\ \\vspace*{3pt}\n'%p)
-                    self.body.append('\\item \\nameref{%s}\n'%p)
+                    self.body.append('\\item %s\n'%p)
                 self.body.append('\\end{inthiscollection}\n')
 
 
@@ -1597,6 +1597,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_bullet_list(self, node):
         if not self.compact_list:
             if 'nopoints' in node['classes']:
+                #print >>sys.stderr, "DEBUG"
+                print >>sys.stderr, node
                 if 'compact' in node['classes']:
                     self.body.append('\\begin{compactnopoints}\n' )
                 else:
