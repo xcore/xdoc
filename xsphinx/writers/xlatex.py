@@ -395,6 +395,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             docnum = m.groups(0)[0]
             rest= m.groups(0)[1]
             url = 'http://www.xmos.com/docnum/X%s%s' % (docnum,rest)
+            if self.in_footnote:
+                url = url.replace('#','\\#')
             if 'refexplicit' in node and node['refexplicit']:
                 pre = ''
                 post = ' (see~\\href{%s}{X%s})' % (url,docnum)
@@ -1049,6 +1051,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_collected_footnote(self, node):
         self.in_footnote = True
+        self.body[-1] = self.body[-1].rstrip()
         self.body.append('\\footnote{')
     def depart_collected_footnote(self, node):
         self.in_footnote = False
