@@ -26,6 +26,6 @@ while True:
 
 for i in range(len(lines)):
     if lines[i][0] == '!':
-        print >>sys.stderr,'\n'.join(lines[i:i+6])
+        print >>sys.stderr,''.join(lines[i:i+6])
 
 print ''.join(lines)

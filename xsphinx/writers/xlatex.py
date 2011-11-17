@@ -225,7 +225,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
         if self.has_preface:
-            fullwidth = '\\clearpage\n\\begin{fullwidth} %preface\n'
+            fullwidth = '\\clearpage\n\\begin{fullwidth} %preface\n\\small\\textls{\\textsf{SYNOPSIS}}\n'
         else:
             fullwidth = ''
 
@@ -259,6 +259,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.elements['classopts'] = ''
         else:
             self.elements['classopts'] = 'a4paper, oneside, '
+
 
 
 
@@ -480,6 +481,51 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.sectionlevel = self.top_sectionlevel - 1
         self.section_summary = []
 
+        if self.builder.config.latex_doctype == 'collection':
+            print >>sys.stderr,"DEBUG"
+            self.has_parts = False
+            for sof in node.traverse(addnodes.start_of_file):
+                try:
+                    self.builder.env.partmap[sof['docname']]
+                    self.has_parts = True
+                except:
+                    pass
+
+            if self.has_parts:
+                self.parts = {}
+            else:
+                self.parts = []
+
+            current_part = None
+            current_chapters = []
+            for sof in node.traverse(addnodes.start_of_file):
+                sec = sof.traverse(nodes.section)[0]
+                ids = [id for id in sec['ids'] if id != '']
+                id = sof['docname']+':'+ids[0]
+                if self.has_parts:
+                    try:
+                        new_part = self.builder.env.partmap[sof['docname']]
+                        print >>sys.stderr, new_part
+                        if new_part:
+                            self.parts[current_part] = current_chapters
+                            current_part = new_part
+                            current_chapters = []
+                    except:
+                        pass
+
+                    current_chapters.append(id)
+                else:
+                    self.parts.append(id)
+
+            if self.has_parts:
+                self.parts[current_part] = current_chapters
+
+            print >>sys.stderr, current_chapters
+            print >>sys.stderr, self.parts
+
+
+
+
         for p in node.traverse(nodes.paragraph):
             p['margin_items'] = []
 
@@ -501,11 +547,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.body.insert(self.section_summary_pos, summary)
 
-        if self.builder.config.latex_doctype == 'collection' and self.has_preface:
-            if not self.seen_first_title:
-                self.seen_first_title = True
-                self.body.append('\\end{fullwidth}\n')
-
+        if self.builder.config.latex_doctype == 'collection':
+            self.end_preface()
 
 
         if False and self.bibitems:
@@ -653,6 +696,23 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_transition(self, node):
         pass
 
+    def end_preface(self):
+        if not self.seen_first_title:
+            self.seen_first_title = True
+            if self.has_preface:
+                self.body.append('\\end{fullwidth}\n')
+            if self.parts != []:
+                self.body.append('\\begin{inthiscollection}\n')
+                if self.has_parts:
+                    parts = [x for x in self.parts.iterkeys()]
+                else:
+                    parts = ['\\nameref{%s}'%x for x in self.parts]
+                for p in self.parts:
+                    #self.body.append('\\hspace*{-\\alen}\\color{arrowcolor}{\\Forward}\\hspace*{4pt} \\nameref{%s} \\\\ \\vspace*{3pt}\n'%p)
+                    self.body.append('\\item \\nameref{%s}\n'%p)
+                self.body.append('\\end{inthiscollection}\n')
+
+
     def visit_title(self, node):
         parent = node.parent
 
@@ -680,10 +740,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 modifier = ''
             try:
                 if self.builder.config.latex_doctype == 'collection':
+                    self.end_preface()
 
-                    if not self.seen_first_title and self.has_preface:
-                        self.seen_first_title = True
-                        self.body.append('\\end{fullwidth}\n')
 
                 if self.sectionlevel == self.top_sectionlevel:
                     if self.part:
@@ -1539,30 +1597,49 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_bullet_list(self, node):
         if not self.compact_list:
             if 'nopoints' in node['classes']:
-                self.body.append('\\begin{nopoints}\n' )
+                if 'compact' in node['classes']:
+                    self.body.append('\\begin{compactnopoints}\n' )
+                else:
+                    self.body.append('\\begin{nopoints}\n' )
             else:
-                self.body.append('\\begin{itemize}\n' )
+                if 'compact' in node['classes']:
+                    self.body.append('\\begin{compactpoints}\n' )
+                else:
+                    self.body.append('\\begin{itemize}\n' )
+
 
 
 
     def depart_bullet_list(self, node):
         if not self.compact_list:
             if 'nopoints' in node['classes']:
-                self.body.append('\\end{nopoints}\n\n' )
+                if 'compact' in node['classes']:
+                    self.body.append('\\end{compactnopoints}\n\n' )
+                else:
+                    self.body.append('\\end{nopoints}\n\n' )
             else:
-                self.body.append('\\end{itemize}\n\n' )
+                if 'compact' in node['classes']:
+                    self.body.append('\\end{compactpoints}\n\n' )
+                else:
+                    self.body.append('\\end{itemize}\n\n' )
 
 
     def visit_enumerated_list(self, node):
         if 'steps' in node['classes']:
-            self.body.append('\\begin{steps}\n' )
+            if 'compact' in node['classes']:
+                self.body.append('\\begin{compactsteps}\n' )
+            else:
+                self.body.append('\\begin{steps}\n' )
         else:
             self.body.append('\\begin{enumerate}\n' )
         if 'start' in node:
             self.body.append('\\setcounter{enumi}{%d}\n' % (node['start'] - 1))
     def depart_enumerated_list(self, node):
         if 'steps' in node['classes']:
-            self.body.append('\\end{steps}\n\n' )
+            if 'compact' in node['classes']:
+                self.body.append('\\end{compactsteps}\n\n' )
+            else:
+                self.body.append('\\end{steps}\n\n' )
         else:
             self.body.append('\\end{enumerate}\n\n' )
 
