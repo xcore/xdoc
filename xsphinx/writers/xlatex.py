@@ -98,9 +98,6 @@ BEGIN_DOC = r'''
 '''
 
 FOOTER = r'''
-\renewcommand{\indexname}{%(indexname)s}
-%(printindex)s
-\newpage
 %(toc)s
 %(enddoc)s
 '''
@@ -210,7 +207,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.elements = self.default_elements.copy()
         if self.builder.config.latex_toc:
-            toc = '\\toc\n'
+            toc = '\\newpage\n\\toc\n'
         else:
             toc = ''
 
