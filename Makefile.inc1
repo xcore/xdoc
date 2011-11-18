@@ -134,8 +134,8 @@ FILTER = 2> _build/$(XLATEX)/sphinx.STDERR > _build/$(XLATEX)/sphinx.STDOUT;cat 
 endif
 xlatex: doxygen | $(SOURCES)
 	@echo "Running Sphinx"
+	@rm -rf _build/$(XLATEX)
 	@mkdir -p _build/$(XLATEX)
-	@rm -rf _build/$(XLATEX)/.doctrees
 	@export CURRENT_BUILDER=$(XLATEX) && export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && $(SPHINXBUILD) -c $(XDOC_DIR)/xsphinx -b $(XLATEX) $(ALLSPHINXOPTS) . $(BUILDDIR)/$(XLATEX) $(FILTER)
 	@cp _build/$(XLATEX)/*.tex .
 
