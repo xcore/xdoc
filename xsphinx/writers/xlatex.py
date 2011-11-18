@@ -1850,6 +1850,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
 
+        for i in range(pos, len(self.body)):
+            if re.match('.*\\mbox{',self.body[i-1]):
+                self.body[i] = self.body[i].lstrip()
+
+
+
         if self.para_sloppy:
             self.body[pos] = self.body[pos] + '\\sloppy\n'
 
@@ -2825,15 +2831,21 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if len(name) > len(lhs):
                 lhs = name
 
+        def make_opt(m):
+            inner = m.groups(0)[0]
+            if len(inner.split(' ')) > 1:
+                return '!multiopt!%s!'%inner
+            return '!opt!%s!'%inner
+
         for clause in clauses:
-            clause = clause.replace('!','!exclaim!')
+            clause = clause.replace('!','aaexclaimaa')
             clause = clause.replace('::=','!amp! !is! !amp!')
             clause = re.sub(r'\*one of\*\s*\n','!oneof!',clause)
             clause = clause.replace('\n','!newline!')
             clause = re.sub(r'!newline![ ]*\|','!newline! !amp! !choice! !amp!', clause)
             clause = re.sub(r'``(?P<txt>[^`]*)``','!token!\g<txt>!',clause)
             clause = re.sub(r'~~(?P<txt>[^~]*)~~','!token!\g<txt>!',clause)
-            clause = re.sub(r'<(?P<txt>[^>]*)>\?','!opt!\g<txt>!',clause)
+            clause = re.sub(r'<(?P<txt>[^>]*)>\?',make_opt,clause)
             clause = re.sub(r'<(?P<txt>[^>]*)>\*','!star!\g<txt>!',clause)
             clause = re.sub(r'<(?P<txt>[^>]*)>\+','!plus!\g<txt>!',clause)
             clause = self.encode(clause)
@@ -2842,11 +2854,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             clause = clause.replace('!newline!','\\\\ \n')
             clause = clause.replace('!choice!','\\choice')
             clause = clause.replace('!oneof!','\\oneof \\\\ &&')
-            clause = clause.replace('!exclaim!','!')
             clause = re.sub(r'!token!(?P<txt>[^!]*)!','\\\\token{\g<txt>}',clause)
             clause = re.sub(r'!opt!(?P<txt>[^!]*)!','\\\\ebnf{opt}{\g<txt>}',clause)
+            clause = re.sub(r'!multiopt!(?P<txt>[^!]*)!','\\\\ebnf{opt}{$\\\\langle$\g<txt>$\\\\rangle$}',clause)
             clause = re.sub(r'!star!(?P<txt>[^!]*)!','\\\\ebnf{0}{\g<txt>}',clause)
             clause = re.sub(r'!plus!(?P<txt>[^!]*)!','\\\\ebnf{1}{\g<txt>}',clause)
+            clause = clause.replace('aaexclaimaa','!')
             if 'inline' in node['classes']:
                 if indent:
                     self.body.append('\\begin{indentation}{\\forceindentlen}{0mm}')
