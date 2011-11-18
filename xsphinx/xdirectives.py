@@ -45,6 +45,10 @@ class GeneralFigure(Directive):
         for c in first_para.children:
             cap.append(c.deepcopy())
 
+        txt = cap.astext().strip()
+        if re.match('[Tt]he.*',txt):
+            print >>sys.stderr, "WARNING: Style: Caption '%s' begins with 'The'" % txt
+
         fig.remove(first_para)
         fig.append(cap)
         return [fig]

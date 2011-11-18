@@ -15,6 +15,7 @@ from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives, states
 from docutils.nodes import fully_normalize_name, whitespace_normalize_name
 from docutils.parsers.rst.roles import set_classes
+import re
 
 try:
     import Image as PIL                        # PIL
@@ -163,6 +164,11 @@ class Figure(Image):
             node = nodes.Element()          # anonymous container for parsing
             self.state.nested_parse(self.content, self.content_offset, node)
             first_node = node[0]
+
+            cap = first_node.astext().strip()
+            if re.match('[Tt]he.*',cap):
+                print >>sys.stderr, "WARNING: Style: Caption '%s' begins with 'The'" % cap
+
             if isinstance(first_node, nodes.paragraph):
                 caption = nodes.caption(first_node.rawsource, '',
                                         *first_node.children)

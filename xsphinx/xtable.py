@@ -15,6 +15,9 @@ class Table(RSTTable):
         for x in self.content:
             content += x + "\n"
 
+        if re.match('[Tt]he.*',self.arguments[0]):
+            print >>sys.stderr, "WARNING: Style: Caption '%s' begins with 'The'" % self.arguments[0]
+
         if content.find('.. raw::') != -1:
             table = nodes.table()
             table['classes'] = ['raw']
@@ -32,6 +35,7 @@ class Table(RSTTable):
 
 
             table['caption'] = self.arguments[0]
+
             if 'position' in self.options:
                 table['position'] = self.options['position']
 
