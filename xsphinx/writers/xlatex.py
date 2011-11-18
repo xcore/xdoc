@@ -351,6 +351,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.not_fullwidth = False
         self.part = None
         self.in_options = False
+        self.in_cmd = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -2333,6 +2334,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_emphasis(self, node):
         if hasattr(self,'no_emph') and self.no_emph == 1:
             self.body.append('\\begin{comment}')
+        elif self.in_cmd:
+            self.body.append(r'\optemph{')
         elif not isinstance(node.parent, addnodes.desc_parameter):
             self.body.append(r'\emph{')
     def depart_emphasis(self, node):
@@ -2667,6 +2670,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append('\\texttt{')
         elif 'cmd' in classes:
             self.in_tt = True
+            self.in_cmd = True
             if isinstance(node.parent,nodes.paragraph) and len(node.parent)==1 \
                and not (isinstance(node.parent.parent,nodes.list_item) and \
                         node.parent.parent[0] == node.parent):
@@ -2687,6 +2691,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         elif 'cmd' in classes:
             self.body.append('}')
             self.in_tt = False
+            self.in_cmd = False
         elif 'missing-reference' in classes:
             self.body.append('\\endgroup}')
 
