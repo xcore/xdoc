@@ -2865,7 +2865,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.body.append('\\begin{indentation}{\\forceindentlen}{0mm}')
                 self.body.append('\\emph{')
             else:
-                self.body.append('\n\\begin{grammar}{%s}\n'%lhs)
+                if 'adjustindent' in node:
+                    self.body.append('\n\\begin{grammar}[%s]{%s}\n'%(node['adjustindent'],lhs))
+                else:
+                    self.body.append('\n\\begin{grammar}{%s}\n'%lhs)
             self.body.append(clause)
             if 'inline' in node['classes']:
                 self.body.append('}')

@@ -15,7 +15,7 @@ class Table(RSTTable):
         for x in self.content:
             content += x + "\n"
 
-        if re.match('[Tt]he.*',self.arguments[0]):
+        if len(self.arguments) > 0 and re.match('[Tt]he.*',self.arguments[0]):
             print >>sys.stderr, "WARNING: Style: Caption '%s' begins with 'The'" % self.arguments[0]
 
         if content.find('.. raw::') != -1:
