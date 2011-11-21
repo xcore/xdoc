@@ -222,7 +222,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
         if self.has_preface:
-            fullwidth = '\\clearpage\n\\begin{fullwidth} %preface\n\\small\\textls{\\textsf{SYNOPSIS}}\n'
+            fullwidth = '\\clearpage\n\\begin{fullwidth} %preface\n{\\small\\textls{\\textsf{SYNOPSIS}}}\n'
         else:
             fullwidth = ''
 
@@ -495,31 +495,33 @@ class LaTeXTranslator(nodes.NodeVisitor):
             current_part = None
             current_chapters = []
             for sof in node.traverse(addnodes.start_of_file):
-                sec = sof.traverse(nodes.section)[0]
-                ids = [id for id in sec['ids'] if id != '']
-                id = sof['docname']+':'+ids[0]
-                if self.has_parts:
-                    try:
-                        new_part = self.builder.env.partmap[sof['docname']]
-                        print >>sys.stderr, new_part
-                        if new_part:
-                            if current_part:
-                                self.parts.append((current_part,
-                                                   current_chapters))
-                            current_part = new_part
-                            current_chapters = []
-                    except:
-                        pass
+                container = sof.parent.parent.parent
+                master_doc = self.builder.config.master_doc
+                if 'docname' in container and \
+                   container['docname'] == master_doc:
+                    sec = sof.traverse(nodes.section)[0]
+                    ids = [id for id in sec['ids'] if id != '']
+                    id = sof['docname']+':'+ids[0]
+                    if self.has_parts:
+                        try:
+                            new_part = self.builder.env.partmap[sof['docname']]
+                            print >>sys.stderr, new_part
+                            if new_part:
+                                if current_part:
+                                    self.parts.append((current_part,
+                                                       current_chapters))
+                                current_part = new_part
+                                current_chapters = []
+                        except:
+                            pass
 
-                    current_chapters.append(id)
-                else:
-                    self.parts.append(id)
+                        current_chapters.append(id)
+                    else:
+                        self.parts.append(id)
 
             if self.has_parts:
                 self.parts.append((current_part, current_chapters))
 
-            print >>sys.stderr, current_chapters
-            print >>sys.stderr, self.parts
 
 
 
@@ -1187,28 +1189,50 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'position' in node:
             self.table.position = node['position']
 
+        for cs in node.traverse(nodes.colspec):
+            self.table.colcount +=1
+            self.table.colspec.append(cs.attributes['colwidth'])
+
+        skipcols = [0 for x in range(self.table.colcount)]
 
         max_width = 0
         total_width = 0
         max_col_widths = {}
+        max_single_width = 0
         self.table.max_width_col = 0
         for row in node.traverse(nodes.row):
             colnum = 0
             for col in row.traverse(nodes.entry):
+                while colnum < self.table.colcount and skipcols[colnum] > 0:
+                    skipcols[colnum] -= 1
+                    colnum += 1
+                if col.has_key('morecols'):
+                    n = int(col['morecols'])+1
+                else:
+                    n = 1
+
+                if col.has_key('morerows'):
+                    k = int(col['morerows'])
+                    skipcols[colnum] += 1
+
                 if not colnum in max_col_widths:
                     max_col_widths[colnum] = 0
                 text = col.astext()
                 width = len(text)
-                if width > max_col_widths[colnum]:
+                if n == 1 and width > max_col_widths[colnum]:
                     max_col_widths[colnum] = width
-                if width > max_width:
+                if n == 1 and width > max_width:
                     max_width = len(text)
                     self.table.max_width_col = colnum
-                colnum=colnum+1
+                if width > max_single_width:#
+                    max_single_width = width
+                colnum=colnum+n
 
         total_width = 0
         for col,width in max_col_widths.iteritems():
             total_width += width
+
+        total_width = max(total_width, max_single_width)
 
 
         self.table.narrow = total_width < 70
@@ -1264,9 +1288,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         # Redirect body output until table is finished.
         self._body = self.body
         self.body = self.tablebody
-        for cs in node.traverse(nodes.colspec):
-            self.table.colcount +=1
-            self.table.colspec.append(cs.attributes['colwidth'])
         self.table.skipcols = [0 for x in range(self.table.colcount)]
 
     def depart_table(self, node):
@@ -1312,7 +1333,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'raw' in node['classes']:
             self.body.append('%Raw Table\n')
         elif self.table.longtable:
-            self.body.append('\n\\small \\begin{longtable}[l]')
+            self.body.append('\n\\small')
+            if self.fullwidth:
+                self.body.append('\\setlength\\LTleft{-\\blockindentlen}')
+            self.body.append('\\begin{longtable}')
         elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
             if tc.find('X') != -1 or tc.find('Y') != -1:
@@ -1405,6 +1429,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             pass
         elif self.table.longtable:
             self.body.append('\\end{longtable}\n\n\\normalsize\n')
+            #if self.fullwidth:
+            #    self.body.append('\\end{adjustwidth}')
         elif self.next_table_tabularcolumns:
             tc = self.next_table_tabularcolumns
             if not self.table.narrow or tc.find('X') != -1 or tc.find('Y') != -1:
@@ -1982,6 +2008,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             w = self.latex_image_length(attrs['width'])
             if w:
                 include_graphics_options.append('width=%s' % w)
+        else:
+            include_graphics_options.append('width=\\ScaleIfNeeded')
+
         if attrs.has_key('height'):
             h = self.latex_image_length(attrs['height'])
             if h:
