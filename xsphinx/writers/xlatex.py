@@ -1912,6 +1912,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
         icon_str += ' '.join(self.para_inserts)
 
         first = self.body[pos+1]
+
+        if re.match('Figure~.ref{.*}',first):
+            pos += 1
+            first = self.body[pos+1]
+
         if first == '\\textbf{' and icon_str != '':
             i = string.find(self.body[pos+2],' ')
             first = '\\textbf{%s}'%self.body[pos+2][0:i]

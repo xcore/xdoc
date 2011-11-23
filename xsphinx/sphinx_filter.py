@@ -20,7 +20,8 @@ while True:
         continue
 
     if not (re.match('.*WARNING.*',line) or \
-            re.match('.*ERROR.*',line)):
+            re.match('.*ERROR.*',line) or \
+            re.match('.*SEVERE.*',line)):
         continue
 
     if re.match('.*included in any toctree.*',line):
