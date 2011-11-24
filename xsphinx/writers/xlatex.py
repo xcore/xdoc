@@ -2287,7 +2287,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
             if node.astext() == uri:
                 if isinstance(node.parent,nodes.paragraph) and len(node.parent)==2:
-                    self.body.append('\\triangleurl{%s}' % self.encode_uri(uri))
+                    self.body.append('\\parurl{%s}' % self.encode_uri(uri))
                 else:
                     self.body.append('\\xurl{%s}' % self.encode_uri(uri))
                 raise nodes.SkipNode

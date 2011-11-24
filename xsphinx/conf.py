@@ -434,7 +434,7 @@ if current_builder=='xlatex':
 
 .. |newpage| raw:: latex
 
-               \\wfinalnewpage
+               \\newpage
 
 .. |sect| raw:: latex
 
@@ -468,7 +468,7 @@ else:
 
 .. |newpage|  raw:: latex
 
-               \\wfinalnewpage
+               \\newpage
 
 .. |sect| raw:: html
 
