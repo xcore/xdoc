@@ -13,6 +13,10 @@ SPHINX_MASTER_DOC ?= index
 endif
 
 _SPHINX_MASTER_DOC ?= $(SPHINX_MASTER_DOC)
+
+COLLECTION := $(if $(NO_COLLECTION),,$(strip $(shell export PYTHONPATH=$(PYTHONPATH)$(PYTHONPATH_EXTRA) && export OTHER_DOC_DIRS="$(OTHER_DOC_DIRS)" && python $(XDOC_DIR)/xsphinx/check_toc.py $(_SPHINX_MASTER_DOC) 0 $(if $(WEBGEN),1,0) $(OTHER_DOC_DIRS))))
+
+
 SPHINX_SECTION_NEWPAGE ?= 1
 
 RSYNC = rsync -tur --cvs-exclude --exclude=**.xe --exclude=**.zip --exclude=**_buid** --exclude=**.build**
@@ -24,9 +28,8 @@ lc = $(subst A,a,$(subst B,b,$(subst C,c,$(subst D,d,$(subst E,e,$(subst F,f,$(s
 space :=
 space +=
 
+DO_LATEX = export TEXINPUTS=$(T):_build/xlatex:;python $(XDOC_DIR)/xsphinx/run_latex.py -shell-escape -interaction nonstopmode $1 > _build/xlatex/latex.log; mv *.aux _build/xlatex; mv *.log _build/xlatex;mv *.idx _build/xlatex; mv *.out _build/xlatex;mv -f *.toc _build/xlatex 2> /dev/null;mv $1 _build/xlatex
 
-LATEX_STAGE = pdflatex -interaction nonstopmode $1 > _build/xlatex/latex.log.$2; mv *.aux _build/xlatex; mv *.log _build/xlatex;mv *.idx _build/xlatex; mv *.out _build/xlatex;mv *.toc _build/xlatex;mv $1 _build/xlatex
-DO_LATEX = echo Running LaTeX;export TEXINPUTS=$(T):_build/xlatex:;$(call LATEX_STAGE,$1,0);$(call LATEX_STAGE,$1,1);$(call LATEX_STAGE,$1,2);egrep -A 6 "^!" _build/xlatex/latex.log.2;echo "."
 
 _sources_dir:
 	@mkdir -p .sources
