@@ -270,6 +270,8 @@ latex_documents = [
    u'', 'manual'),
 ]
 
+latex_font_size = ''
+
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
 #latex_logo = None
@@ -349,6 +351,32 @@ class Configurator(object):
             exec(cmd)
         
 
+if 'XMOSCOMPACTPDF' in os.environ:
+    xmos_compact_pdf = (os.environ['XMOSCOMPACTPDF'] == "1")
+    collection = False
+else:
+    xmos_compact_pdf = False
+    collection = True
+
+if 'XMOSMANUALPDF' in os.environ:
+    xmos_manual_pdf = (os.environ['XMOSMANUALPDF'] == "1")
+else:
+    xmos_manual_pdf = False
+
+if xmos_compact_pdf:
+    latex_doctype = 'document'
+    latex_section_numbers = True
+    latex_section_newpage = False
+    latex_toc = False
+    use_sidecaption = True
+elif xmos_manual_pdf:
+    latex_doctype = 'collection'
+    latex_section_numbers = True
+    use_sidecaption = True
+    latex_use_chapters = True
+else:
+    latex_section_numbers = True
+
 
 
 def setup(app):
@@ -369,12 +397,13 @@ def setup(app):
     app.add_config_value('use_sidecaption',[],False)
     app.add_config_value('tiny_verbatim',[],False)
     app.add_config_value('latex_toc',True,False)
-#    app.add_generic_role('srcfile',srcfile.srcfile)
+    app.add_config_value('body_only',False,'')
+    app.add_config_value('collection',False,'')
+
     app.add_generic_role('srcfile',docutils.nodes.literal)
     app.add_generic_role('~',docutils.nodes.term)
     app.add_generic_role('n',docutils.nodes.term)
     app.add_directive('squeeze',xdirectives.SqueezeDirective)
-    latex_doctype='article'
     app.add_directive('toctree', XdocTocTree)
     app.add_directive('table', xtable.Table)
     app.add_role("sub",xroles.subscript)
@@ -382,21 +411,29 @@ def setup(app):
     app.add_role("command",xroles.command)
     app.add_role("tt",xroles.tt)
     app.connect('doctree-resolved',xsphinx.passes.format_references)
+    app.connect('doctree-resolved',xlatex_rearrange_tocs)
+
+
+    app.add_node(xdirectives.newinxc)
+
+    app.add_directive("newinxc", xdirectives.NewInXCDirective)
+    app.add_directive("steps", xdirectives.Steps)
+    app.add_directive("nopoints", xdirectives.NoPoints)
+    app.add_directive("points", xdirectives.Points)
+    app.add_directive("actions", xdirectives.Actions)
+    app.add_directive("xoption", xdirectives.Cmdoption)
+    app.add_directive("commentary", xdirectives.Commentary)
+    app.add_directive("toolsoutput", xdirectives.ToolsOutput)
+    app.add_directive("ebnf", xdirectives.Ebnf)
+    app.add_directive("paragraph-headings", xdirectives. ParagraphHeadingList)
+    app.add_role("ebnf",xdirectives.ebnf_role)
+
+
     xcomment.setup(app, enable_comments)
     try:
         __import__('xmosconf')
     except:
         pass
-
-    # global use_xmoslatex;    use_xmoslatex= True
-    # global latex_doctype;    latex_doctype='collection'
-    # global latex_section_numbers;    latex_section_numbers=True
-    # global use_sidecaption;    use_sidecaption=True
-    # global latex_use_chapters;    latex_use_chapters=True
-    # global latex_section_numbers;    latex_section_numbers=True
-    # global latex_docclass;    latex_docclass='xcore'
-    # global latex_font_size;    latex_font_size=''
-
 
     for mod in extraconf_modules:
         mod = mod.strip()
@@ -410,6 +447,9 @@ def setup(app):
                 extra_setup = getattr(mod, 'setup')
                 extra_setup(app, conf, tags)
                 conf.set()
+
+    app.add_role("menuitem",xdirectives.make_menuitem(current_builder))
+
 # -- Options for breathe --
 
 breathe_projects = { 'auto_doxygen' : '_build/doxygen/xml' }

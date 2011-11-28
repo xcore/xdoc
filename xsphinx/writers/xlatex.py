@@ -35,6 +35,7 @@ xmoslatex_admonitionlabels = { 'attention' : 'attention',
                                'error' : 'danger',
                                'hint' : 'tip',
                                'important' : 'info',
+                               'info' : 'info',
                                'note' : 'info',
                                'tip' : 'tip',
                                'warning' : 'attention',
@@ -94,6 +95,7 @@ BEGIN_DOC = r'''
 %(begin)s
 %(shorthandoff)s
 %(maketitle)s
+\pretoc
 %(fullwidth)s
 '''
 
@@ -143,8 +145,8 @@ class ExtBabel(Babel):
             return '\\shorthandoff{"}'
         return ''
 
-    _ISO639_TO_BABEL = Babel._ISO639_TO_BABEL.copy()
-    _ISO639_TO_BABEL['sl'] = 'slovene'
+    #_ISO639_TO_BABEL = Babel._ISO639_TO_BABEL.copy()
+    #ma_ISO639_TO_BABEL['sl'] = 'slovene'
 
 
 class Table(object):
@@ -207,7 +209,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.elements = self.default_elements.copy()
         if self.builder.config.latex_toc:
-            toc = '\\newpage\n\\toc\n'
+            toc = '\\posttoc\n'
         else:
             toc = ''
 
@@ -226,12 +228,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             fullwidth = ''
 
-        if builder.config.use_xmoslatex:
-            begin = '\\start'
-            enddoc = '\\finish'
-        else:
-            begin = '\\begin{document}'
-            enddoc = '\\end{document}'
+        begin = '\\start'
+        enddoc = '\\finish'
 
         self.seen_first_title = False
         self.elements.update({
@@ -252,10 +250,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
             'enddoc':enddoc
         })
 
-        if builder.config.use_xmoslatex:
-            self.elements['classopts'] = ''
-        else:
-            self.elements['classopts'] = 'a4paper, oneside, '
+
+        self.elements['classopts'] = ''
 
 
 
@@ -352,8 +348,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def astext(self):
         text = HEADER0 % self.elements
-        if not self.builder.config.use_xmoslatex:
-            text = text + NON_XMOS_HEADER % self.elements
         text = text + HEADER1 % self.elements
         text = text + self.highlighter.get_stylesheet() + \
                 u''.join(self.body) + \
@@ -814,33 +808,32 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.context.append('}\n')
         self.in_title = 1
 
-        if self.builder.config.use_xmoslatex:
-            if self.builder.config.latex_doctype == 'collection':
-                tp = self.top_sectionlevel
-            else:
-                tp = self.top_sectionlevel - 1
-            if self.builder.config.latex_doctype == 'collection' and \
-               self.sectionlevel == tp:
+        if self.builder.config.latex_doctype == 'collection':
+            tp = self.top_sectionlevel
+        else:
+            tp = self.top_sectionlevel - 1
+        if self.builder.config.latex_doctype == 'collection' and \
+           self.sectionlevel == tp:
 
-                summary = '%summary!\n'
-                if self.section_summary != []:
-                    summary += "\\begin{inthisdocument}\n"
-                    for item in self.section_summary:
-                        summary += "\item %s\n"%item
-                    summary += "\\end{inthisdocument}\n\n"
+            summary = '%summary!\n'
+            if self.section_summary != []:
+                summary += "\\begin{inthisdocument}\n"
+                for item in self.section_summary:
+                    summary += "\item %s\n"%item
+                summary += "\\end{inthisdocument}\n\n"
 
 
-                if self.section_summary_fullwidth:
-                    summary += '\\begin{fullwidth} % chapter!\n'
+            if self.section_summary_fullwidth:
+                summary += '\\begin{fullwidth} % chapter!\n'
 
-                if self.section_summary_pos:
-                    self.body.insert(self.section_summary_pos, summary)
-                self.section_summary = []
-                self.section_summary_fullwidth = self.fullwidth
+            if self.section_summary_pos:
+                self.body.insert(self.section_summary_pos, summary)
+            self.section_summary = []
+            self.section_summary_fullwidth = self.fullwidth
 
-                self.section_summary_pos = len(self.body)+2
-            if self.sectionlevel == tp+1:
-                self.section_summary_entry_pos = len(self.body)
+            self.section_summary_pos = len(self.body)+2
+        if self.sectionlevel == tp+1:
+            self.section_summary_entry_pos = len(self.body)
 #                self.section_summary.append(str(node[0]))
 
     def depart_title(self, node):
@@ -850,19 +843,18 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.in_title = False
             return
 
-        if self.builder.config.use_xmoslatex:
-            if self.builder.config.latex_doctype == 'collection':
-                tp = self.top_sectionlevel + 1
-            else:
-                tp = self.top_sectionlevel
-            if self.sectionlevel == tp:
-                item = ''
-                valid_ids = [x for x in node['ids'] if x != '']
-                if valid_ids != []:
-                    id = self.curfilestack[-1] + ':' + valid_ids[0]
-                    item = '\\nameref{%s}' % id
+        if self.builder.config.latex_doctype == 'collection':
+            tp = self.top_sectionlevel + 1
+        else:
+            tp = self.top_sectionlevel
+        if self.sectionlevel == tp:
+            item = ''
+            valid_ids = [x for x in node['ids'] if x != '']
+            if valid_ids != []:
+                id = self.curfilestack[-1] + ':' + valid_ids[0]
+                item = '\\nameref{%s}' % id
 
-                self.section_summary.append(item)
+            self.section_summary.append(item)
 
         self.in_title = 0
         self.body.append(self.context.pop())
@@ -883,58 +875,51 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append(self.context.pop())
 
     def visit_desc_list(self, node):
-        if self.builder.config.use_xmoslatex:
-            desctype = None
-            for x in node.traverse(addnodes.desc):
-                desctype = x['desctype']
-                break
-            node['desctype'] = desctype
-            if desctype in toplevel_desc:
-                pass
-            elif desctype != None:
-                self.body.append('\\begin{option}\n\n')
-                self.body.append('\\addtolength{\\codeindent}{22mm}')
-                self.in_options = True
-            else:
-                pass
+        desctype = None
+        for x in node.traverse(addnodes.desc):
+            desctype = x['desctype']
+            break
+        node['desctype'] = desctype
+        if desctype in toplevel_desc:
+            pass
+        elif desctype != None:
+            self.body.append('\\begin{option}\n\n')
+            self.body.append('\\addtolength{\\codeindent}{22mm}')
+            self.in_options = True
+        else:
+            pass
 #                print node
 
     def depart_desc_list(self, node):
-        if self.builder.config.use_xmoslatex:
-            desctype = node['desctype']
-            if desctype in toplevel_desc:
-                pass
-            elif desctype != None:
-                self.body.append('\\addtolength{\\codeindent}{-22mm}')
-                self.body.append('\\end{option}\n\n')
-                self.in_options = False
+        desctype = node['desctype']
+        if desctype in toplevel_desc:
+            pass
+        elif desctype != None:
+            self.body.append('\\addtolength{\\codeindent}{-22mm}')
+            self.body.append('\\end{option}\n\n')
+            self.in_options = False
 
     def visit_desc(self, node):
-        if not self.builder.config.use_xmoslatex:
-            self.body.append('\n\n\\begin{fulllineitems}\n')
-        else:
-            if node['desctype'] in toplevel_desc:
-                estimated_param_len = 0
-                for y in node.traverse(addnodes.desc_signature):
-                    for x in y.traverse(nodes.Text):
-                        estimated_param_len += len(str(x))
-                if self.fullwidth:
-                    long_params = estimated_param_len > 70
-                else:
-                    long_params = estimated_param_len > 65
-                node['long_params'] = long_params
-                for x in node.traverse(addnodes.desc_parameter):
-                    x['long_params'] = long_params
-                if long_params:
-                    self.body.append('\n\\vspace{-1.5\\baselineskip}')
-                self.body.append('\n\n\\texttt{')
-                if long_params:
-                    self.body.append('\\begin{tabbing}')
+        if node['desctype'] in toplevel_desc:
+            estimated_param_len = 0
+            for y in node.traverse(addnodes.desc_signature):
+                for x in y.traverse(nodes.Text):
+                    estimated_param_len += len(str(x))
+            if self.fullwidth:
+                long_params = estimated_param_len > 70
+            else:
+                long_params = estimated_param_len > 65
+            node['long_params'] = long_params
+            for x in node.traverse(addnodes.desc_parameter):
+                x['long_params'] = long_params
+            if long_params:
+                self.body.append('\n\\vspace{-1.5\\baselineskip}')
+            self.body.append('\n\n\\texttt{')
+            if long_params:
+                self.body.append('\\begin{tabbing}')
 
     def depart_desc(self, node):
-        if not self.builder.config.use_xmoslatex:
-            self.body.append('\n\\end{fulllineitems}\n\n')
-
+        pass
 
 
 
@@ -946,38 +931,21 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             hyper = ''
         self.body.append(hyper)
-        if self.builder.config.use_xmoslatex:
-            self.prev_duplicate_sig = False
-            if not node.parent['desctype'] in toplevel_desc:
-                self.body.append('\\item[')
-        else:
-            params = False
-            for child in node:
-                if isinstance(child, addnodes.desc_parameterlist):
-                    params = True
-                    break
-            if params:
-                self.body.append(r'\pysiglinewithargsret{')
-            else:
-                self.body.append(r'\pysigline{')
+        self.prev_duplicate_sig = False
+        if not node.parent['desctype'] in toplevel_desc:
+             self.body.append('\\item[')
         self.in_sig = True
 
 
     def depart_desc_signature(self, node):
-        if self.builder.config.use_xmoslatex:
-            if not node.parent['desctype'] in toplevel_desc:
-                self.body.append(r']')
-                if self.prev_duplicate_sig:
-                    self.body.append('\duplicateoption')
-        else:
-            self.body.append(r'}{} \justifying \setlength{\parindent}{0mm}')
-        self.in_sig = False
+        if not node.parent['desctype'] in toplevel_desc:
+           self.body.append(r']')
+           if self.prev_duplicate_sig:
+               self.body.append('\duplicateoption')
+           self.in_sig = False
 
     def visit_desc_addname(self, node):
-        if self.builder.config.use_xmoslatex:
-            self.body.append(r'\optemph{')
-        else:
-            self.body.append(r'\code{')
+        self.body.append(r'\optemph{')
         self.literal_whitespace += 1
 
     def depart_desc_addname(self, node):
@@ -995,56 +963,37 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_desc_name(self, node):
-        if self.builder.config.use_xmoslatex:
-            if 'duplicate' in node['classes']:
-                if not node.parent['desctype'] in toplevel_desc:
-                    self.body.append(" ]")
-                    if self.prev_duplicate_sig:
-                        self.body.append('\duplicateoption')
-                    self.body.append("\n\\item[")
-                    self.prev_duplicate_sig = True
-        else:
-            self.body.append(r'\bfcode{')
-        self.literal_whitespace += 1
+       if 'duplicate' in node['classes']:
+           if not node.parent['desctype'] in toplevel_desc:
+               self.body.append(" ]")
+               if self.prev_duplicate_sig:
+                   self.body.append('\duplicateoption')
+               self.body.append("\n\\item[")
+               self.prev_duplicate_sig = True
+       self.literal_whitespace += 1
+
     def depart_desc_name(self, node):
-        if self.builder.config.use_xmoslatex:
-            pass
-        else:
-            self.body.append('}')
         self.literal_whitespace -= 1
 
     def visit_desc_parameterlist(self, node):
-        if self.builder.config.use_xmoslatex:
-            self.body.append('(')
-        else:
-            self.body.append('}{\\raggedright ')
+        self.body.append('(')
         self.first_param = 1
     def depart_desc_parameterlist(self, node):
-        if self.builder.config.use_xmoslatex:
-            self.body.append(')')
+        self.body.append(')')
 
     def visit_desc_parameter(self, node):
         if not self.first_param:
-            if self.builder.config.use_xmoslatex:
-                if 'long_params' in node and node['long_params']:
-                    self.body.append(',\\\\ \n\\> ')
-                else:
-                    self.body.append(', ')
+            if 'long_params' in node and node['long_params']:
+                self.body.append(',\\\\ \n\\> ')
             else:
-                self.body.append(',\\\\ ')
+                self.body.append(', ')
         else:
-            if self.builder.config.use_xmoslatex:
-                if 'long_params' in node and node['long_params']:
-                    self.body.append('\\= ')
+            if 'long_params' in node and node['long_params']:
+                self.body.append('\\= ')
             self.first_param = 0
-        if not self.builder.config.use_xmoslatex and \
-           not node.hasattr('noemph'):
-            self.body.append(r'\emph{')
 
     def depart_desc_parameter(self, node):
-        if not self.builder.config.use_xmoslatex and \
-           not node.hasattr('noemph'):
-            self.body.append('}')
+        pass
 
     def visit_desc_optional(self, node):
         self.body.append(r'\optional{')
@@ -1057,46 +1006,40 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('}')
 
     def visit_desc_content(self, node):
-        if self.builder.config.use_xmoslatex:
-            if node.parent['desctype'] in toplevel_desc:
-                if node.parent['long_params']:
-                    self.body.append('\n\\end{tabbing}')
-                    if len(node.children) == 0:
-                        self.body.append('\\vspace{-3mm}\n')
+       if node.parent['desctype'] in toplevel_desc:
+           if node.parent['long_params']:
+               self.body.append('\n\\end{tabbing}')
+               if len(node.children) == 0:
+                   self.body.append('\\vspace{-3mm}\n')
 
-                if self.fullwidth:
-                    indent = '\\blockindentlen'
-                else:
-                    indent = '\\blockindentlen'
-                self.body.append('}\n\n')
+           if self.fullwidth:
+               indent = '\\blockindentlen'
+           else:
+               indent = '\\blockindentlen'
+           self.body.append('}\n\n')
 
-                self.body.append('\\vspace{-2mm}\n')
-                self.body.append('\\sloppy\n')
-                if len(node.children) != 0:
-                    self.body.append('\\begin{indentation*}{%s}{0mm}'%indent)
-                else:
-                    for x in node.parent.traverse(
-                        condition=lambda x: not isinstance(x, addnodes.index),
-                        include_self=False,
-                        descend=False,
-                        ascend=False,
-                        siblings=True):
-                        if isinstance(x, addnodes.desc):
-                            # immediately followed by another desc
-                            self.body.append('\n\\vspace{-0.25\\baselineskip}\n')
-                        break
-        else:
-            if node.children and \
-               not isinstance(node.children[0], nodes.paragraph):
-                # avoid empty desc environment which causes a formatting bug
-                self.body.append('~')
+           self.body.append('\\vspace{-2mm}\n')
+           self.body.append('\\sloppy\n')
+           if len(node.children) != 0:
+               self.body.append('\\begin{indentation*}{%s}{0mm}'%indent)
+           else:
+               for x in node.parent.traverse(
+                   condition=lambda x: not isinstance(x, addnodes.index),
+                   include_self=False,
+                   descend=False,
+                   ascend=False,
+                   siblings=True):
+                   if isinstance(x, addnodes.desc):
+                       # immediately followed by another desc
+                       self.body.append('\n\\vspace{-0.25\\baselineskip}\n')
+                   break
+
     def depart_desc_content(self, node):
-        if self.builder.config.use_xmoslatex:
-            if node.parent['desctype'] in toplevel_desc:
-                if len(node.children) != 0:
-                    self.body.append('\n\\end{indentation*}\n')
-                    #self.body.append('\\vspace{u3mm}\n')
-                self.body.append('\\fussy\n')
+       if node.parent['desctype'] in toplevel_desc:
+           if len(node.children) != 0:
+               self.body.append('\n\\end{indentation*}\n')
+               #self.body.append('\\vspace{u3mm}\n')
+           self.body.append('\\fussy\n')
 
     def visit_refcount(self, node):
         self.body.append("\\emph{")
@@ -1736,7 +1679,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for f in node.traverse(nodes.field_name):
                 f['classes'].append('action')
             self.sectionlevel += 1
-        elif self.builder.config.use_xmoslatex:
+        else:
             node['classes'].append('latex_compact')
             if 'latex_compact' in node['classes']:
                 for f in node.traverse(nodes.field_name):
@@ -1750,9 +1693,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
        if 'actions' in node['classes']:
            self.sectionlevel -= 1
            self.body.append('\\end{actions}\n\n')
-       elif self.builder.config.use_xmoslatex:
-            if 'latex_compact' in node['classes']:
-                self.body.append('\\end{option}\n\\vspace{-3mm}\n\n')
+       else:
+           if 'latex_compact' in node['classes']:
+               self.body.append('\\end{option}\n\\vspace{-3mm}\n\n')
 
 
 #        self.body.append('\\end{description}\\end{quote}\n')
@@ -2123,7 +2066,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_admonition(self, node):
 #        self.body.append('\n\\begin{notice}{note}')
-        self.body.append('\n\na \warnmargin ')
+        self.body.append('\n\na \infomargin ')
     def depart_admonition(self, node):
 #        self.body.append('\\end{notice}\n')
         pass
@@ -2132,29 +2075,21 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def _make_visit_admonition(name):
         def visit_admonition(self, node):
-            if self.builder.config.use_xmoslatex:
-#                print node
+           if 'no-raise' in node['classes']:
+               raise_txt = ''
+           elif len(node.astext()) < 70 or 'raise' in node['classes']:
+               raise_txt = 'raise'
+           else:
+               raise_txt = ''
 
-                if 'no-raise' in node['classes']:
-                    raise_txt = ''
-                elif len(node.astext()) < 70 or 'raise' in node['classes']:
-                    raise_txt = 'raise'
-                else:
-                    raise_txt = ''
+           for p in node.traverse(nodes.paragraph):
 
-                for p in node.traverse(nodes.paragraph):
+               p['margin_items'].append("\%smargin%s" % (xmoslatex_admonitionlabels[name],raise_txt))
+               break
 
-                    p['margin_items'].append("\%smargin%s" % (xmoslatex_admonitionlabels[name],raise_txt))
-                    break
-#                self.body.append('\n\n \\ \\hspace{-0.35cm} \%smarginraise '%xmoslatex_admonitionlabels[name])
-            else:
-                self.body.append(u'\n\n\\textbf{%s}: ' %
-                                 (admonitionlabels[name]))
         return visit_admonition
 
     def _depart_named_admonition(self, node):
-#        if not self.builder.config.use_xmoslatex:
-#            self.body.append('\\end{notice}\n')
         pass
 
     visit_attention = _make_visit_admonition('attention')
@@ -2168,13 +2103,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
     visit_hint = _make_visit_admonition('hint')
     depart_hint = _depart_named_admonition
     visit_important = _make_visit_admonition('important')
-    depart_important = _depart_named_admonition
-    visit_note = _make_visit_admonition('note')
-    depart_note = _depart_named_admonition
-    visit_tip = _make_visit_admonition('tip')
-    depart_tip = _depart_named_admonition
-    visit_warning = _make_visit_admonition('warning')
     depart_warning = _depart_named_admonition
+    visit_note = _make_visit_admonition('info')
+    depart_note = _depart_named_admonition
 
     visit_newinxc = _make_visit_admonition('newinxc')
     depart_newinxc = _depart_named_admonition
@@ -2390,14 +2321,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.no_contractions -= 1
 
     def visit_strong(self, node):
-        if self.builder.config.use_xmoslatex:
-            if str(node[0]) == 'Enum Values:':
-                node.parent.parent[1]['classes'].append('skip')
-                self.body.append('This type has the following values:\n')
-                raise nodes.SkipNode
-            if str(node[0]) == 'Structure Members:':
-                self.body.append('This structure has the following members:\n')
-                raise nodes.SkipNode
+        if str(node[0]) == 'Enum Values:':
+            node.parent.parent[1]['classes'].append('skip')
+            self.body.append('This type has the following values:\n')
+            raise nodes.SkipNode
+        if str(node[0]) == 'Structure Members:':
+            self.body.append('This structure has the following members:\n')
+            raise nodes.SkipNode
 
         self.body.append(r'\textbf{')
         self.in_strong = True
@@ -2610,9 +2540,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 done = 1
         if not done:
             if not 'skip' in node['classes']:
-                #if self.builder.config.use_xmoslatex:
-                #   self.body.append('\\vspace{-3mm}\n')
-                #self.body.append('\\begin{quote}\n')
                 self.body.append('\\begin{indentation}{\\forceindentlen}{0mm}')
             if 'commentary' in node['classes']:
                 self.body.append('\small\n')
@@ -2629,9 +2556,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             #    self.body.append('\\end{commentary}\n')
             if not 'skip' in node['classes']:
                 self.body.append('\\end{indentation}')
-                #self.body.append('\\end{quote}\n')
-                #if self.builder.config.use_xmoslatex:
-                #    self.body.append('\\vspace{-3mm}\n')
 
     # option node handling copied from docutils' latex writer
 
