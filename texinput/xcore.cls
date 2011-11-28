@@ -417,7 +417,6 @@
 \newcommand{\Y}{Y}
 \newcommand{\N}{N}
 \newcommand{\token}[1]{\textnormal{\texttt{#1}}}
-\input{terminology}
 \newcommand{\pfinalpagebreak}{}
 \newcommand{\wfinalkillfooter}{}
 \newcommand{\wfinalnewpage}{}

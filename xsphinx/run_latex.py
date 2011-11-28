@@ -18,7 +18,7 @@ while True:
     found_rerun = False
     for line in lines:
         #print >>sys.stderr,line
-        if re.match('.*[rR]e-?run.*',line):
+        if re.match('.*[rR]e-?run to get.*',line):
             found_rerun = True
 
     if not found_rerun:
