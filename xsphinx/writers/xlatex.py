@@ -2103,9 +2103,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
     visit_hint = _make_visit_admonition('hint')
     depart_hint = _depart_named_admonition
     visit_important = _make_visit_admonition('important')
-    depart_warning = _depart_named_admonition
-    visit_note = _make_visit_admonition('info')
+    depart_important = _depart_named_admonition
+    visit_note = _make_visit_admonition('note')
     depart_note = _depart_named_admonition
+    visit_tip = _make_visit_admonition('tip')
+    depart_tip = _depart_named_admonition
+    visit_warning = _make_visit_admonition('warning')
+    depart_warning = _depart_named_admonition
 
     visit_newinxc = _make_visit_admonition('newinxc')
     depart_newinxc = _depart_named_admonition
