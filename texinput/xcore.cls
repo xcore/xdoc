@@ -434,7 +434,6 @@
 
 % For the sphinx generator we specify the toc at the front
 
-\newcommand{\pretoc}{\newpage\toc}
+\newcommand{\pretoc}{\toc}
 \newcommand{\posttoc}{}
-
-
+\renewcommand{\printtoctitle}[1]{}
