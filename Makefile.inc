@@ -3,7 +3,7 @@ no_target:
 
 export
 
-RSYNC = rsync -tur --cvs-exclude --exclude=**.xe --exclude=**.zip --exclude=**_buid** --exclude=**.build**
+RSYNC = rsync -tur --cvs-exclude --exclude=**.xe --exclude=**.zip --exclude=**_buid** --exclude=**.build** --exclude=**.sources**
 
 # Need to copy in linked dirs before anything else
 ifeq ($(OTHER_DOC_DIRS),)
