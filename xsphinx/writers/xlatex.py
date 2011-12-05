@@ -942,7 +942,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
            self.body.append(r']')
            if self.prev_duplicate_sig:
                self.body.append('\duplicateoption')
-           self.in_sig = False
+        self.in_sig = False
 
     def visit_desc_addname(self, node):
         self.body.append(r'\optemph{')
