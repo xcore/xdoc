@@ -345,6 +345,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.part = None
         self.in_options = False
         self.in_cmd = False
+        self.in_list_item = False
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -791,7 +792,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(r'\textbf{')
             self.context.append('}\n\n\medskip\n\n')
         elif isinstance(parent, nodes.Admonition):
-            self.body.append('{')
+            self.body.append('\\textbf{')
             self.context.append('}\n')
         elif isinstance(parent, nodes.table):
             self._caption_saved_body = self.body
@@ -1178,7 +1179,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         total_width = max(total_width, max_single_width)
 
 
-        self.table.narrow = total_width < 70
+
+        self.table.narrow = \
+            (self.next_table_tabularcolumns != None) or (total_width < 70)
 
         if 'narrow' in node['classes']:
             self.table.narrow = True
@@ -1629,8 +1632,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
         # Append "{}" in case the next character is "[", which would break
         # LaTeX's list environment (no numbering and the "[" is not printed).
         self.body.append(r'\item   ')
+        self.in_list_item = True
+
     def depart_list_item(self, node):
         self.body.append('\n')
+        self.in_list_item = False
 
     def visit_definition_list(self, node):
         self.body.append('\\begin{description}\n')
@@ -1773,7 +1779,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not isinstance(node.parent, nodes.entry) and \
            not isinstance(node.parent, nodes.strong) and \
            not isinstance(node.parent, nodes.field_body) and \
-           not isinstance(node.parent, collected_footnote):
+           not isinstance(node.parent, collected_footnote) and \
+           not isinstance(node.parent, nodes.list_item):
             self.body.append('\n\n')
         else:
             self.body.append('')
@@ -2066,7 +2073,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_admonition(self, node):
 #        self.body.append('\n\\begin{notice}{note}')
-        self.body.append('\n\na \infomargin ')
+        self.body.append('\n\n')
+
     def depart_admonition(self, node):
 #        self.body.append('\\end{notice}\n')
         pass
@@ -2457,13 +2465,17 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         options=''
         if max_line_width > 65:
-            options='basicstyle=\\ttfamily\\Smaller,'
+            options='basicstyle=\\ttfamily\\Smaller'
 
 #        print code
 #        hlcode = self.highlighter.highlight_block(code, lang, linenos)
 #        print hlcode
 #        hlcode = '\begin{Verbatim}\n' + code + '\n\end{Verbatim}\n'
-        hlcode = '\\begin{lstlisting}[%sresetmargins=true]\n'%options + code
+
+        if not self.in_list_item:
+            options += ',resetmargins=true'
+
+        hlcode = '\\begin{lstlisting}[%s]\n'%options + code
 
         # workaround for Unicode issue
         hlcode = hlcode.replace(u'€', u'@texteuro[]')
