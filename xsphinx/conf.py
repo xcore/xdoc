@@ -497,6 +497,18 @@ if current_builder=='xlatex':
 
              $\\ne$
 
+.. |reddot| raw:: latex
+
+             {\\color{red}{\\LARGE\\textbullet}}
+
+.. |amberdot| raw:: latex
+
+             {\\color{xmosyellow}{\\LARGE\\textbullet}}
+
+.. |greendot| raw:: latex
+
+             {\\color{green}{\\LARGE\\textbullet}}
+
         '''
 else:
         rst_epilog = """
@@ -529,6 +541,19 @@ else:
 .. |ne| raw:: html
 
              &ne;
+
+.. |reddot| raw:: html
+
+             <span class="red">&bull;</span>
+
+.. |amberdot| raw:: html
+
+            <span class="amber">&bull;</span>
+
+.. |greendot| raw:: html
+
+            <span class="green">&bull;</span>
+
         """
 
 rst_epilog += """
