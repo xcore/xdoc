@@ -1776,11 +1776,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.para_inserts = []
         self.para_icon_insert_point = len(self.body)
         self.para_sloppy = False
+        para_index = node.parent.index(node)
         if not isinstance(node.parent, nodes.entry) and \
            not isinstance(node.parent, nodes.strong) and \
            not isinstance(node.parent, nodes.field_body) and \
            not isinstance(node.parent, collected_footnote) and \
-           not isinstance(node.parent, nodes.list_item):
+           not (isinstance(node.parent, nodes.list_item) and para_index==0):
             self.body.append('\n\n')
         else:
             self.body.append('')
