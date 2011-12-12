@@ -2513,7 +2513,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 tinyv = '\\small'
 
-            self.body.append('\n' + hlcode + '\\end{lstlisting}')
+            self.body.append('\n' + hlcode + '\\end{lstlisting}\n\n')
 #            self.body.append('\n\\vspace{0.25\\baselineskip}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{%s \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.25\\baselineskip}\n' % tinyv)
         self.verbatim = None
     visit_doctest_block = visit_literal_block
