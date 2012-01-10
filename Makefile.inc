@@ -46,4 +46,4 @@ $1: $(if $(filter clean,$1),,$(LINKED_DIRS))
 	@make --no-print-directory -f $(XDOC_DIR)/Makefile.inc1 $1
 endef
 
-$(foreach goal,$(sort html pdf xmoshtml xmospdf justlatex xref all_xref cognidox draft issue clean realclean webgen),$(eval $(call DISPATCH,$(goal))))
+$(foreach goal,$(sort html pdf xmoshtml xdehtml xmospdf justlatex xref all_xref cognidox draft issue clean realclean webgen),$(eval $(call DISPATCH,$(goal))))
