@@ -19,7 +19,7 @@ COLLECTION := $(if $(NO_COLLECTION),,$(strip $(shell export PYTHONPATH=$(PYTHONP
 
 SPHINX_SECTION_NEWPAGE ?= 1
 
-RSYNC = rsync -tur --cvs-exclude --exclude=**.xe --exclude=**.zip --exclude=**_buid** --exclude=**.build**
+RSYNC = rsync -tur --cvs-exclude --exclude=**.xe --exclude=**.zip --exclude=**_buid** --exclude=**.build**  --exclude=**.sources**
 # default target
 LATEX_CMD = latex
 
