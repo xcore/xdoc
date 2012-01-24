@@ -109,7 +109,9 @@ ifeq ($(DOXYGEN_DIRS),)
 doxygen:
 	@echo -n
 else
-doxygen: $(if $(NOCOPY),,$(foreach x, $(DOXYGEN_DIRS), $(x).copy_doxygen))
+doxygen_copy: $(foreach x, $(DOXYGEN_DIRS), $(x).copy_doxygen)
+	@echo -n
+doxygen: $(if $(NOCOPY),,doxygen_copy)
 	@echo "Running Doxygen"
 	@cp $(XDOC_DIR)/xsphinx/Doxyfile $(DOC_DIR)/Doxyfile
 	@sed -i -e 's/--INPUT--/.doxygen/g' Doxyfile
