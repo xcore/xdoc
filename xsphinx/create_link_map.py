@@ -34,6 +34,9 @@ for path in ['.'] + paths:
     if lines != []:
         rpath = os.path.join(rpath,lines[0][:-2])
 
+    if len(rpath) > 4 and rpath[-4:] == '.git':
+            rpath = rpath[:-4]
+
     if path == '.':
         mapfile.write(rpath + "\n")
     else:
