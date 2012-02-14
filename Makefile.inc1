@@ -135,7 +135,7 @@ singlehtml: doxygen | $(SOURCES)
 
 ifeq ($(VERBOSE),1)
 else
-FILTER = 2> _build/$(XLATEX)/sphinx.STDERR > _build/$(XLATEX)/sphinx.STDOUT;cat _build/$(XLATEX)/sphinx.STDERR | python $(XDOC_DIR)/xsphinx/sphinx_filter.py
+FILTER = 2> _build/$(XLATEX)/sphinx.STDERR > _build/$(XLATEX)/sphinx.STDOUT;cat _build/$(XLATEX)/sphinx.STDERR | python $(XDOC_DIR)/xsphinx/sphinx_filter.py _build/sphinx.out
 endif
 xlatex: doxygen | $(SOURCES)
 	@echo "Running Sphinx"

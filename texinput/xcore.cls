@@ -13,7 +13,6 @@
 \ProcessOptions
 
 \LoadClass[oneside,onecolumn,article,10pt]{memoir}
-
 % Set conservative values to prevent the need
 % for too much manual typesetting
 \widowpenalty=10000
@@ -437,3 +436,4 @@
 \newcommand{\pretoc}{\toc}
 \newcommand{\posttoc}{}
 \renewcommand{\printtoctitle}[1]{}
+

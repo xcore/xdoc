@@ -1,42 +1,66 @@
 import sys
 import re
 
-output = False
-seen_exception = False
-seen_debug = False
-while True:
-    line = sys.stdin.readline()
-    if line == '':
-        break
+class XSphinxFilter(object):
 
-    if re.match('Exception.*',line) or re.match('Configuration error.*',line):
-        seen_exception = True
+    def __init__(self, stdout, stderr, logfile_path):
+        self.output = False
+        self.seen_exception = False
+        self.seen_debug = False
+        self.stdout = stdout
+        self.stderr = stderr
+        self.logfile = open(logfile_path,"w")
+        self.logfile_path = logfile_path
 
-    if re.match('.*DEBUG.*',line):
-        seen_debug = True
+    def finish(self):
+        self.logfile.close()
+        if self.output:
+            self.stdout.write("Full details of errors/warnings can be found in %s\n" % self.logfile_path)
 
-    if seen_exception or seen_debug:
-        sys.stdout.write(line)
-        continue
+        return self.stdout, self.stderr
 
-    if not (re.match('.*WARNING.*',line) or \
-            re.match('.*ERROR.*',line) or \
-            re.match('.*SEVERE.*',line)):
-        continue
+    def flush(self):
+        self.stdout.flush()
 
-    if re.match('.*included in any toctree.*',line):
-        continue
+    def write(self, line):
+        self.logfile.write(line)
+#        self.stdout.write(line)
+#        return
+        if re.match('Exception.*',line) or re.match('IOError.*',line) or re.match('Configuration error.*',line):
+            self.seen_exception = True
 
-    m = re.match(r'.*/([^/:]*):(.*)', line)
+        if re.match('.*DEBUG.*',line):
+            self.seen_debug = True
 
-    if m:
-        line = '%s:%s\n' % (m.groups(0)[0],m.groups(0)[1])
+        if self.seen_exception or self.seen_debug:
+            self.stdout.write(line)
+            return
 
-    output = True
-    sys.stdout.write(line)
+        if not (re.match('.*WARNING.*',line) or \
+                re.match('.*ERROR.*',line) or \
+                re.match('.*SEVERE.*',line)):
+            return
 
-if output:
-    print "Full details of errors/warnings can be found in _build/.../sphinx.STDERR"
+        if re.match('.*included in any toctree.*',line):
+            return
 
-if seen_exception:
-    exit(1)
+        m = re.match(r'.*/([^/:]*):(.*)', line)
+
+        if m:
+            line = '%s:%s\n' % (m.groups(0)[0],m.groups(0)[1])
+
+        self.output = True
+        self.stdout.write(line)
+
+
+
+if __name__ == "__main__":
+    filt = XSphinxFilter(sys.stdout,sys.stderr,sys.argv[1])
+    while True:
+        line = sys.stdin.readline()
+        if line == '':
+            break
+        filt.write(line)
+    filt.finish()
+    if filt.seen_exception:
+        exit(1)
