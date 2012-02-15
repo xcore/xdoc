@@ -15,6 +15,11 @@ def checktoc(master, linked_dirs = None, path='.'):
 
     f = open(os.path.join(path,master));lines = f.readlines();f.close()
 
+    title = None
+    for line in lines:
+        if not title and not re.match('^[-=.!][-=.!]+',line):
+            title = line.strip()
+
     toc = []
     in_toc = False
     toc_indent = None
@@ -37,14 +42,14 @@ def checktoc(master, linked_dirs = None, path='.'):
                 line = m.group(2)
             toc.append(line)
 
-    return toc
+    return toc,title
 
 if __name__ == "__main__":
     master = sys.argv[1] + '.rst'
     docnum = sys.argv[2]
     webgen = (sys.argv[3] == '1')
 
-    toc = checktoc(master)
+    toc,_ = checktoc(master)
     i = 0
     for entry in toc:
         print entry + "___%s" % i

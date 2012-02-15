@@ -133,6 +133,7 @@ def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
         shutil.copy(os.path.join(doc_dir,outfile),
                     os.path.join(doc_dir,master+'.pdf'))
         os.remove(texfile)
+        os.remove(outfile)
 
     for line in lines:
         filt.write(line)
@@ -235,13 +236,15 @@ def build(path, config, target = 'html',subdoc=None):
         sys.stderr.write("xdoc: Unknown target %s\n"%target)
         exit(1)
 
-    toc = checktoc(config['SPHINX_MASTER_DOC']+".rst",
+    toc,title = checktoc(config['SPHINX_MASTER_DOC']+".rst",
                    config['OTHER_DOC_DIRS'],
                    path=path)
     if toc == []:
         os.environ['XMOSCOMPACTPDF']='1'
     else:
         os.environ['XMOSMANUALPDF']='1'
+
+    os.environ['SPHINX_PROJECT_NAME'] = title
 
     config['TOC'] = toc
 
