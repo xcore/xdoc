@@ -182,4 +182,7 @@ class Figure(Image):
                 return [figure_node, error]
             if len(node) > 1:
                 figure_node += nodes.legend('', *node[1:])
+        else:
+            self.state.document.reporter.error('Figure without caption\n',
+                                               line = self.lineno)
         return [figure_node]

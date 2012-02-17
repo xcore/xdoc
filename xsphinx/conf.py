@@ -176,7 +176,7 @@ html_theme_path = ["themes",user_theme_dir]
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "%s (%s)"%(project, release)
+html_short_title = "%s"%(project)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -353,35 +353,39 @@ class Configurator(object):
             exec(cmd)
         
 
-if 'XMOSCOMPACTPDF' in os.environ:
-    xmos_compact_pdf = (os.environ['XMOSCOMPACTPDF'] == "1")
-    collection = False
-else:
-    xmos_compact_pdf = False
-    collection = True
-
-if 'XMOSMANUALPDF' in os.environ:
-    xmos_manual_pdf = (os.environ['XMOSMANUALPDF'] == "1")
-else:
-    xmos_manual_pdf = False
-
-if xmos_compact_pdf:
-    latex_doctype = 'document'
-    latex_section_numbers = True
-    latex_section_newpage = False
-    latex_toc = False
-    use_sidecaption = True
-elif xmos_manual_pdf:
-    latex_doctype = 'collection'
-    latex_section_numbers = True
-    use_sidecaption = True
-    latex_use_chapters = True
-else:
-    latex_section_numbers = True
-
-
 
 def setup(app):
+    global xmos_compact_pdf, collection, xmos_manual_pdf, latex_doctype
+    global latex_section_numbers, latex_section_newpage, latex_toc
+    global use_sidecaption, latex_use_chapters
+
+    if 'XMOSCOMPACTPDF' in os.environ:
+        xmos_compact_pdf = (os.environ['XMOSCOMPACTPDF'] == "1")
+        collection = False
+    else:
+        xmos_compact_pdf = False
+        collection = True
+
+    if 'XMOSMANUALPDF' in os.environ:
+        xmos_manual_pdf = (os.environ['XMOSMANUALPDF'] == "1")
+    else:
+        xmos_manual_pdf = False
+
+    if xmos_compact_pdf:
+        latex_doctype = 'document'
+        latex_section_numbers = True
+        latex_section_newpage = False
+        latex_toc = False
+        use_sidecaption = True
+    elif xmos_manual_pdf:
+        latex_doctype = 'collection'
+        latex_section_numbers = True
+        use_sidecaption = True
+        latex_use_chapters = True
+    else:
+        latex_section_numbers = True
+
+
     app.add_builder(XLaTeXBuilder)
     if current_builder in ['xlatex']:
         app.connect('doctree-resolved',xlatex_rearrange_tocs)

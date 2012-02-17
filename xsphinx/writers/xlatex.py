@@ -2018,6 +2018,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_figure(self, node):
         self._figsavedbody = self.body
         self.body = []
+        self.caption = None
 
     def depart_figure(self, node):
         ids = ''
@@ -2039,6 +2040,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         node['align'] = 'left'
         self.body.append('\\begin{figure}[%s]\n'%position)
+        if not self.caption:
+            print >>sys.stderr,"ERROR: LaTeX generator error: No caption for figure\n"
+            exit(1)
         cap = self.caption.strip()
 
         self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))

@@ -21,28 +21,46 @@ config_defaults = {'OTHER_DOC_DIRS':[],
                    'SOURCE_INCLUDE_DIRS':[],
                    'SPHINX_MASTER_DOC':'index'}
 
+def get_master_doc(path):
+    rstfiles = [f for f in os.listdir(path) if re.match('.*\.rst$',f)]
+    if 'index.rst' in rstfiles:
+        return 'index'
+    elif len(rstfiles) == 1:
+        return rstfiles[0][:-4]
+    else:
+        sys.stderr.write("Cannot determine main rst file")
+
+def get_title(path):
+    toc,title = checktoc(os.path.join(path,get_master_doc(path)+'.rst'))
+    return title
+
+
 def get_config(path):
     config = {}
-    f = open(os.path.join(path,'Makefile'))
-    lines = f.readlines()
-    f.close()
+    if os.path.exists(os.path.join(path,'Makefile')):
+        f = open(os.path.join(path,'Makefile'))
+        lines = f.readlines()
+        f.close()
+    else:
+        lines = ''
     for line in lines:
-        m = re.match('(.*)=(.*)',line)
+        m = re.match('([^\+]*)(\+?)=(.*)',line)
         if m:
             key = m.groups(0)[0].strip()
-            value = m.groups(0)[1].strip()
-            if key in config_defaults and config_defaults[key] == []:
+            plus = m.groups(0)[1].strip()
+            value = m.groups(0)[2].strip()
+            is_list = key in config_defaults and config_defaults[key] == []
+
+            if is_list:
                 value = [x for x in value.split(' ') if x != '']
-            config[key] = value
+
+            if is_list and plus=='+' and key in config:
+                config[key] += value
+            else:
+                config[key] = value
 
     if not 'SPHINX_MASTER_DOC' in config:
-        rstfiles = [f for f in os.listdir(path) if re.match('.*\.rst$',f)]
-        if 'index.rst' in rstfiles:
-            config['SPHINX_MASTER_DOC'] = 'index'
-        elif len(rstfiles) == 1:
-            config['SPHINX_MASTER_DOC'] = rstfiles[0][:-4]
-        else:
-            sys.stderr.write("Cannot determine main rst file")
+        config['SPHINX_MASTER_DOC'] = get_master_doc(path)
 
     for key,default_value in config_defaults.items():
         if not key in config:
@@ -116,6 +134,10 @@ def doDoxygen(xdoc_dir, doc_dir):
 def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
 
     texfile = os.path.join(doc_dir,master+".tex")
+    if not os.path.exists(os.path.join(build_dir,master+".tex")):
+        print "Cannot find latex file. Something must have gone wrong"
+        exit(1)
+
     shutil.copy(os.path.join(build_dir,master+".tex"),texfile)
     os.environ['TEXINPUTS'] += build_dir + ":"
     filt = XSphinxFilter(sys.stdout, sys.stderr, os.path.join(build_dir,'latex.output'))
@@ -239,9 +261,12 @@ def build(path, config, target = 'html',subdoc=None):
     toc,title = checktoc(config['SPHINX_MASTER_DOC']+".rst",
                    config['OTHER_DOC_DIRS'],
                    path=path)
+
     if toc == []:
         os.environ['XMOSCOMPACTPDF']='1'
+        os.environ['XMOSMANUALPDF']='0'
     else:
+        os.environ['XMOSCOMPACTPDF']='0'
         os.environ['XMOSMANUALPDF']='1'
 
     os.environ['SPHINX_PROJECT_NAME'] = title
@@ -298,6 +323,9 @@ xmos_targets = ['xmoshtml','xdehtml','xmospdf','issue','draft','xref']
 
 def main(target,path='.'):
     print "Building documentation target: %s" % target
+    curdir = os.path.abspath(os.curdir)
+    os.chdir(path)
+    path = '.'
     if target in ['issue','draft']:
         config = prebuild(path,xmos_prebuild=True, xmos_publish=True)
         build(path,config,target='xref')
@@ -315,6 +343,7 @@ def main(target,path='.'):
     if target in ['issue','draft']:
         from xmossphinx.upload_issue import upload
         upload(path,is_draft=(target==['draft']))
+    os.chdir(curdir)
 
 if __name__ == "__main__":
     target = sys.argv[1]
