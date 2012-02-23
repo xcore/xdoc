@@ -62,6 +62,7 @@ def get_config(path):
     if not 'SPHINX_MASTER_DOC' in config:
         config['SPHINX_MASTER_DOC'] = get_master_doc(path)
 
+
     for key,default_value in config_defaults.items():
         if not key in config:
             config[key] = default_value
@@ -258,9 +259,10 @@ def build(path, config, target = 'html',subdoc=None):
         sys.stderr.write("xdoc: Unknown target %s\n"%target)
         exit(1)
 
+    print path
     toc,title = checktoc(config['SPHINX_MASTER_DOC']+".rst",
-                   config['OTHER_DOC_DIRS'],
-                   path=path)
+                         config['OTHER_DOC_DIRS'],
+                         path=path)
 
     if toc == []:
         os.environ['XMOSCOMPACTPDF']='1'

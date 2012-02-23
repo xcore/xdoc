@@ -361,7 +361,7 @@ def setup(app):
 
     if 'XMOSCOMPACTPDF' in os.environ:
         xmos_compact_pdf = (os.environ['XMOSCOMPACTPDF'] == "1")
-        collection = False
+        collection = not xmos_compact_pdf
     else:
         xmos_compact_pdf = False
         collection = True
@@ -384,7 +384,6 @@ def setup(app):
         latex_use_chapters = True
     else:
         latex_section_numbers = True
-
 
     app.add_builder(XLaTeXBuilder)
     if current_builder in ['xlatex']:
