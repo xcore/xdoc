@@ -35,6 +35,14 @@ def get_title(path):
     return title
 
 
+def expand(s, config):
+    for key, value in config.items():
+        if type(value) == list:
+            continue
+        s = s.replace("$(%s)"%key, value)
+        s = s.replace("$%s"%key, value)
+    return s
+
 def get_config(path):
     config = {}
     if os.path.exists(os.path.join(path,'Makefile')):
@@ -43,7 +51,15 @@ def get_config(path):
         f.close()
     else:
         lines = ''
+    prev = None
     for line in lines:
+        if prev:
+            line = prev + line
+            prev = None
+        if len(line)>1 and line[-2] == '\\':
+            prev = line[:-2]
+            continue
+        line = expand(line, config)
         m = re.match('([^\+]*)(\+?)=(.*)',line)
         if m:
             key = m.groups(0)[0].strip()
@@ -229,6 +245,8 @@ def import_xmos(config):
     if not xmossphinx:
         sys.path.append(os.path.join(config['XDOC_DIR'],'..','infr_docs'))
         sys.path.append(os.path.join(config['XDOC_DIR'],'..','infr_docs','xmossphinx'))
+        sys.path.append(os.path.join(config['XDOC_DIR'],'..','infr_docs','tool_xpd'))
+
         import xmossphinx
 
 
@@ -328,7 +346,17 @@ def main(target,path='.'):
     curdir = os.path.abspath(os.curdir)
     os.chdir(path)
     path = '.'
-    if target in ['issue','draft']:
+    if target == 'swlinks':
+        config = get_config(path)
+        import_xmos(config)
+        from xmossphinx.xmos_check_swlinks import check_swlinks
+        check_swlinks(path)
+    elif target == 'update_sw':
+        config = get_config(path)
+        import_xmos(config)
+        from xmossphinx.xmos_check_swlinks import update_sw
+        update_sw(path)
+    elif target in ['issue','draft']:
         config = prebuild(path,xmos_prebuild=True, xmos_publish=True)
         build(path,config,target='xref')
         for x in config['TOC']:
