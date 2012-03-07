@@ -146,6 +146,7 @@ def doDoxygen(xdoc_dir, doc_dir):
         if not re.match('.*REFERENCE.*',line):
             print line
 
+    process.wait()
     os.remove(doxyfile_path)
 
 def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
@@ -176,7 +177,8 @@ def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
 
     for line in lines:
         filt.write(line)
-    filt.finish()
+
+    sys.stdout, sys.stderr = filt.finish()
 
 def find_files(path):
     fs = []
@@ -277,7 +279,6 @@ def build(path, config, target = 'html',subdoc=None):
         sys.stderr.write("xdoc: Unknown target %s\n"%target)
         exit(1)
 
-    print path
     toc,title = checktoc(config['SPHINX_MASTER_DOC']+".rst",
                          config['OTHER_DOC_DIRS'],
                          path=path)
@@ -311,12 +312,14 @@ def build(path, config, target = 'html',subdoc=None):
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
 
+
     os.makedirs(build_dir)
 
     if target == 'xref':
         print "Getting xref info"
     else:
         print "Running Sphinx"
+
     filt = XSphinxFilter(sys.stdout, sys.stderr, os.path.join(build_dir,'sphinx.output'))
     sys.stdout = filt
     sys.stderr = filt
@@ -340,8 +343,26 @@ def build(path, config, target = 'html',subdoc=None):
 
 xmos_targets = ['xmoshtml','xdehtml','xmospdf','issue','draft','xref']
 
+class StdInChecker(object):
+    """ This class is to try and debug a strange occurrence where sys.stdin
+        gets closed somewhere. Putting this class in actually stopped it
+        happening so I'm going to leave it here whilst it is under
+        investigation.
+    """
+    def __init__(self, f):
+        self.f = f
+
+    def read(self):
+        return self.f.read()
+
+    def readline(self):
+        return self.f.readline()
+
+    def close(self):
+        raise BaseException
 
 def main(target,path='.'):
+    sys.stdin = StdInChecker(sys.stdin)
     print "Building documentation target: %s" % target
     curdir = os.path.abspath(os.curdir)
     os.chdir(path)
@@ -367,13 +388,18 @@ def main(target,path='.'):
         config = prebuild(path,xmos_prebuild=(target in xmos_targets))
         build(path,config,target=target)
 
+
     if target in ['issue','draft','pubdraft','pubissue']:
         make_zip(path, config)
 
+
     if target in ['issue','draft']:
         from xmossphinx.upload_issue import upload
-        upload(path,is_draft=(target==['draft']))
+        upload(path,is_draft=(target=='draft'))
     os.chdir(curdir)
+
+
+
 
 if __name__ == "__main__":
     target = sys.argv[1]
