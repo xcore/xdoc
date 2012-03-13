@@ -93,6 +93,20 @@ def get_config(path):
         except TypeError:
             os.environ[key] = ' '.join(value)
 
+    for key,value in config.items():
+        try:
+            if '..' in value:
+                print value
+                value = [x for x in value if x != '..']
+                for d in os.listdir('..'):
+                    if os.path.isdir(os.path.join('..',d)) and \
+                            not d == os.path.basename(os.path.abspath('.')):
+                        value.append(os.path.join('..',d))
+
+                config[key] = value
+        except:
+            pass
+
     return config
 
 def rsync_dir(d,destroot):
@@ -113,6 +127,7 @@ def rsync_dir(d,destroot):
                     if src_mod_time - dst_mod_time < 1:
                         copyfile = False
                 if copyfile:
+                    pass
                     shutil.copy2(src, dst)
 
 
@@ -120,7 +135,7 @@ def rsync_dir(d,destroot):
 
 def rsync_dirs(dirlist, dest):
     for d in dirlist:
-        rsync_dir(d,os.path.join(dest,os.path.basename(d)))
+            rsync_dir(d,os.path.join(dest,os.path.basename(d)))
 
 
 def doDoxygen(xdoc_dir, doc_dir):
@@ -236,8 +251,7 @@ def prebuild(path, xmos_prebuild=False,xmos_publish=False,docnum=None):
             config['DOCNUM'] = docnum
             os.environ['DOCNUM'] = docnum
 
-    if config['DOXYGEN_DIRS'] != []:
-        doDoxygen(config['XDOC_DIR'], config['DOC_DIR'])
+    doDoxygen(config['XDOC_DIR'], config['DOC_DIR'])
 
 
     return config
@@ -251,8 +265,12 @@ def import_xmos(config):
 
         import xmossphinx
 
+def pop_if_exists(d, val):
+    if val in d:
+        d.pop(val)
 
 def build(path, config, target = 'html',subdoc=None):
+    pop_if_exists(os.environ,'XMOSLATEX')
     if target == 'html':
         builder = 'html'
     elif target == 'gh-pages':
@@ -275,6 +293,8 @@ def build(path, config, target = 'html',subdoc=None):
         builder = 'xdehtml'
         os.environ['USE_XDEONLY_HTML'] = "1"
         os.environ['XDETUTORIAL_HTML'] = "1"
+    elif target == 'text':
+        builder = 'text'
     else:
         sys.stderr.write("xdoc: Unknown target %s\n"%target)
         exit(1)

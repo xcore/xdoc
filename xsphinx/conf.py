@@ -34,13 +34,6 @@ else:
     use_aafig = False
 
 
-if 'CURRENT_BUILDER' in os.environ:
-    current_builder = os.environ['CURRENT_BUILDER']
-else:
-    current_builder = None
-
-
-
 
 if 'USE_COMMENTS' in os.environ and os.environ['USE_COMMENTS']=='1':
     enable_comments = True
@@ -352,13 +345,23 @@ class Configurator(object):
                 cmd = "global %s;%s = %s" % (key, key, val) 
             exec(cmd)
         
-
+current_builder=""
 
 def setup(app):
     global xmos_compact_pdf, collection, xmos_manual_pdf, latex_doctype
     global latex_section_numbers, latex_section_newpage, latex_toc
     global use_sidecaption, latex_use_chapters
+    global current_builder, rst_epilog
 
+    if 'CURRENT_BUILDER' in os.environ:
+        current_builder = os.environ['CURRENT_BUILDER']
+    else:
+        current_builder = None
+
+    if current_builder=='xlatex':
+        rst_epilog = rst_epilog_latex
+    else:
+        rst_epilog = rst_epilog_html
     if 'XMOSCOMPACTPDF' in os.environ:
         xmos_compact_pdf = (os.environ['XMOSCOMPACTPDF'] == "1")
         collection = not xmos_compact_pdf
@@ -468,8 +471,21 @@ rst_prolog = '''
 '''
 
 
-if current_builder=='xlatex':
-        rst_epilog = '''
+rst_epilog_common = """
+.. |-| replace:: ihjsqueezeihj
+
+.. |beginmbox| raw:: latex
+
+              \\mbox{
+
+.. |endmbox| raw:: latex
+
+              }
+
+"""
+
+
+rst_epilog_latex = rst_epilog_common + '''
 
 .. |submenu| raw:: latex
  
@@ -517,8 +533,8 @@ if current_builder=='xlatex':
              {\\color{green}{\\LARGE\\textbullet}}
 
         '''
-else:
-        rst_epilog = """
+
+rst_epilog_html = rst_epilog_common +  """
 .. |submenu| replace:: **>**
 
 .. |micro| raw:: html
@@ -563,15 +579,3 @@ else:
 
         """
 
-rst_epilog += """
-.. |-| replace:: ihjsqueezeihj
-
-.. |beginmbox| raw:: latex
-
-              \\mbox{
-
-.. |endmbox| raw:: latex
-
-              }
-
-"""
