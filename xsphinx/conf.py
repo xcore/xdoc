@@ -62,7 +62,8 @@ sys.path.append(xsphinx_dir + "/breathe")
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.ifconfig', 'xsphinx.ext.mathjax', 'breathe']
+extensions = ['sphinx.ext.ifconfig','breathe']
+# 'xsphinx.ext.mathjax', 'breathe']
 
 if use_aafig:
     print "Found and adding aafig extension"
