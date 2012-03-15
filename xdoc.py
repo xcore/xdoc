@@ -208,7 +208,15 @@ def copy_dir_to_zip(z, path, arcpath, pattern=None, exclude = None):
         fpath = os.path.join(path, f)
         if (not pattern or re.match(pattern, f)) and \
                 (not exclude or not f == exclude):
-            z.write(fpath,arcname = os.path.join(arcpath, f))
+            if re.match('.*\.html$',f):
+                html_file = open(fpath)
+                html_str = html_file.read()
+                html_file.close()
+                html_str = html_str.replace('_images','images')
+                html_str = html_str.replace('_static/images','images')
+                z.writestr(os.path.join(arcpath, f),html_str)
+            else:
+                z.write(fpath,arcname = os.path.join(arcpath, f))
 
 def make_zip(path, config):
     z = zipfile.ZipFile("issue.zip","w")
@@ -222,7 +230,9 @@ def make_zip(path, config):
                     pattern='.*\.html$', exclude = master_html)
     copy_dir_to_zip(z,os.path.join(path,'_build','xdehtml','_static'),
                     os.path.join('html','_static'))
-    copy_dir_to_zip(z,os.path.join(path,'_build','xdehtml','images'),
+    copy_dir_to_zip(z,os.path.join(path,'_build','xdehtml','_static','images'),
+                    os.path.join('html','images'))
+    copy_dir_to_zip(z,os.path.join(path,'_build','xdehtml','_images'),
                     os.path.join('html','images'))
     z.close()
 
