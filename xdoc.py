@@ -107,6 +107,8 @@ def get_config(path):
         except:
             pass
 
+
+
     return config
 
 def rsync_dir(d,destroot):
@@ -331,6 +333,8 @@ def build(path, config, target = 'html',subdoc=None):
 
 
     os.environ['CURRENT_BUILDER'] = builder
+
+    os.environ['OTHER_DOC_DIRS_ABS'] = ' '.join([os.path.abspath(x) for x in config['OTHER_DOC_DIRS']])
 
     if subdoc:
         os.environ['_SPHINX_MASTER_DOC'] = subdoc

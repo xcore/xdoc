@@ -12,6 +12,7 @@ def checktoc(master, linked_dirs = None, path='.'):
         for p in linked_dirs:
             p = os.path.join('.linked_dirs',os.path.basename(os.path.abspath(p)))
             search_paths.append(p)
+    search_paths.append('.linked_dirs')
 
     f = open(os.path.join(path,master));lines = f.readlines();f.close()
 

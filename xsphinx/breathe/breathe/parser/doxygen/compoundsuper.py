@@ -6781,7 +6781,7 @@ class docVerbatimTextType(GeneratedsSuper):
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
             self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
 # end class docVerbatimTextType
- 
+
 
 class docTableType(GeneratedsSuper):
     subclass = None

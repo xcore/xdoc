@@ -1144,7 +1144,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         max_col_widths = {}
         max_single_width = 0
         self.table.max_width_col = 0
+
         for row in node.traverse(nodes.row):
+
             colnum = 0
             for col in row.traverse(nodes.entry):
                 while colnum < self.table.colcount and skipcols[colnum] > 0:
@@ -1158,6 +1160,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 if col.has_key('morerows'):
                     k = int(col['morerows'])
                     skipcols[colnum] += 1
+
 
                 if not colnum in max_col_widths:
                     max_col_widths[colnum] = 0
@@ -1501,7 +1504,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
              raise UnsupportedError('%s:%s: ceels that span columns and rows'
                                     ' are not yet implemented (%s).' %
                                     (self.curfilestack[-1], node.line or '',self.table.caption))
-
+        inc = 1
         while self.table.skipcols[self.table.col] > 0:
             self.table.skipcols[self.table.col] = self.table.skipcols[self.table.col]-1
             if self.table.col > 0:
@@ -1513,6 +1516,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.body.append(' & ')
         if node.has_key('morecols'):
             n = int(node['morecols'])+1
+            inc = n
             total = float(sum(self.table.colspec))
             colwidth = float(sum(self.table.colspec[self.table.col:self.table.col+n]))
             colwidth = (colwidth / total)
@@ -1548,7 +1552,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #            self.body.append('\multirow{%d}{%.3f\linewidth}{' % (n,colwidth) )
             self.table.skipcols[self.table.col] += n-1
 
-        self.table.col += 1
+        self.table.col += inc
         if isinstance(node.parent.parent, nodes.thead):
             self.body.append('\\textbf{')
             self.in_strong = True

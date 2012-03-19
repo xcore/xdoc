@@ -20,10 +20,15 @@ if __name__ == "__main__":
     in_code_section = False
     fname = sys.argv[1]
     f = open(fname)
+
     while True:
         x = f.readline()
+
         x = x.replace('\\code','\\verbatim')
         x = x.replace('\\endcode','\\endverbatim')
+        x = x.replace('\\a','__DOEMPHASIS__')
+        x = re.sub('__DOEMPHASIS__ ([a-zA-Z0-9_]+)',':tt:`\g<1>`',x)
+
 
 
         if x == '':

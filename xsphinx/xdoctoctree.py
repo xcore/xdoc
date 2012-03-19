@@ -18,6 +18,8 @@ class XdocTocTree(TocTree):
 
         linked_dirs = ['.linked_dirs/'+os.path.split(x)[1] for x in linked_dirs]
 
+        linked_dirs.append('.linked_dirs')
+
         partmap = {}
         part = None
         to_remove = 0

@@ -161,6 +161,9 @@ def render_content(data_object, tab):
         for repl, pattern in mult_ret_subs:
             s = s.replace(pattern, repl)
 
+
+
+
     return s
 
 def render_compoundtype(type_data_object, data_object, state, content, content_offset):
