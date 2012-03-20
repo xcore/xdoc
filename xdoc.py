@@ -205,18 +205,23 @@ def find_files(path):
 
     return fs
 
+
+def write_html_to_zip(z, fpath, arcpath):
+    html_file = open(fpath)
+    html_str = html_file.read()
+    html_file.close()
+    html_str = html_str.replace('_images','images')
+    html_str = html_str.replace('_static/images','images')
+    z.writestr(arcpath, html_str)
+
+
 def copy_dir_to_zip(z, path, arcpath, pattern=None, exclude = None):
     for f in find_files(path):
         fpath = os.path.join(path, f)
         if (not pattern or re.match(pattern, f)) and \
                 (not exclude or not f == exclude):
             if re.match('.*\.html$',f):
-                html_file = open(fpath)
-                html_str = html_file.read()
-                html_file.close()
-                html_str = html_str.replace('_images','images')
-                html_str = html_str.replace('_static/images','images')
-                z.writestr(os.path.join(arcpath, f),html_str)
+                write_html_to_zip(z, fpath, os.path.join(arcpath, f))
             else:
                 z.write(fpath,arcname = os.path.join(arcpath, f))
 
@@ -226,8 +231,9 @@ def make_zip(path, config):
     z.write(pdfpath,arcname="output.pdf")
     z.write(os.path.join(path,'seealso.xml'))
     master_html = config['SPHINX_MASTER_DOC']+'.html'
-    z.write(os.path.join(path,'_build','xdehtml',master_html),
-                         arcname=os.path.join('html','index.html'))
+    write_html_to_zip(z,
+                      os.path.join(path,'_build','xdehtml',master_html),
+                      os.path.join('html','index.html'))
     copy_dir_to_zip(z,os.path.join(path,'_build','xdehtml'),'html',
                     pattern='.*\.html$', exclude = master_html)
     copy_dir_to_zip(z,os.path.join(path,'_build','xdehtml','_static'),
