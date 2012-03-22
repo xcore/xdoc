@@ -500,7 +500,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     if self.has_parts:
                         try:
                             new_part = self.builder.env.partmap[sof['docname']]
-                            print >>sys.stderr, new_part
                             if new_part:
                                 if current_part:
                                     self.parts.append((current_part,
@@ -1121,7 +1120,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table.longtable = 'longtable' in node['classes']
         self.tablebody = []
 
-        self.table.simple = True
 
         for child in node.traverse():
             if isinstance(child, nodes.literal_block) or \
@@ -1144,7 +1142,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         max_col_widths = {}
         max_single_width = 0
         self.table.max_width_col = 0
-
         for row in node.traverse(nodes.row):
 
             colnum = 0
@@ -1166,8 +1163,10 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     max_col_widths[colnum] = 0
                 text = col.astext()
                 width = len(text)
+
                 if n == 1 and width > max_col_widths[colnum]:
                     max_col_widths[colnum] = width
+
                 if n == 1 and width > max_width:
                     max_width = len(text)
                     self.table.max_width_col = colnum
@@ -1176,8 +1175,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 colnum=colnum+n
 
         total_width = 0
+        total_width_threshold = 100
+        col_threshold = total_width_threshold/len(max_col_widths)
+
+        num_bigcols = 0
         for col,width in max_col_widths.iteritems():
+            if width > col_threshold:
+                num_bigcols += 1
             total_width += width
+
+        self.table.extra_wide = num_bigcols > 1
 
         total_width = max(total_width, max_single_width)
 
@@ -1191,6 +1198,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if 'wide' in node['classes']:
             self.table.narrow = False
 
+        self.table.simple = not self.table.extra_wide
 
 #        self.table.simple = 'simple-content' in node['classes']
 
@@ -1208,7 +1216,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         self.table.no_hlines = not self.table.horizontal_borders
 
-        self.table.smaller = 'smaller' in node['classes']
+        self.table.smaller = 'smaller' in node['classes'] or self.table.extra_wide
         self.table.bigger = 'bigger' in node['classes'] or \
                             'larger' in node['classes']
 
@@ -1238,6 +1246,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self._body = self.body
         self.body = self.tablebody
         self.table.skipcols = [0 for x in range(self.table.colcount)]
+        #self.table.colspec = []
 
     def depart_table(self, node):
 
@@ -1292,11 +1301,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\n\\begin{tabularx}{\linewidth}')
             else:
                 self.body.append('\n\\begin{tabular}')
-        elif self.table.has_verbatim or self.table.narrow:
+        elif self.table.has_verbatim or self.table.narrow or self.table.extra_wide:
             self.body.append('\n\\begin{tabular}')
         else:
             self.body.append('\n\\begin{tabularx}{\linewidth}')
 #            self.body.append('\n\\begin{center}\\begin{tabulary}{\\linewidth}')
+
 
 
         if 'raw' in node['classes']:
@@ -1317,7 +1327,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     else:
                         colspec_str += 'l%s' % (linesep)
                 else:
-                    colspec_str += 'p{%.3f\\linewidth}%s' % (colwidth,linesep)
+                    if self.fullwidth:
+                        tw = 122
+                    else:
+                        tw = 100
+                    colspec_str += 'p{%.3fmm}%s' % (colwidth*tw,linesep)
             self.body.append('{%s'%linesep + colspec_str + '}\n')
         else:
 #            print node
@@ -1386,7 +1400,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body.append('\n\\end{tabularx}')
             else:
                 self.body.append('\n\\end{tabular}')
-        elif self.table.has_verbatim or self.table.narrow:
+        elif self.table.has_verbatim or self.table.narrow or self.table.extra_wide:
             self.body.append('\\end{tabular}\n\n')
         else:
             self.body.append('\\end{tabularx}\n\n')
@@ -1418,9 +1432,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
         pass
 
     def visit_thead(self, node):
-        if self.next_table_colspec:
-            self.table.colspec = '{%s}\n' % self.next_table_colspec
-        self.next_table_colspec = None
+#        if self.next_table_colspec:
+#            self.table.colspec = '{%s}\n' % self.next_table_colspec
+#        self.next_table_colspec = None
         self.table.thead_start = len(self.body)
 #        self.body.append('\\hline\n')
 #        self.table.had_head = True

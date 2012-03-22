@@ -167,6 +167,8 @@ def doDoxygen(xdoc_dir, doc_dir):
     os.remove(doxyfile_path)
 
 def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
+    os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+":"
+    os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+":"
 
     texfile = os.path.join(doc_dir,master+".tex")
     if not os.path.exists(os.path.join(build_dir,master+".tex")):
@@ -334,8 +336,6 @@ def build(path, config, target = 'html',subdoc=None):
 
     os.environ['COLLECTION'] = ' '.join([x + '__0' for x in toc])
 
-    os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+":"
-    os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+":"
 
 
     os.environ['CURRENT_BUILDER'] = builder
@@ -424,6 +424,13 @@ def main(target,path='.'):
             build(path,config,target='xref',subdoc=x)
         build(path,config,target='xdehtml')
         build(path,config,target='xmospdf')
+    elif target == 'justlatex':
+        config = prebuild(path,xmos_prebuild=True)
+        doLatex(path,
+                os.path.join(path,"_build",'xlatex'),
+                config,
+                config['SPHINX_MASTER_DOC'],
+                xmoslatex = True)
     else:
         config = prebuild(path,xmos_prebuild=(target in xmos_targets))
         build(path,config,target=target)
