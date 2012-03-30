@@ -43,8 +43,7 @@ def expand(s, config):
         s = s.replace("$%s"%key, value)
     return s
 
-def get_config(path):
-    config = {}
+def get_config(path,config={}):
     if os.path.exists(os.path.join(path,'Makefile')):
         f = open(os.path.join(path,'Makefile'))
         lines = f.readlines()
@@ -246,9 +245,9 @@ def make_zip(path, config):
                     os.path.join('html','images'))
     z.close()
 
-def prebuild(path, xmos_prebuild=False,xmos_publish=False,docnum=None):
+def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None):
     global xmossphinx
-    config = get_config(path)
+    config = get_config(path,config)
     rsync_dirs(config['OTHER_DOC_DIRS'],'.linked_dirs')
     rsync_dirs(config['DOXYGEN_DIRS'],'.doxygen')
     rsync_dirs(config['SOURCE_INCLUDE_DIRS'],'.sources')
@@ -282,7 +281,6 @@ def import_xmos(config):
         sys.path.append(os.path.join(config['XDOC_DIR'],'..','infr_docs'))
         sys.path.append(os.path.join(config['XDOC_DIR'],'..','infr_docs','xmossphinx'))
         sys.path.append(os.path.join(config['XDOC_DIR'],'..','infr_docs','tool_xpd'))
-
         import xmossphinx
 
 def pop_if_exists(d, val):
@@ -353,6 +351,11 @@ def build(path, config, target = 'html',subdoc=None):
         shutil.rmtree(build_dir)
 
 
+    if 'XDEHTML_UNPAGED_OUTPUT' in config:
+        os.environ['XDEHTML_UNPAGED_OUTPUT'] = config['XDEHTML_UNPAGED_OUTPUT']
+    else:
+        os.environ['XDEHTML_UNPAGED_OUTPUT'] = '0'
+
     os.makedirs(build_dir)
 
     if target == 'xref':
@@ -401,38 +404,38 @@ class StdInChecker(object):
     def close(self):
         raise BaseException
 
-def main(target,path='.'):
+def main(target,path='.',config={}):
     sys.stdin = StdInChecker(sys.stdin)
     print "Building documentation target: %s" % target
     curdir = os.path.abspath(os.curdir)
     os.chdir(path)
     path = '.'
     if target == 'swlinks':
-        config = get_config(path)
+        config = get_config(path,config)
         import_xmos(config)
         from xmossphinx.xmos_check_swlinks import check_swlinks
         check_swlinks(path)
     elif target == 'update_sw':
-        config = get_config(path)
+        config = get_config(path,config)
         import_xmos(config)
         from xmossphinx.xmos_check_swlinks import update_sw
         update_sw(path)
     elif target in ['issue','draft']:
-        config = prebuild(path,xmos_prebuild=True, xmos_publish=True)
+        config = prebuild(path,config,xmos_prebuild=True, xmos_publish=True)
         build(path,config,target='xref')
         for x in config['TOC']:
             build(path,config,target='xref',subdoc=x)
         build(path,config,target='xdehtml')
         build(path,config,target='xmospdf')
     elif target == 'justlatex':
-        config = prebuild(path,xmos_prebuild=True)
+        config = prebuild(path,config,xmos_prebuild=True)
         doLatex(path,
                 os.path.join(path,"_build",'xlatex'),
                 config,
                 config['SPHINX_MASTER_DOC'],
                 xmoslatex = True)
     else:
-        config = prebuild(path,xmos_prebuild=(target in xmos_targets))
+        config = prebuild(path,config,xmos_prebuild=(target in xmos_targets))
         build(path,config,target=target)
 
 
