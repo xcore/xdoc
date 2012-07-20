@@ -225,7 +225,11 @@ class XLaTeXBuilder(Builder):
                      path.join(self.outdir, logobase))
 
         self.info(bold('copying TeX support files... '), nonl=True)
-        staticdirname = path.join(package_dir, 'texinputs')
+        if hasattr(sys,'_MEIPASS'):
+            staticdirname = path.join(sys._MEIPASS, 'sphinx/texinputs')
+        else:
+            staticdirname = path.join(package_dir, 'texinputs')
+
         for filename in os.listdir(staticdirname):
             if not filename.startswith('.'):
                 copyfile(path.join(staticdirname, filename),

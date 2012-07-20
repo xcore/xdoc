@@ -82,7 +82,14 @@ def get_config(path,config={}):
         if not key in config:
             config[key] = default_value
 
-    config['XDOC_DIR'] = os.path.dirname(os.path.abspath(__file__))
+
+    if hasattr(sys,'_MEIPASS'):
+        config['XDOC_DIR'] = sys._MEIPASS
+    elif '_MEIPASS2' in os.environ:
+        config['XDOC_DIR'] = os.environ['_MEIPASS2']
+    else:
+        config['XDOC_DIR'] = os.path.dirname(os.path.abspath(__file__))
+
     config['DOC_DIR'] = os.path.abspath(path)
 
 
@@ -166,9 +173,11 @@ def doDoxygen(xdoc_dir, doc_dir):
     os.remove(doxyfile_path)
 
 def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
-    os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+":"
+    if hasattr(sys,'_MEIPASS'):
+        os.environ['TEXINPUTS'] = os.path.join(sys._MEIPASS,'infr_docs','base')+":"
+    else:
+        os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+":"
     os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+":"
-
     texfile = os.path.join(doc_dir,master+".tex")
     if not os.path.exists(os.path.join(build_dir,master+".tex")):
         print "Cannot find latex file. Something must have gone wrong"
@@ -438,16 +447,14 @@ def main(target,path='.',config={}):
         config = prebuild(path,config,xmos_prebuild=(target in xmos_targets))
         build(path,config,target=target)
 
-
     if target in ['issue','draft','pubdraft','pubissue']:
         make_zip(path, config)
-
 
     if target in ['issue','draft']:
         from xmossphinx.upload_issue import upload
         upload(path,is_draft=(target=='draft'))
-    os.chdir(curdir)
 
+    os.chdir(curdir)
 
 
 

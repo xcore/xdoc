@@ -29,6 +29,8 @@ from sphinx.util.pycompat import any
 from sphinx.util.texescape import tex_escape_map, tex_replace_map
 from sphinx.util.smartypants import educate_quotes_latex
 
+do_in_this_collection = False
+
 xmoslatex_admonitionlabels = { 'attention' : 'attention',
                                'caution' : 'attention',
                                'danger' : 'danger',
@@ -695,7 +697,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.seen_first_title = True
             if self.has_preface:
                 self.body.append('\\end{fullwidth}\n')
-            if self.parts != []:
+            if do_in_this_collection and self.parts != []:
                 self.body.append('\\begin{inthiscollection}\n')
                 if self.has_parts:
                     parts = ['\\hyperref[part:%s]{%s}'%(x,x) for (x,y) in self.parts]
@@ -1321,8 +1323,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 colwidth = self.table.colspec[i]
                 colwidth = (colwidth / total)
                 if self.table.simple:
-                    if not self.table.narrow and not self.table.longtable and \
-                       i == self.table.max_width_col:
+                    if not self.table.narrow and i == self.table.max_width_col \
+                       and not self.table.longtable:
+
                         colspec_str += 'Y%s' % (linesep)
                     else:
                         colspec_str += 'l%s' % (linesep)

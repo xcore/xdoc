@@ -27,7 +27,6 @@ import xtable
 import sphinx.domains.std
 import xsphinx.passes
 
-
 if 'USE_AAFIG' in os.environ:
     use_aafig = (os.environ['USE_AAFIG'] != '0')
 else:
@@ -116,7 +115,7 @@ release = ''#os.environ['VERSION']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 
-exclude_patterns = [xsphinx_dir + '/_build','.*\.#.*']
+exclude_patterns = [xsphinx_dir + '/_build','.*.#.*']
 exclude_patterns += ['.support*','.sources*','.doxygen*']
 #,'_linked_dirs/.*/'+os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]+'.*']
 
@@ -163,7 +162,6 @@ html_theme_options = {}
 doc_dir = os.path.abspath(os.environ['DOC_DIR'])
 user_theme_dir = os.path.relpath(os.path.join(doc_dir,"themes"))
 html_theme_path = ["themes",user_theme_dir]
-
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -441,10 +439,11 @@ def setup(app):
     xcomment.setup(app, enable_comments)
 
     try:
-        __import__('xmosconf')
+        import xmosconf
         extraconf_modules.add('xmosconf')
     except:
-        pass
+        print "Cannot find xmosconf"
+
 
     for mod in extraconf_modules:
         mod = mod.strip()
