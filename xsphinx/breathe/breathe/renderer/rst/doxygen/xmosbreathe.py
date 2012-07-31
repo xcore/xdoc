@@ -34,7 +34,7 @@ def render_content(data_object, tab):
     tab += '   '
 #    print tab + repr(data_object)
 #    if isinstance(data_object, enumvalueTypeSub):
-#        print tab + repr(dir(data_object))
+#    print tab + str(data_object)
 
     if isinstance(data_object, MixedContainer):
         s = render_content(data_object.getValue(), tab)
@@ -65,6 +65,9 @@ def render_content(data_object, tab):
     if (hasattr(data_object, 'para')):
         s += ''.join([render_content(x, tab) for x in data_object.para])
 
+    if isinstance(data_object, enumvalueTypeSub):
+        data_object.content_ = \
+           [x for x in data_object.content_ if not check_for_linked(x)]
 
     if (hasattr(data_object, 'content')):
         s += ''.join([render_content(x, tab) for x in data_object.content])
@@ -84,9 +87,6 @@ def render_content(data_object, tab):
     if (hasattr(data_object, 'parametername')):
         s += ''.join([render_content(x, tab) for x in data_object.parametername])
 
-    if isinstance(data_object, enumvalueTypeSub):
-        data_object.content_ = \
-           [x for x in data_object.content_ if not check_for_linked(x)]
 
 
     if (hasattr(data_object, 'simplesects')):
