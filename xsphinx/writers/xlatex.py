@@ -825,7 +825,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 summary += "\\end{inthisdocument}\n\n"
 
 
-            if self.section_summary_fullwidth:
+            if self.section_summary != [] and self.section_summary_fullwidth:
                 summary += '\\begin{fullwidth} % chapter!\n'
 
             if self.section_summary_pos:
