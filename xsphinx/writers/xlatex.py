@@ -613,9 +613,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'not-fullwidth' in node['classes']:
             self.not_fullwidth = True
+            self.prev_section_summary_fullwidth = self.section_summary_fullwidth
+            self.section_summary_fullwidth = False
 
         if not self.fullwidth and not self.not_fullwidth:
           if self.builder.config.latex_doctype != 'collection' or self.sectionlevel == self.top_sectionlevel:
+            self.prev_section_summary_fullwidth = self.section_summary_fullwidth
+            self.section_summary_fullwidth = False
             for n in node.traverse():
                 has_toplevel_desc = \
                     isinstance(n, addnodes.desc) and \
@@ -630,10 +634,16 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     if self.builder.config.do_section_summary:
                         self.section_summary_fullwidth = True
 #                        self.body.append('\\begin{fullwidth} % fragment')
+                        self.body.append('\n% FULLWIDTH SECTION (with summary)\n')
                     else:
                         self.body.append('\n% FULLWIDTH SECTION\n')
                     node['started_fullwidth'] = True
                     break
+
+          if (self.builder.config.do_section_summary and
+            not self.section_summary_fullwidth):
+            self.body.append('\n% NON-FULLWIDTH SECTION\n')
+
 
     def depart_section(self, node):
         self.sectionlevel = max(self.sectionlevel - 1,
@@ -825,13 +835,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 summary += "\\end{inthisdocument}\n\n"
 
 
-            if self.section_summary != [] and self.section_summary_fullwidth:
+            if self.prev_section_summary_fullwidth:
                 summary += '\\begin{fullwidth} % chapter!\n'
 
             if self.section_summary_pos:
                 self.body.insert(self.section_summary_pos, summary)
             self.section_summary = []
-            self.section_summary_fullwidth = self.fullwidth
+            #self.section_summary_fullwidth = self.fullwidth
 
             self.section_summary_pos = len(self.body)+2
         if self.sectionlevel == tp+1:

@@ -119,7 +119,7 @@ def get_config(path,config={}):
 
 def rsync_dir(d,destroot):
     print "Copying %s" % d
-    exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe'
+    exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe|.*\.linked_dirs'
     for root, dirs, files in os.walk(d):
         for f in files:
             src = os.path.join(root, f)
