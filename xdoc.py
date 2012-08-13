@@ -156,7 +156,14 @@ def doDoxygen(xdoc_dir, doc_dir):
     shutil.copy(os.path.join(xdoc_dir, 'xsphinx', 'Doxyfile'),
                 doxyfile_path)
 
-    cmd = 'doxygen'
+    f = open(doxyfile_path,"a");
+    if hasattr(sys,'_MEIPASS'):
+        print "Using xdoxygen"
+        cmd = 'xdoxygen'
+        f.write('\nINPUT_FILTER = xdoxygen_prefilter\n')
+    else:
+        cmd = 'doxygen'
+        f.write('\nINPUT_FILTER           = "python $(XDOC_DIR)/xsphinx/xc_prefilter.py\n"')
 
     process = subprocess.Popen(cmd,cwd=doc_dir,
                                stdout=subprocess.PIPE,
@@ -174,7 +181,7 @@ def doDoxygen(xdoc_dir, doc_dir):
 
 def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
     if hasattr(sys,'_MEIPASS'):
-        os.environ['TEXINPUTS'] = os.path.join(sys._MEIPASS,'infr_docs','base')+":"
+        os.environ['TEXINPUTS'] = os.path.join(sys._MEIPASS,'infr_docs','base')+":" + os.path.join(sys._MEIPASS,'texinputs')+":"+"/home/davel/dev/tools_xdoc/texinputs:"
     else:
         os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+":"
     os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+":"
@@ -279,7 +286,8 @@ def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None)
             config['DOCNUM'] = docnum
             os.environ['DOCNUM'] = docnum
 
-    doDoxygen(config['XDOC_DIR'], config['DOC_DIR'])
+    if config['DOXYGEN_DIRS'] != []:
+        doDoxygen(config['XDOC_DIR'], config['DOC_DIR'])
 
 
     return config
