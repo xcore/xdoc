@@ -346,6 +346,8 @@ class Configurator(object):
         
 current_builder=""
 
+do_section_summary = False
+
 def setup(app):
     global xmos_compact_pdf, collection, xmos_manual_pdf, latex_doctype
     global latex_section_numbers, latex_section_newpage, latex_toc
@@ -406,6 +408,7 @@ def setup(app):
     app.add_config_value('latex_toc',True,False)
     app.add_config_value('body_only',False,'')
     app.add_config_value('collection',False,'')
+    app.add_config_value('do_section_summary',False,'')
 
     app.add_generic_role('srcfile',docutils.nodes.literal)
     app.add_generic_role('~',docutils.nodes.term)

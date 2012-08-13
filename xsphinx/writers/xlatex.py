@@ -97,7 +97,6 @@ BEGIN_DOC = r'''
 %(begin)s
 %(shorthandoff)s
 %(maketitle)s
-\pretoc
 %(fullwidth)s
 '''
 
@@ -226,9 +225,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 
         if self.has_preface:
-            fullwidth = '\\clearpage\n\\begin{fullwidth} %preface\n{\\small\\textls{\\textsf{SYNOPSIS}}}\n'
+            fullwidth = '\\clearpage\n\\begin{fullwidth} %preface\n{\\small\\textls{\\textsf{SYNOPSIS}}}'
         else:
-            fullwidth = ''
+            fullwidth = '\\pretoc'
 
         begin = '\\start'
         enddoc = '\\finish'
@@ -525,7 +524,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         for p in node.traverse(nodes.paragraph):
             p['margin_items'] = []
 
-        if self.builder.config.latex_doctype != 'collection':
+        if self.builder.config.do_section_summary:
             self.section_summary_pos = len(self.body)+1
 
 
@@ -541,7 +540,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.section_summary_fullwidth:
             summary += '\\begin{fullwidth} % chapter!!\n'
 
-        self.body.insert(self.section_summary_pos, summary)
+        if self.builder.config.do_section_summary:
+            self.body.insert(self.section_summary_pos, summary)
 
         if self.builder.config.latex_doctype == 'collection':
             self.end_preface()
@@ -613,9 +613,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'not-fullwidth' in node['classes']:
             self.not_fullwidth = True
+            self.prev_section_summary_fullwidth = self.section_summary_fullwidth
+            self.section_summary_fullwidth = False
 
         if not self.fullwidth and not self.not_fullwidth:
           if self.builder.config.latex_doctype != 'collection' or self.sectionlevel == self.top_sectionlevel:
+            self.prev_section_summary_fullwidth = self.section_summary_fullwidth
+            self.section_summary_fullwidth = False
             for n in node.traverse():
                 has_toplevel_desc = \
                     isinstance(n, addnodes.desc) and \
@@ -627,13 +631,19 @@ class LaTeXTranslator(nodes.NodeVisitor):
                       tp_item or
                       'fullwidth' in node['classes']):
                     self.fullwidth = True
-                    if self.builder.config.latex_doctype != 'collection':
+                    if self.builder.config.do_section_summary:
                         self.section_summary_fullwidth = True
 #                        self.body.append('\\begin{fullwidth} % fragment')
+                        self.body.append('\n% FULLWIDTH SECTION (with summary)\n')
                     else:
                         self.body.append('\n% FULLWIDTH SECTION\n')
                     node['started_fullwidth'] = True
                     break
+
+          if (self.builder.config.do_section_summary and
+            not self.section_summary_fullwidth):
+            self.body.append('\n% NON-FULLWIDTH SECTION\n')
+
 
     def depart_section(self, node):
         self.sectionlevel = max(self.sectionlevel - 1,
@@ -696,7 +706,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not self.seen_first_title:
             self.seen_first_title = True
             if self.has_preface:
-                self.body.append('\\end{fullwidth}\n')
+                self.body.append('\\end{fullwidth}\n\\pretoc\n')
             if do_in_this_collection and self.parts != []:
                 self.body.append('\\begin{inthiscollection}\n')
                 if self.has_parts:
@@ -814,7 +824,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             tp = self.top_sectionlevel
         else:
             tp = self.top_sectionlevel - 1
-        if self.builder.config.latex_doctype == 'collection' and \
+        if self.builder.config.do_section_summary and \
            self.sectionlevel == tp:
 
             summary = '%summary!\n'
@@ -825,13 +835,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 summary += "\\end{inthisdocument}\n\n"
 
 
-            if self.section_summary_fullwidth:
+            if self.prev_section_summary_fullwidth:
                 summary += '\\begin{fullwidth} % chapter!\n'
 
             if self.section_summary_pos:
                 self.body.insert(self.section_summary_pos, summary)
             self.section_summary = []
-            self.section_summary_fullwidth = self.fullwidth
+            #self.section_summary_fullwidth = self.fullwidth
 
             self.section_summary_pos = len(self.body)+2
         if self.sectionlevel == tp+1:
@@ -856,7 +866,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 id = self.curfilestack[-1] + ':' + valid_ids[0]
                 item = '\\nameref{%s}' % id
 
-            self.section_summary.append(item)
+            if self.builder.config.do_section_summary:
+                self.section_summary.append(item)
 
         self.in_title = 0
         self.body.append(self.context.pop())
