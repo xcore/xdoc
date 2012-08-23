@@ -5,6 +5,7 @@ import re
 import sphinx
 import shutil
 import subprocess
+import platform
 from xsphinx.check_toc import checktoc
 from xsphinx.run_latex import runlatex
 from xsphinx.sphinx_filter import XSphinxFilter
@@ -156,7 +157,14 @@ def doDoxygen(xdoc_dir, doc_dir):
     shutil.copy(os.path.join(xdoc_dir, 'xsphinx', 'Doxyfile'),
                 doxyfile_path)
 
-    cmd = 'doxygen'
+    f = open(doxyfile_path,"a");
+    if hasattr(sys,'_MEIPASS'):
+        print "Using xdoxygen"
+        cmd = 'xdoxygen'
+        f.write('\nINPUT_FILTER = xdoxygen_prefilter\n')
+    else:
+        cmd = 'doxygen'
+        f.write('\nINPUT_FILTER           = "python $(XDOC_DIR)/xsphinx/xc_prefilter.py\n"')
 
     process = subprocess.Popen(cmd,cwd=doc_dir,
                                stdout=subprocess.PIPE,
@@ -172,19 +180,26 @@ def doDoxygen(xdoc_dir, doc_dir):
     process.wait()
     os.remove(doxyfile_path)
 
+ostype = platform.system()
+
+if not re.match('.*Darwin.*',ostype) and re.match('.*[W|w]in.*',ostype):
+    listsep = ';'
+else:
+    listsep = ':'
+
 def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
     if hasattr(sys,'_MEIPASS'):
-        os.environ['TEXINPUTS'] = os.path.join(sys._MEIPASS,'infr_docs','base')+":"
+        os.environ['TEXINPUTS'] = os.path.join(sys._MEIPASS,'infr_docs','base')+listsep + os.path.join(sys._MEIPASS,'texinputs')+listsep+"/home/davel/dev/tools_xdoc/texinputs" + listsep
     else:
-        os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+":"
-    os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+":"
+        os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+listsep
+    os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+listsep
     texfile = os.path.join(doc_dir,master+".tex")
     if not os.path.exists(os.path.join(build_dir,master+".tex")):
         print "Cannot find latex file. Something must have gone wrong"
         exit(1)
 
     shutil.copy(os.path.join(build_dir,master+".tex"),texfile)
-    os.environ['TEXINPUTS'] += build_dir + ":"
+    os.environ['TEXINPUTS'] += os.path.abspath(build_dir) + listsep + os.path.abspath(doc_dir) + listsep
     filt = XSphinxFilter(sys.stdout, sys.stderr, os.path.join(build_dir,'latex.output'))
     texfile = master+'.tex'
     if xmoslatex:
@@ -192,7 +207,7 @@ def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
         from xmossphinx.xmos_latex import make_xmos_latex
         texfile = make_xmos_latex(texfile, config)
 
-    lines = runlatex(doc_dir,['-shell-escape','-interaction','nonstopmode',
+    lines = runlatex(doc_dir,['-shell-escape','-interaction=nonstopmode',
                               texfile])
 
     outfile = texfile.replace('.tex','.pdf')
@@ -279,7 +294,8 @@ def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None)
             config['DOCNUM'] = docnum
             os.environ['DOCNUM'] = docnum
 
-    doDoxygen(config['XDOC_DIR'], config['DOC_DIR'])
+    if config['DOXYGEN_DIRS'] != []:
+        doDoxygen(config['XDOC_DIR'], config['DOC_DIR'])
 
 
     return config

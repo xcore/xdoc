@@ -2,6 +2,7 @@
 import sys
 import subprocess
 import re
+import os
 
 def runlatex(path,args):
     cmd = ['pdflatex'] + args

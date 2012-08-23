@@ -662,7 +662,8 @@ IMAGE_PATH             =
 # If FILTER_PATTERNS is specified, this tag will be
 # ignored.
 
-INPUT_FILTER           = "python $(XDOC_DIR)/xsphinx/xc_prefilter.py"
+# This is automatically added by xdoc now
+# INPUT_FILTER           = "python $(XDOC_DIR)/xsphinx/xc_prefilter.py"
 
 # The FILTER_PATTERNS tag can be used to specify filters on a per file pattern
 # basis.
