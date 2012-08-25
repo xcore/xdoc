@@ -10,7 +10,7 @@ from xsphinx.check_toc import checktoc
 from xsphinx.run_latex import runlatex
 from xsphinx.sphinx_filter import XSphinxFilter
 import zipfile
-
+import copy
 # This script is slighty odd in that it is a port of a system that was based on
 # Makefiles. This means that some values are passed around in the OS environment
 # (ugh)
@@ -45,6 +45,7 @@ def expand(s, config):
     return s
 
 def get_config(path,config={}):
+    config = copy.copy(config)
     if os.path.exists(os.path.join(path,'Makefile')):
         f = open(os.path.join(path,'Makefile'))
         lines = f.readlines()
@@ -81,7 +82,7 @@ def get_config(path,config={}):
 
     for key,default_value in config_defaults.items():
         if not key in config:
-            config[key] = default_value
+            config[key] = copy.copy(default_value)
 
 
     if hasattr(sys,'_MEIPASS'):
@@ -103,7 +104,7 @@ def get_config(path,config={}):
     for key,value in config.items():
         try:
             if '..' in value:
-                print value
+                #print value
                 value = [x for x in value if x != '..']
                 for d in os.listdir('..'):
                     if os.path.isdir(os.path.join('..',d)) and \
@@ -114,13 +115,11 @@ def get_config(path,config={}):
         except:
             pass
 
-
-
     return config
 
 def rsync_dir(d,destroot):
     print "Copying %s" % d
-    exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe|.*\.linked_dirs|.*\.doxygen|.*\.support.*'
+    exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe|.*\.linked_dirs.*|.*\.doxygen.*|.*\.support.*'
     for root, dirs, files in os.walk(d):
         for f in files:
             src = os.path.join(root, f)
@@ -198,24 +197,23 @@ def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
         print "Cannot find latex file. Something must have gone wrong"
         exit(1)
 
-    shutil.copy(os.path.join(build_dir,master+".tex"),texfile)
+    #shutil.copy(os.path.join(build_dir,master+".tex"),texfile)
     os.environ['TEXINPUTS'] += os.path.abspath(build_dir) + listsep + os.path.abspath(doc_dir) + listsep
     filt = XSphinxFilter(sys.stdout, sys.stderr, os.path.join(build_dir,'latex.output'))
     texfile = master+'.tex'
     if xmoslatex:
         import_xmos(config)
         from xmossphinx.xmos_latex import make_xmos_latex
-        texfile = make_xmos_latex(texfile, config)
+        texfile = make_xmos_latex(build_dir, texfile, config)
 
-    lines = runlatex(doc_dir,['-shell-escape','-interaction=nonstopmode',
+    lines = runlatex(build_dir,['-shell-escape','-interaction=nonstopmode',
                               texfile])
 
     outfile = texfile.replace('.tex','.pdf')
     if xmoslatex:
-        shutil.copy(os.path.join(doc_dir,outfile),
-                    os.path.join(doc_dir,master+'.pdf'))
-        os.remove(texfile)
-        os.remove(outfile)
+        shutil.copy(os.path.join(build_dir,outfile),
+                    os.path.join(build_dir,master+'.pdf'))
+        os.remove(os.path.join(build_dir,outfile))
 
     for line in lines:
         filt.write(line)
@@ -272,9 +270,9 @@ def make_zip(path, config):
 def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None):
     global xmossphinx
     config = get_config(path,config)
-    rsync_dirs(config['OTHER_DOC_DIRS'],'.linked_dirs')
-    rsync_dirs(config['DOXYGEN_DIRS'],'.doxygen')
-    rsync_dirs(config['SOURCE_INCLUDE_DIRS'],'.sources')
+    rsync_dirs(config['OTHER_DOC_DIRS'],os.path.join('_build','.linked_dirs'))
+    rsync_dirs(config['DOXYGEN_DIRS'],os.path.join('_build','.doxygen'))
+    rsync_dirs(config['SOURCE_INCLUDE_DIRS'],os.path.join('_build','.sources'))
 
     sys.path.append(os.path.join(config['XDOC_DIR'],'xsphinx'))
 
@@ -381,6 +379,11 @@ def build(path, config, target = 'html',subdoc=None):
     else:
         os.environ['XDEHTML_UNPAGED_OUTPUT'] = '0'
 
+    if 'SOURCE_SUFFIX' in config:
+        os.environ['SOURCE_SUFFIX'] = config['SOURCE_SUFFIX']
+    else:
+        os.environ['SOURCE_SUFFIX'] = '.rst'
+
     os.makedirs(build_dir)
 
     if target == 'xref':
@@ -469,6 +472,9 @@ def main(target,path='.',config={}):
     if target in ['issue','draft']:
         from xmossphinx.upload_issue import upload
         upload(path,is_draft=(target=='draft'))
+
+    if (target in xmos_targets):
+        os.remove(os.path.join(path,'seealso.xml'))
 
     os.chdir(curdir)
 

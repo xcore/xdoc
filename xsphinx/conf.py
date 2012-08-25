@@ -77,7 +77,10 @@ templates_path = [xsphinx_dir + '/_templates']
 mathjax_path = 'http://mathjax.connectmv.com/MathJax.js'
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+if 'SOURCE_SUFFIX' in os.environ:
+    source_suffix = os.environ['SOURCE_SUFFIX']
+else:
+    source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
