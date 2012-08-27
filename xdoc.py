@@ -250,9 +250,9 @@ def copy_dir_to_zip(z, path, arcpath, pattern=None, exclude = None):
 
 def make_zip(path, config):
     z = zipfile.ZipFile("issue.zip","w")
-    pdfpath = os.path.join(path,config['SPHINX_MASTER_DOC']+'.pdf')
+    pdfpath = os.path.join(path,'_build','xlatex',config['SPHINX_MASTER_DOC']+'.pdf')
     z.write(pdfpath,arcname="output.pdf")
-    z.write(os.path.join(path,'seealso.xml'))
+    z.write(os.path.join(path,'_build','seealso.xml'),arcname='seealso.xml')
     master_html = config['SPHINX_MASTER_DOC']+'.html'
     write_html_to_zip(z,
                       os.path.join(path,'_build','xdehtml',master_html),
@@ -472,9 +472,6 @@ def main(target,path='.',config={}):
     if target in ['issue','draft']:
         from xmossphinx.upload_issue import upload
         upload(path,is_draft=(target=='draft'))
-
-    if (target in xmos_targets):
-        os.remove(os.path.join(path,'seealso.xml'))
 
     os.chdir(curdir)
 
