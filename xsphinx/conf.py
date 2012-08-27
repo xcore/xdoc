@@ -27,6 +27,9 @@ import xtable
 import sphinx.domains.std
 import xsphinx.passes
 
+if __name__ == "__main__":
+    sys.exit(0)
+
 if 'USE_AAFIG' in os.environ:
     use_aafig = (os.environ['USE_AAFIG'] != '0')
 else:
