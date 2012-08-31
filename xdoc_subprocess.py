@@ -7,10 +7,10 @@ ostype = platform.system()
 
 if not re.match('.*Darwin.*',ostype) and re.match('.*[W|w]in.*',ostype):
     concat_args = True
+    use_shell = True
 else:
     concat_args = False
-
-use_shell = True
+    use_shell = False
 
 def Popen(*args, **kwargs):    
     kwargs['shell'] = use_shell
