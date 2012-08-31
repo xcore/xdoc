@@ -3,11 +3,12 @@
 import sys
 import subprocess
 import os
+from xdoc_subprocess import Popen, call
 
 paths = sys.argv[1:]
 mapfile = open('.linked_dirs/map','w')
 for path in ['.'] + paths:
-    process = subprocess.Popen(["git","config","--get","remote.origin.url"],
+    process = Popen(["git","config","--get","remote.origin.url"],
                                cwd=path,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
@@ -23,7 +24,7 @@ for path in ['.'] + paths:
             url = os.path.basename(url)
             rpath = url
 
-    process = subprocess.Popen(["git","rev-parse","--show-prefix"],
+    process = Popen(["git","rev-parse","--show-prefix"],
                                    cwd=os.path.realpath(path),
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
