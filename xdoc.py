@@ -190,7 +190,7 @@ def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
     if hasattr(sys,'_MEIPASS'):
         os.environ['TEXINPUTS'] = os.path.join(sys._MEIPASS,'infr_docs','base')+listsep + os.path.join(sys._MEIPASS,'texinputs')+listsep
     else:
-        os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+listsep
+        os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+listsep + os.path.join(config['XDOC_DIR'],'..','..','infr_docs','base')+listsep
     os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+listsep
     texfile = os.path.join(doc_dir,master+".tex")
     if not os.path.exists(os.path.join(build_dir,master+".tex")):
@@ -280,9 +280,18 @@ def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None)
         import_xmos(config)
         from xmossphinx.xmos_process_toc import process_toc
         from xmossphinx.check_docinfo import check_doc
+
+        auto_create = 'AUTO_CREATE' in config and config['AUTO_CREATE']=='1'
+        if 'ALT_TITLE' in config:
+            alt_title = config['ALT_TITLE']
+        else:
+            alt_title = None
+
         _,docnum = check_doc(path,
                              config['SPHINX_MASTER_DOC'],
-                             try_to_create=xmos_publish)
+                             try_to_create=xmos_publish,
+                             auto_create=auto_create,
+                             alt_title = alt_title)
 
         print "Processing document structure for xref database"
         process_toc(os.path.join(path,config['SPHINX_MASTER_DOC']+".rst"),
@@ -471,7 +480,10 @@ def main(target,path='.',config={}):
 
     if target in ['issue','draft']:
         from xmossphinx.upload_issue import upload
-        upload(path,is_draft=(target=='draft'))
+        force_upload = 'FORCE_UPLOAD' in config and config['FORCE_UPLOAD']=='1'
+        title = get_title(path)
+        upload(path,is_draft=(target=='draft'),force_upload=force_upload,
+               upload_title = "Document: %s" % title)
 
     os.chdir(curdir)
 
