@@ -2,6 +2,8 @@ from docutils import nodes
 from sphinx.util.compat import Directive
 from docutils.parsers.rst import directives
 import os, subprocess
+from xdoc_subprocess import Popen, call
+
 
 class Slot(object):
 
@@ -168,7 +170,7 @@ def depart_comment(self, node):
 def setup(app, enable_comments):        
 #    try:
 
-    p =  subprocess.Popen(['git','rev-parse','--show-toplevel'],
+    p =  Popen(['git','rev-parse','--show-toplevel'],
                           stdout=subprocess.PIPE)
     p.wait()
     output = p.stdout.readlines()
@@ -177,7 +179,7 @@ def setup(app, enable_comments):
     else:
         toplevel = None
 
-    p =  subprocess.Popen(['git','rev-parse','--show-prefix'],
+    p =  Popen(['git','rev-parse','--show-prefix'],
                           stdout=subprocess.PIPE)
     p.wait()
     output = p.stdout.readlines()

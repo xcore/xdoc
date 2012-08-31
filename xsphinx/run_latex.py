@@ -3,7 +3,7 @@ import sys
 import subprocess
 import re
 import os
-
+from xdoc_subprocess import call, Popen
 def runlatex(path,args):
     cmd = ['pdflatex'] + args
 
@@ -11,10 +11,10 @@ def runlatex(path,args):
     while True:
         print >>sys.stderr, "Running Latex %d" % n
         n=n+1
-        process = subprocess.Popen(cmd,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT,
-                                   cwd=path)
+        process = Popen(cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        cwd=path)
         lines = process.stdout.readlines()
 
         found_rerun = False

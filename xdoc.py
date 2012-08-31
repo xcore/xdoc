@@ -188,7 +188,7 @@ else:
 
 def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
     if hasattr(sys,'_MEIPASS'):
-        os.environ['TEXINPUTS'] = os.path.join(sys._MEIPASS,'infr_docs','base')+listsep + os.path.join(sys._MEIPASS,'texinputs')+listsep+"/home/davel/dev/tools_xdoc/texinputs" + listsep
+        os.environ['TEXINPUTS'] = os.path.join(sys._MEIPASS,'infr_docs','base')+listsep + os.path.join(sys._MEIPASS,'texinputs')+listsep
     else:
         os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+listsep
     os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+listsep
