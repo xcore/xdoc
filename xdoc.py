@@ -279,7 +279,7 @@ def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None)
     if xmos_prebuild:
         import_xmos(config)
         from xmossphinx.xmos_process_toc import process_toc
-        from xmossphinx.check_docinfo import check_doc
+        from xmossphinx.check_docinfo import check_doc, get_version
 
         auto_create = 'AUTO_CREATE' in config and config['AUTO_CREATE']=='1'
         if 'ALT_TITLE' in config:
@@ -287,11 +287,24 @@ def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None)
         else:
             alt_title = None
 
-        _,docnum = check_doc(path,
+        if 'COGNIDOX_PATH' in config:
+            cognidox_path = config['COGNIDOX_PATH']
+        else:
+            cognidox_path = None
+
+        partnum,docnum = check_doc(path,
                              config['SPHINX_MASTER_DOC'],
                              try_to_create=xmos_publish,
                              auto_create=auto_create,
-                             alt_title = alt_title)
+                             alt_title = alt_title,
+                             cognidox_path=cognidox_path)
+
+        if xmos_publish:
+            if 'BASE_VERSION' in config:
+                base_version = config['BASE_VERSION']
+            else:
+                base_version = None
+            config['XMOS_DOC_VERSION'] = get_version(partnum, base_version=base_version)
 
         print "Processing document structure for xref database"
         process_toc(os.path.join(path,config['SPHINX_MASTER_DOC']+".rst"),
@@ -483,9 +496,13 @@ def main(target,path='.',config={}):
         force_upload = 'FORCE_UPLOAD' in config and config['FORCE_UPLOAD']=='1'
         title = get_title(path)
         upload(path,is_draft=(target=='draft'),force_upload=force_upload,
-               upload_title = "Document: %s" % title)
+               upload_title = "Document: %s" % title,
+               version=config['XMOS_DOC_VERSION'])
 
     os.chdir(curdir)
+
+    if target in ['issue','draft']:
+        return config['XMOS_DOC_VERSION']
 
 
 

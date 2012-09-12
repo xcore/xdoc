@@ -400,6 +400,23 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 pre = '\\href{%s}{X%s}' % (url,docnum)
                 return True, pre, ''
 
+        m = re.match('.*part:(.*):(.*)',id)
+        if m:
+            docnum = m.groups(0)[0]
+            rest = m.groups(0)[1]
+            url = 'http://www.xmos.com/doc/%s/latest%s' % (docnum,rest)
+            if self.in_footnote:
+                url = url.replace('#','\\#')
+            if 'refexplicit' in node and node['refexplicit']:
+                pre = ''
+                post = ' (see~\\href{%s}{%s})' % (url,docnum)
+                return False, pre, post
+            else:
+                pre = '\\href{%s}{%s}' % (url,docnum)
+                return True, pre, ''
+
+
+
 
         pre = '{\\hyperref[%s]{' % (self.idescape(id))
         post = '}}'
