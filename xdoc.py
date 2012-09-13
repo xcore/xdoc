@@ -305,6 +305,7 @@ def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None)
             else:
                 base_version = None
             config['XMOS_DOC_VERSION'] = get_version(partnum, base_version=base_version)
+            config['XMOS_PART_NUMBER'] = partnum
 
         print "Processing document structure for xref database"
         process_toc(os.path.join(path,config['SPHINX_MASTER_DOC']+".rst"),
@@ -431,6 +432,34 @@ def build(path, config, target = 'html',subdoc=None):
                 config['SPHINX_MASTER_DOC'],
                 xmoslatex = target in xmos_targets)
 
+    if target in ['xdehtml','xmoshtml','html']:
+        print "Removing excess files"
+        build_path = os.path.join(path,"_build",builder)
+        refs = set()
+        fs = [os.path.join(build_path, f) for f in os.listdir(build_path)]
+        static_path = os.path.join(build_path,"_static")
+        fs += [os.path.join(static_path, f) for f in os.listdir(static_path)]
+
+        for f in fs:
+            if f.endswith("html") or f.endswith("css"):
+                print "Scanning %s" % os.path.basename(f)
+                lines = open(f).readlines()
+                for line in lines:
+                    matches = re.findall("\"([^\"]*)\"",line)
+                    matches += re.findall("url\(([^\)]*)\)",line)
+                    for ref in [os.path.basename(ref) for ref in matches]:
+                        refs.add(ref)
+
+
+
+        image_dir = os.path.join(build_dir,'_static','images')
+        static_dir = os.path.join(build_dir,'_static')
+        fs =  [os.path.join(image_dir,f) for f in os.listdir(image_dir)]
+        fs += [os.path.join(static_dir,f) for f in os.listdir(static_dir)]
+        for f in fs:
+            if os.path.isfile(f) and not os.path.basename(f) in refs:
+                os.remove(f)
+
     if target != 'xref':
         print "Build Complete"
 
@@ -502,7 +531,7 @@ def main(target,path='.',config={}):
     os.chdir(curdir)
 
     if target in ['issue','draft']:
-        return config['XMOS_DOC_VERSION']
+        return config['XMOS_PART_NUMBER'],config['XMOS_DOC_VERSION']
 
 
 
