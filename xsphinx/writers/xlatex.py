@@ -1874,7 +1874,8 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 self.body[i] = ''
                 self.body[i+1] = self.body[i+1].lstrip()
 
-
+            if re.match(r'.*\\texttrademark',self.body[i]):
+                self.body[i-1] = self.body[i-1].rstrip()
 
         for i in range(pos, len(self.body)):
             if re.match('.*\\mbox{',self.body[i-1]):

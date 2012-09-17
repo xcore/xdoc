@@ -541,6 +541,12 @@ rst_epilog_latex = rst_epilog_common + '''
 
              {\\color{green}{\\LARGE\\textbullet}}
 
+
+.. |tm| raw:: latex
+
+            {\\texttrademark}
+
+
         '''
 
 rst_epilog_html = rst_epilog_common +  """
@@ -585,6 +591,10 @@ rst_epilog_html = rst_epilog_common +  """
 .. |greendot| raw:: html
 
             <span class="green">&bull;</span>
+
+.. |tm| raw:: html
+
+            &trade;
 
         """
 
