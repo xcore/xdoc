@@ -11,6 +11,8 @@ from xsphinx.run_latex import runlatex
 from xsphinx.sphinx_filter import XSphinxFilter
 import zipfile
 import copy
+import refimage
+
 # This script is slighty odd in that it is a port of a system that was based on
 # Makefiles. This means that some values are passed around in the OS environment
 # (ugh)
@@ -440,25 +442,22 @@ def build(path, config, target = 'html',subdoc=None):
         static_path = os.path.join(build_path,"_static")
         fs += [os.path.join(static_path, f) for f in os.listdir(static_path)]
 
-        for f in fs:
-            if f.endswith("html") or f.endswith("css"):
-                print "Scanning %s" % os.path.basename(f)
-                lines = open(f).readlines()
-                for line in lines:
-                    matches = re.findall("\"([^\"]*)\"",line)
-                    matches += re.findall("url\(([^\)]*)\)",line)
-                    for ref in [os.path.basename(ref) for ref in matches]:
-                        refs.add(ref)
+        html_files = [f for f in fs if f.endswith("html")]
+        css_files = [f for f in fs if f.endswith("css")]
 
+        refs = refimage.get_references(html_files, css_files)
 
-
-        image_dir = os.path.join(build_dir,'_static','images')
-        static_dir = os.path.join(build_dir,'_static')
-        fs =  [os.path.join(image_dir,f) for f in os.listdir(image_dir)]
-        fs += [os.path.join(static_dir,f) for f in os.listdir(static_dir)]
-        for f in fs:
-            if os.path.isfile(f) and not os.path.basename(f) in refs:
-                os.remove(f)
+        if refs:
+            image_dir = os.path.join(build_dir,'_static','images')
+            static_dir = os.path.join(build_dir,'_static')
+            fs = []
+            if os.path.exists(image_dir):
+                fs +=  [os.path.join(image_dir,f) for f in os.listdir(image_dir)]
+            if os.path.exists(static_dir):
+                fs += [os.path.join(static_dir,f) for f in os.listdir(static_dir)]
+            for f in fs:
+                if os.path.isfile(f) and not os.path.basename(f) in refs:
+                    os.remove(f)
 
     if target != 'xref':
         print "Build Complete"
