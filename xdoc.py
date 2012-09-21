@@ -101,7 +101,10 @@ def get_config(path,config={}):
         try:
             os.environ[key] = value
         except TypeError:
-            os.environ[key] = ' '.join(value)
+            try:
+                os.environ[key] = ' '.join(value)
+            except:
+                pass
 
     for key,value in config.items():
         try:
@@ -294,6 +297,11 @@ def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None)
         else:
             cognidox_path = None
 
+        if 'EXTRA_SEEALSOS' in config:
+            xmossphinx.builders.xmos_xref.seealsos = config['EXTRA_SEEALSOS']
+        else:
+            xmossphinx.builders.xmos_xref.seealsos = []
+
         partnum,docnum = check_doc(path,
                              config['SPHINX_MASTER_DOC'],
                              try_to_create=xmos_publish,
@@ -330,6 +338,7 @@ def import_xmos(config):
         sys.path.append(os.path.join(config['XDOC_DIR'],'..','infr_docs','xmossphinx'))
         sys.path.append(os.path.join(config['XDOC_DIR'],'..','infr_docs','tool_xpd'))
         import xmossphinx
+        import xmossphinx.builders.xmos_xref
 
 def pop_if_exists(d, val):
     if val in d:
