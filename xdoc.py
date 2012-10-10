@@ -456,6 +456,8 @@ def build(path, config, target = 'html',subdoc=None):
 
         refs = refimage.get_references(html_files, css_files)
 
+        refs.add('list.png')
+
         if refs:
             image_dir = os.path.join(build_dir,'_static','images')
             static_dir = os.path.join(build_dir,'_static')
