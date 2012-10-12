@@ -9,7 +9,7 @@ $1:
 	@python $(XDOC_DIR)/xdoc.py $1
 endef
 
-$(foreach goal,$(sort html pdf xmoshtml xdehtml xmospdf justlatex xref all_xref cognidox draft issue webgen archive copy_remote xdetutorial xmospdf.remote xdehtml.remote),$(eval $(call DISPATCH,$(goal))))
+$(foreach goal,$(sort html pdf xmoshtml xdehtml xmospdf justlatex xref all_xref cognidox draft issue webgen archive copy_remote xdetutorial xmospdf.remote xdehtml.remote xref xref_all),$(eval $(call DISPATCH,$(goal))))
 
 clean:
 	rm -rf .linked_dirs

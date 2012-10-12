@@ -124,7 +124,7 @@ def get_config(path,config={}):
 
 def rsync_dir(d,destroot):
     print "Copying %s" % d
-    exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe|.*\.linked_dirs.*|.*\.doxygen.*|.*\.support.*'
+    exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe|.*\.linked_dirs.*|.*\.doxygen.*|.*\.support.*|.*\.rst$'
     for root, dirs, files in os.walk(d):
         for f in files:
             src = os.path.join(root, f)
@@ -400,6 +400,7 @@ def build(path, config, target = 'html',subdoc=None):
     if subdoc:
         os.environ['_SPHINX_MASTER_DOC'] = subdoc
         os.environ['COLLECTION'] = ''
+        os.environ['XMOSCOMPACTPDF'] = '1'
     else:
         os.environ['_SPHINX_MASTER_DOC'] = config['SPHINX_MASTER_DOC']
 
@@ -473,7 +474,7 @@ def build(path, config, target = 'html',subdoc=None):
     if target != 'xref':
         print "Build Complete"
 
-xmos_targets = ['xmoshtml','xdehtml','xmospdf','issue','draft','xref']
+xmos_targets = ['xmoshtml','xdehtml','xmospdf','issue','draft','xref','xref_all']
 
 class StdInChecker(object):
     """ This class is to try and debug a strange occurrence where sys.stdin
@@ -513,9 +514,14 @@ def main(target,path='.',config={}):
         config = prebuild(path,config,xmos_prebuild=True, xmos_publish=True)
         build(path,config,target='xref')
         for x in config['TOC']:
-            build(path,config,target='xref',subdoc=x)
+            build(path,config,target='xref',subdoc=x.replace('.rst',''))
         build(path,config,target='xdehtml')
         build(path,config,target='xmospdf')
+    elif target in ['xref_all']:
+        config = prebuild(path,config,xmos_prebuild=True, xmos_publish=True)
+        build(path,config,target='xref')
+        for x in config['TOC']:
+            build(path,config,target='xref',subdoc=x.replace('.rst',''))
     elif target == 'justlatex':
         config = prebuild(path,config,xmos_prebuild=True)
         doLatex(path,
