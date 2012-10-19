@@ -118,9 +118,19 @@ def render_content(data_object, tab):
 
             args = data_object.argsstring.replace("&amp","&")
             args = data_object.argsstring.replace("?"," ?")
+            args = re.sub("NULLABLE_REFERENCE_PARAM\(\s*([^,]*)\s*,\s*([^\)]*)\s*\)",
+                               "\g<1> &?\g<2>",
+                               args)
             args = re.sub("REFERENCE_PARAM\(\s*([^,]*)\s*,\s*([^\)]*)\s*\)",
                                "\g<1> &\g<2>",
                                args)
+            args = re.sub("NULLABLE_RESOURCE\(\s*([^,]*)\s*,\s*([^\)]*)\s*\)",
+                               "\g<1> ?\g<2>",
+                               args)
+            args = re.sub("NULLABLE",
+                               "?",
+                               args)
+
             s = ".. c:function:: " + data_object.definition + args + "\n" + add_indent(s)
             print "Rendering Doxygen function " + data_object.definition
         elif data_object.kind == "typedef":

@@ -16,9 +16,9 @@ class XdocTocTree(TocTree):
         except:
             linked_dirs = []
 
-        linked_dirs = ['.linked_dirs/'+os.path.split(x)[1] for x in linked_dirs]
+        linked_dirs = ['_build/.linked_dirs/'+os.path.split(x)[1] for x in linked_dirs]
 
-        linked_dirs.append('.linked_dirs')
+        linked_dirs.append('_build/.linked_dirs')
 
         partmap = {}
         part = None
@@ -48,6 +48,7 @@ class XdocTocTree(TocTree):
 
             for ld in linked_dirs:
                 if os.path.exists(os.path.join(ld, path + '.rst')):
+
                     print "Found %s in %s" % (path,ld)
                     path = os.path.join(ld, path)
                     if m:

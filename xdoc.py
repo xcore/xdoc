@@ -122,9 +122,12 @@ def get_config(path,config={}):
 
     return config
 
-def rsync_dir(d,destroot):
+def rsync_dir(d,destroot,include_rst=False):
     print "Copying %s" % d
-    exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe|.*\.linked_dirs.*|.*\.doxygen.*|.*\.support.*|.*\.rst$'
+    exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe|.*\.linked_dirs.*|.*\.doxygen.*|.*\.support.*'
+    if not include_rst:
+        exclude_pattern += '|.*\.rst'
+    exclude_pattern += "$"
     for root, dirs, files in os.walk(d):
         for f in files:
             src = os.path.join(root, f)
@@ -146,9 +149,10 @@ def rsync_dir(d,destroot):
 
 
 
-def rsync_dirs(dirlist, dest):
+def rsync_dirs(dirlist, dest,include_rst=False):
     for d in dirlist:
-            rsync_dir(d,os.path.join(dest,os.path.basename(d)))
+            rsync_dir(d,os.path.join(dest,os.path.basename(d)),
+                      include_rst=include_rst)
 
 
 def doDoxygen(xdoc_dir, doc_dir):
@@ -275,7 +279,7 @@ def make_zip(path, config):
 def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None):
     global xmossphinx
     config = get_config(path,config)
-    rsync_dirs(config['OTHER_DOC_DIRS'],os.path.join('_build','.linked_dirs'))
+    rsync_dirs(config['OTHER_DOC_DIRS'],os.path.join('_build','.linked_dirs'),include_rst=True)
     rsync_dirs(config['DOXYGEN_DIRS'],os.path.join('_build','.doxygen'))
     rsync_dirs(config['SOURCE_INCLUDE_DIRS'],os.path.join('_build','.sources'))
 
