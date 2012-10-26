@@ -23,6 +23,10 @@ def get_references(html_files, css_files):
         f.close()
         css = ' '.join(lines)
 
+
+        urls = re.findall('url\(\"(.*)\.css\"\)',css,re.MULTILINE)
+        refs.update([x+".css" for x in urls])
+
         entries = re.findall('^(.*){([^}]*)}',css,re.MULTILINE)
 
         for select_expr, contents in entries:
