@@ -285,6 +285,14 @@ def prebuild(path, config={},xmos_prebuild=False,xmos_publish=False,docnum=None)
 
     sys.path.append(os.path.join(config['XDOC_DIR'],'xsphinx'))
 
+    for f in os.listdir(path):
+        if f and f.endswith(".rst_t"):
+            import jinja2
+            loader = jinja2.FileSystemLoader(path)
+            env = jinja2.Environment(loader=loader)
+            t = env.get_template(f)
+            t.stream().dump(f.replace(".rst_t",".rst"))
+
     if xmos_prebuild:
         import_xmos(config)
         from xmossphinx.xmos_process_toc import process_toc
