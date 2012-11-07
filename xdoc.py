@@ -556,12 +556,35 @@ def main(target,path='.',config={}):
                version=config['XMOS_DOC_VERSION'])
 
     os.chdir(curdir)
-
     if target in ['issue','draft']:
         return config['XMOS_PART_NUMBER'],config['XMOS_DOC_VERSION']
 
+help_message = """\
+To build github style documentation run:
 
+    xdoc html
+      or
+    xdoc pdf
+
+from the directory containing the rst.
+
+To build xmos style documentation run:
+
+    xdoc xmoshtml
+      or
+    xdoc xmospdf
+
+from the directory containing the rst.
+"""
+
+all_targets = ['swlinks','update_sw','issue','draft','xref','xref_all','justlatex'
+               'pubdraft','pubissue','html','pdf','xmospdf','xdehtml','xdetutorial','text']
 
 if __name__ == "__main__":
+    if len(sys.argv)<2 or sys.argv[1] not in all_targets:
+        print help_message
+        sys.exit(1)
     target = sys.argv[1]
+    if target=='xmoshtml':
+        target='xdehtml'
     main(target)
