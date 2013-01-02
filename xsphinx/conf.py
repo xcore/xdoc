@@ -121,7 +121,7 @@ release = ''#os.environ['VERSION']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 
-exclude_patterns = [xsphinx_dir + '/_build','.*.#.*']
+exclude_patterns = [xsphinx_dir + '/_build','*.#*']
 exclude_patterns += ['.support*','.sources*','.doxygen*']
 #,'_linked_dirs/.*/'+os.path.split(os.path.abspath(os.environ['DOC_DIR']))[1]+'.*']
 

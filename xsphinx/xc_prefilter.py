@@ -11,7 +11,7 @@ mult_ret_subs = [ ('\{','obrace'),
                   ('\/\*','ocomment'),
                   ('\*\/','ccomment')]
 
-if __name__ == "__main__" and not (hasattr(sys,'frozen') and sys.frozen==1):
+if __name__ == "__main__":
     """
     This script is run before doxygen (using doxygen's INPUT_FILTER
     property) to handle some awkward XC features. In particular it

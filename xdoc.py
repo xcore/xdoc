@@ -31,7 +31,8 @@ def get_master_doc(path):
     elif len(rstfiles) == 1:
         return rstfiles[0][:-4]
     else:
-        sys.stderr.write("Cannot determine main rst file")
+        sys.stderr.write("Cannot determine main rst file\n")
+        sys.exit(1)
 
 def get_title(path):
     toc,title = checktoc(os.path.join(path,get_master_doc(path)+'.rst'))
@@ -162,17 +163,24 @@ def doDoxygen(xdoc_dir, doc_dir):
     if not os.path.exists(build_path):
         os.makedirs(build_path)
 
-    shutil.copy(os.path.join(xdoc_dir, 'xsphinx', 'Doxyfile'),
-                doxyfile_path)
+    dst = open(doxyfile_path,"w")
+    src = open(os.path.join(xdoc_dir, 'xsphinx', 'Doxyfile'),"r")
+    for line in src.readlines():
+        if line.startswith('INPUT_FILTER'):
+            if hasattr(sys,'_MEIPASS'):
+                line = 'INPUT_FILTER = xdoxygen_prefilter\n'
+        dst.write(line)
+    dst.close()
+    src.close()
 
-    f = open(doxyfile_path,"a");
     if hasattr(sys,'_MEIPASS'):
         print "Using xdoxygen"
         cmd = 'xdoxygen'
-        f.write('\nINPUT_FILTER = xdoxygen_prefilter\n')
     else:
         cmd = 'doxygen'
-        f.write('\nINPUT_FILTER           = "python $(XDOC_DIR)/xsphinx/xc_prefilter.py\n"')
+
+
+    f = open(doxyfile_path,"a");
 
     process = subprocess.Popen(cmd,cwd=doc_dir,
                                stdout=subprocess.PIPE,
