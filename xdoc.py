@@ -12,6 +12,7 @@ from xsphinx.sphinx_filter import XSphinxFilter
 import zipfile
 import copy
 import refimage
+from unweave import unweave
 
 # This script is slighty odd in that it is a port of a system that was based on
 # Makefiles. This means that some values are passed around in the OS environment
@@ -24,8 +25,33 @@ config_defaults = {'OTHER_DOC_DIRS':[],
                    'SOURCE_INCLUDE_DIRS':[],
                    'SPHINX_MASTER_DOC':'index'}
 
+temp_files = []
+
 def get_master_doc(path):
+    global temp_files
     rstfiles = [f for f in os.listdir(path) if re.match('.*\.rst$',f)]
+    if len(rstfiles) == 0:
+        srcfiles = [f for f in os.listdir(path) if re.match('.*\.x?c$',f)]
+        if len(srcfiles) == 1:
+            fname = srcfiles[0]
+            gendir = os.path.join(path,'_build','gen')
+            if not os.path.exists(gendir):
+                os.makedirs(gendir)
+
+            destname = fname.replace('.xc','.rst').replace('.c','.rst')
+            destname = os.path.join('_build','gen',destname)
+            if fname == destname:
+                print "ARRGH, dodgy source file"
+                sys.exit(1)
+            src_path = os.path.join(path,fname)
+            dst_path = os.path.join(path,destname)
+            dst = open(dst_path,"w")
+            print "Processing %s to create document" % fname
+            for line in unweave(open(src_path).readlines()):
+                dst.write(line)
+            dst.close()
+            rstfiles = [destname]
+
     if 'index.rst' in rstfiles:
         return 'index'
     elif len(rstfiles) == 1:
@@ -519,6 +545,9 @@ def main(target,path='.',config={}):
     curdir = os.path.abspath(os.curdir)
     os.chdir(path)
     path = '.'
+    if target == 'xmoshtml':
+        target = 'xdehtml'
+
     if target == 'swlinks':
         config = get_config(path,config)
         import_xmos(config)
@@ -586,7 +615,7 @@ from the directory containing the rst.
 """
 
 all_targets = ['swlinks','update_sw','issue','draft','xref','xref_all','justlatex'
-               'pubdraft','pubissue','html','pdf','xmospdf','xdehtml','xdetutorial','text']
+               'pubdraft','pubissue','html','pdf','xmospdf','xdehtml','xdetutorial','text','xmoshtml']
 
 if __name__ == "__main__":
     if len(sys.argv)<2 or sys.argv[1] not in all_targets:
@@ -596,3 +625,5 @@ if __name__ == "__main__":
     if target=='xmoshtml':
         target='xdehtml'
     main(target)
+    for path in temp_files:
+        os.remove(path)
