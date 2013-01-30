@@ -236,14 +236,14 @@ def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
         os.environ['TEXINPUTS'] = os.path.join(config['XDOC_DIR'],'..','infr_docs','base')+listsep + os.path.join(config['XDOC_DIR'],'..','..','infr_docs','base')+listsep
     os.environ['TEXINPUTS'] += os.path.join(config['XDOC_DIR'],'texinput')+listsep
     texfile = os.path.join(doc_dir,master+".tex")
-    if not os.path.exists(os.path.join(build_dir,master+".tex")):
-        print "Cannot find latex file. Something must have gone wrong"
+    if not os.path.exists(os.path.join(build_dir,os.path.basename(master)+".tex")):
+        print "Cannot find latex file: %s\n. Something must have gone wrong" % os.path.join(build_dir,os.path.basename(master)+".tex")
         exit(1)
 
     #shutil.copy(os.path.join(build_dir,master+".tex"),texfile)
     os.environ['TEXINPUTS'] += os.path.abspath(build_dir) + listsep + os.path.abspath(doc_dir) + listsep
     filt = XSphinxFilter(sys.stdout, sys.stderr, os.path.join(build_dir,'latex.output'))
-    texfile = master+'.tex'
+    texfile = os.path.basename(master)+'.tex'
     if xmoslatex:
         import_xmos(config)
         from xmossphinx.xmos_latex import make_xmos_latex
@@ -255,7 +255,7 @@ def doLatex(doc_dir,build_dir,config, master, xmoslatex=False):
     outfile = texfile.replace('.tex','.pdf')
     if xmoslatex:
         shutil.copy(os.path.join(build_dir,outfile),
-                    os.path.join(build_dir,master+'.pdf'))
+                    os.path.join(build_dir,os.path.basename(master)+'.pdf'))
         os.remove(os.path.join(build_dir,outfile))
 
     for line in lines:

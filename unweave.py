@@ -11,10 +11,12 @@ def unweave(src_lines):
         finish_output_doc = False
 
         # A /** at the beginning of the line outputs documentation
-        m = re.match('\s*/\*\*\s*(.*)',line)
+        m = re.match('(\s*/\*\*\s*)(.*)',line)
         if m:
             output_doc = True
-            line = m.groups(0)[0]
+            indent = len(m.groups(0)[0])
+            line = ''.join([' ' for x in range(0,indent)]) + m.groups(0)[1]
+            line = line + "\n"
 
         # A */ or **/ finishes outputing docs
         m = re.match('(.*?)\*(\*?)/\s*',line)
@@ -30,6 +32,10 @@ def unweave(src_lines):
             line += '\n'
 
         if output_doc:
+            m = re.match('(\s*)[^\s].*',line)
+            if (m):
+                indent = min(indent,len(m.groups(0)[0]))
+            line = line[indent:]
             rst_lines.append(line)
         elif output_code:
             rst_lines.append(" "+line)
