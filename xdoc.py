@@ -416,6 +416,8 @@ def build(path, config, target = 'html',subdoc=None):
         os.environ['XDETUTORIAL_HTML'] = "1"
     elif target == 'text':
         builder = 'text'
+    elif target == 'xmostext':
+        builder = 'xmostext'
     else:
         sys.stderr.write("xdoc: Unknown target %s\n"%target)
         exit(1)
@@ -519,7 +521,7 @@ def build(path, config, target = 'html',subdoc=None):
     if target != 'xref':
         print "Build Complete"
 
-xmos_targets = ['xmoshtml','xdehtml','xmospdf','issue','draft','xref','xref_all']
+xmos_targets = ['xmoshtml','xdehtml','xmostext','xmospdf','issue','draft','xref','xref_all']
 
 class StdInChecker(object):
     """ This class is to try and debug a strange occurrence where sys.stdin
@@ -615,7 +617,7 @@ from the directory containing the rst.
 """
 
 all_targets = ['swlinks','update_sw','issue','draft','xref','xref_all','justlatex'
-               'pubdraft','pubissue','html','pdf','xmospdf','xdehtml','xdetutorial','text','xmoshtml']
+               'pubdraft','pubissue','html','pdf','xmospdf','xdehtml','xdetutorial','text','xmoshtml','xmostext']
 
 if __name__ == "__main__":
     if len(sys.argv)<2 or sys.argv[1] not in all_targets:
