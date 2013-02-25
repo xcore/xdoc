@@ -12,7 +12,7 @@ from xsphinx.sphinx_filter import XSphinxFilter
 import zipfile
 import copy
 import refimage
-from unweave import unweave
+
 
 # This script is slighty odd in that it is a port of a system that was based on
 # Makefiles. This means that some values are passed around in the OS environment
@@ -47,6 +47,8 @@ def get_master_doc(path):
             dst_path = os.path.join(path,destname)
             dst = open(dst_path,"w")
             print "Processing %s to create document" % fname
+            from unweave import unweave
+
             for line in unweave(open(src_path).readlines()):
                 dst.write(line)
             dst.close()
