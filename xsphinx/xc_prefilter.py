@@ -28,7 +28,7 @@ if __name__ == "__main__":
         x = x.replace('\\endcode','\\endverbatim')
         x = x.replace('\\a','__DOEMPHASIS__')
         x = re.sub('__DOEMPHASIS__ ([a-zA-Z0-9_]+)',':tt:`\g<1>`',x)
-
+        x = re.sub('\<tt\>([^\<]*)\</tt\>',':tt:`\\1`', x)
 
 
         if x == '':
