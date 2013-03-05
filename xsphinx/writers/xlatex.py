@@ -2092,7 +2092,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('\\begin{figure}[%s]\n'%position)
         if not self.caption:
             print >>sys.stderr,"ERROR: LaTeX generator error: No caption for figure\n"
-            exit(1)
+            sys.exit(1)
         cap = self.caption.strip()
 
         self.body.append(u'\\begin{sidecaption}{%s}%s\n'%(cap,main_id))
