@@ -46,7 +46,8 @@ class LiteralInclude(Directive):
  
         docdir = path.dirname(env.doc2path(env.docname, base=None))
         dirs = [docdir,os.path.join(docdir,'_build','.sources')]
-        dirs += [os.path.join(docdir,'_build','.sources',x) for x in os.listdir(os.path.join('_build','.sources'))]
+        if os.path.exists(os.path.join('_build','.sources')):
+            dirs += [os.path.join(docdir,'_build','.sources',x) for x in os.listdir(os.path.join('_build','.sources'))]
 
         #self.state.document.settings.env.config.include_search_dirs
        

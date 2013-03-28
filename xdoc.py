@@ -153,6 +153,9 @@ def get_config(path,config={}):
 
 def rsync_dir(d,destroot,include_rst=False):
     print "Copying %s" % d
+    if not os.path.exists(d):
+        sys.stderr.write("ERROR: Path %s does not exist.\n"%d)
+        sys.exit(1)
     exclude_pattern = r'.*\.sources.*|.*\.git.*|.*\.zip|.*\.xe|.*\.linked_dirs.*|.*\.doxygen.*|.*\.support.*'
     if not include_rst:
         exclude_pattern += '|.*\.rst'
@@ -165,14 +168,13 @@ def rsync_dir(d,destroot,include_rst=False):
             if not re.match(exclude_pattern, src):
                 copyfile = True
                 if not os.path.exists(dstpath):
-                    os.makedirs(os.path.dirname(dst))
+                    os.makedirs(dstpath)
                 if os.path.exists(dst):
                     dst_mod_time = os.stat(dst).st_mtime
                     src_mod_time = os.stat(src).st_mtime
                     if src_mod_time - dst_mod_time < 1:
                         copyfile = False
                 if copyfile:
-                    pass
                     shutil.copy2(src, dst)
 
 

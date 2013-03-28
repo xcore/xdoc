@@ -26,6 +26,7 @@ from xsphinx.xdoctoctree import XdocTocTree
 import xtable
 import sphinx.domains.std
 import xsphinx.passes
+from xsphinx.code_rst_include import do_code_rst_includes
 
 if __name__ == "__main__":
     sys.exit(0)
@@ -428,7 +429,7 @@ def setup(app):
     app.add_role("tt",xroles.tt)
     app.connect('doctree-resolved',xsphinx.passes.format_references)
     app.connect('doctree-resolved',xlatex_rearrange_tocs)
-
+    app.connect('source-read',do_code_rst_includes)
 
     app.add_node(xdirectives.newinxc)
 
