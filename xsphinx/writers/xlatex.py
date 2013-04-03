@@ -105,7 +105,7 @@ FOOTER = r'''
 %(enddoc)s
 '''
 
-toplevel_desc = ['function','type']
+toplevel_desc = ['function','type','macro']
 
 class collected_footnote(nodes.footnote):
     """Footnotes that are collected are assigned this class."""
