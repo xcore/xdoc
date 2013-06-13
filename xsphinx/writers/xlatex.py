@@ -107,8 +107,10 @@ FOOTER = r'''
 
 toplevel_desc = ['function','type','macro']
 
+
 class collected_footnote(nodes.footnote):
     """Footnotes that are collected are assigned this class."""
+
 
 class UnsupportedError(SphinxError):
     category = 'Markup is unsupported in LaTeX'
@@ -138,7 +140,6 @@ class XLaTeXWriter(writers.Writer):
 
 
 # Helper classes
-
 class ExtBabel(Babel):
     def get_shorthandoff(self):
         shortlang = self.language.split('_')[0]
@@ -251,14 +252,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             'enddoc':enddoc
         })
 
-
         self.elements['classopts'] = ''
 
-
-
-
         document.settings.docclass = builder.config.latex_docclass
-
 
         # if document.settings.docclass == 'howto':
         #     docclass = builder.config.latex_docclass.get('howto', 'article')
@@ -415,14 +411,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 pre = '\\href{%s}{%s}' % (url,docnum)
                 return True, pre, ''
 
-
-
-
         pre = '{\\hyperref[%s]{' % (self.idescape(id))
         post = '}}'
         return False, pre, post
-
-
 
     def hyperpageref(self, id):
         return '\\autopageref*{%s}' % (self.idescape(id))
@@ -502,7 +493,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 except:
                     pass
 
-
             self.parts = []
 
             current_part = None
@@ -537,16 +527,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
             if self.has_parts:
                 self.parts.append((current_part, current_chapters))
 
-
-
-
-
         for p in node.traverse(nodes.paragraph):
             p['margin_items'] = []
 
         if self.builder.config.do_section_summary:
             self.section_summary_pos = len(self.body)+1
-
 
     def depart_document(self, node):
 
@@ -565,7 +550,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if self.builder.config.latex_doctype == 'collection':
             self.end_preface()
-
 
         if False and self.bibitems:
             widest_label = ""
@@ -664,7 +648,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             not self.section_summary_fullwidth):
             self.body.append('\n% NON-FULLWIDTH SECTION\n')
 
-
     def depart_section(self, node):
         self.sectionlevel = max(self.sectionlevel - 1,
                                 self.top_sectionlevel - 1)
@@ -683,6 +666,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_problematic(self, node):
         self.body.append(r'{\color{red}\bfseries{}')
+
     def depart_problematic(self, node):
         self.body.append('}')
 
@@ -698,12 +682,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_glossary(self, node):
         pass
+
     def depart_glossary(self, node):
         pass
 
     def visit_productionlist(self, node):
         self.body.append('\n\n\\begin{productionlist}\n')
         self.in_production_list = 1
+
     def depart_productionlist(self, node):
         self.body.append('\\end{productionlist}\n\n')
         self.in_production_list = 0
@@ -714,11 +700,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
                              self.encode(node['tokenname']))
         else:
             self.body.append('\\productioncont{')
+                
     def depart_production(self, node):
         self.body.append('}\n')
 
     def visit_transition(self, node):
         self.body.append('\n\n\\bigskip\\hrule{}\\bigskip\n\n')
+
     def depart_transition(self, node):
         pass
 
@@ -748,7 +736,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for p in parts:
                 self.body.append('\\item %s\n'%p)
             self.body.append('\\end{inthispart}\n')
-
 
     def visit_title(self, node):
         parent = node.parent
@@ -817,8 +804,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.context[-1] += self.hypertarget(id, anchor=False)
                 self.next_section_ids.clear()
 
-
-
         elif isinstance(parent, (nodes.topic, nodes.sidebar)):
             self.body.append(r'\textbf{')
             self.context.append('}\n\n\medskip\n\n')
@@ -854,7 +839,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     summary += "\item %s\n"%item
                 summary += "\\end{inthisdocument}\n\n"
 
-
             if self.prev_section_summary_fullwidth:
                 summary += '\\begin{fullwidth} % chapter!\n'
 
@@ -866,7 +850,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.section_summary_pos = len(self.body)+2
         if self.sectionlevel == tp+1:
             self.section_summary_entry_pos = len(self.body)
-#                self.section_summary.append(str(node[0]))
+            #self.section_summary.append(str(node[0]))
 
     def depart_title(self, node):
         if isinstance(node.parent, nodes.table):
@@ -897,13 +881,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.next_title_indent = False
             self.body.append('\\begin{indentation}{\\blockindentlen}{0mm}%%')
 
-
     def visit_subtitle(self, node):
         if isinstance(node.parent, nodes.sidebar):
             self.body.append('~\\\\\n\\textbf{')
             self.context.append('}\n\\smallskip\n')
         else:
             self.context.append('')
+
     def depart_subtitle(self, node):
         self.body.append(self.context.pop())
 
@@ -954,9 +938,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_desc(self, node):
         pass
 
-
-
-
     def visit_desc_signature(self, node):
         node['desctype'] = node.parent['desctype']
         if node.parent['objtype'] != 'describe' and node['ids']:
@@ -968,7 +949,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not node.parent['desctype'] in toplevel_desc:
              self.body.append('\\item[')
         self.in_sig = True
-
 
     def depart_desc_signature(self, node):
         if not node.parent['desctype'] in toplevel_desc:
@@ -1153,7 +1133,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.table.longtable = 'longtable' in node['classes']
         self.tablebody = []
 
-
         for child in node.traverse():
             if isinstance(child, nodes.literal_block) or \
                isinstance(child, nodes.field_list) or \
@@ -1192,7 +1171,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     assert colnum < self.table.colcount, "Table structure is invalid"
                     skipcols[colnum] += 1
 
-
                 if not colnum in max_col_widths:
                     max_col_widths[colnum] = 0
                 text = col.astext()
@@ -1222,8 +1200,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         total_width = max(total_width, max_single_width)
 
-
-
         self.table.narrow = \
             (self.next_table_tabularcolumns != None) or (total_width < 70)
 
@@ -1236,8 +1212,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 #        self.table.simple = 'simple-content' in node['classes']
 
-
-
         self.table.vertical_borders = 'vertical-borders' in node['classes']
 
         if self.next_table_tabularcolumns and \
@@ -1245,8 +1219,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             self.table.vertical_borders = True
 
         self.table.horizontal_borders = 'horizontal-borders' in node['classes']
-
-
 
         self.table.no_hlines = not self.table.horizontal_borders
 
@@ -1320,8 +1292,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
 #        self.body.append(ids)
         
-
-
         if 'raw' in node['classes']:
             self.body.append('%Raw Table\n')
         elif self.table.longtable:
@@ -1340,8 +1310,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.body.append('\n\\begin{tabularx}{\linewidth}')
 #            self.body.append('\n\\begin{center}\\begin{tabulary}{\\linewidth}')
-
-
 
         if 'raw' in node['classes']:
             pass
@@ -1395,9 +1363,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #                self.body.append(self.hypertarget(id, anchor=False))
 #            self.next_table_ids.clear()
 
-
-
-
         if 'raw' in node['classes']:
             pass
         elif self.table.longtable:
@@ -1419,7 +1384,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             #self.body.append('\\Hline\n')
             self.body.append('%s\n'%self.table.toprule)
-
 
         self.body.extend(self.tablebody)
 
@@ -1511,9 +1475,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for i in range(self.table.colcount):
                 if self.table.skipcols[i] == 0:
                     self.body.append('%s{%d-%d}\n'%(self.table.crule,i+1,i+1))
-
-
-
 
         self.table.prev_colcount = colcount
         # if (self.table.colcount != colcount):
@@ -1645,9 +1606,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
                 else:
                     self.body.append('\\begin{itemize}\n' )
 
-
-
-
     def depart_bullet_list(self, node):
         if not self.compact_list:
             if 'nopoints' in node['classes']:
@@ -1660,7 +1618,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
                     self.body.append('\\end{compactpoints}\n\n' )
                 else:
                     self.body.append('\\end{itemize}\n\n' )
-
 
     def visit_enumerated_list(self, node):
         if 'steps' in node['classes']:
@@ -1694,13 +1651,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_definition_list(self, node):
         self.body.append('\\begin{description}\n')
 
-
     def depart_definition_list(self, node):
         self.body.append('\\end{description}\n\n')
 
-
     def visit_definition_list_item(self, node):
         pass
+
     def depart_definition_list_item(self, node):
         pass
 
@@ -1713,17 +1669,20 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body.append('\\item[{')
         self.in_term = True
         self.context.append(ctx)
+
     def depart_term(self, node):
         self.body.append(self.context.pop())
         self.in_term = False
 
     def visit_classifier(self, node):
         self.body.append('{[}')
+
     def depart_classifier(self, node):
         self.body.append('{]}')
 
     def visit_definition(self, node):
         pass
+
     def depart_definition(self, node):
         self.body.append('\n')
 
@@ -1756,7 +1715,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
            if 'latex_compact' in node['classes']:
                self.body.append('\\end{option}\n\\vspace{-3mm}\n\n')
 
-
 #        self.body.append('\\end{description}\\end{quote}\n')
 #        self.body.append('\\end{tabular} \n \n')
        pass
@@ -1782,7 +1740,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #            self.body.append('}\n\n')
 #        self.body.append('}\n\n')
         pass
-
 
     def visit_field_name(self, node):
 #        print self.sectionlevel
@@ -1813,7 +1770,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 #        self.body.append('}\n\n')
         pass
         
-        
 #    visit_field_name = visit_term
 #    depart_field_name = depart_term
 
@@ -1839,7 +1795,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.body.append('')
 
-
     def depart_paragraph(self, node):
 
         if 'windows' in node['classes']:
@@ -1850,10 +1805,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
         if 'linux' in node['classes']:
             self.para_inserts.append('\\linuxmargin')
-
-
-
-
 
         for i in range(self.para_icon_insert_point,len(self.body)):
             try:
@@ -1884,8 +1835,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
         for i in range(pos, len(self.body)):
             if re.match('.*\\mbox{',self.body[i-1]):
                 self.body[i] = self.body[i].lstrip()
-
-
 
         if self.para_sloppy:
             self.body[pos] = self.body[pos] + '\\sloppy\n'
@@ -2091,7 +2040,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             main_id = ''
         self.next_figure_ids.clear()
 
-
         node['align'] = 'left'
         self.body.append('\\begin{figure}[%s]\n'%position)
         if not self.caption:
@@ -2137,8 +2085,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def depart_admonition(self, node):
 #        self.body.append('\\end{notice}\n')
         pass
-
-
 
     def _make_visit_admonition(name):
         def visit_admonition(self, node):
@@ -2511,7 +2457,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
             code = '\n'.join(lines)
 
-
         lang = self.hlsettingstack[-1][0]
         linenos = code.count('\n') >= self.hlsettingstack[-1][1] - 1
         if node.has_key('language'):
@@ -2585,6 +2530,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         """
         self.body.append('{\\raggedright{}')
         self.literal_whitespace += 1
+
     def depart_line_block(self, node):
         self.literal_whitespace -= 1
         # remove the last \\
@@ -2593,6 +2539,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_line(self, node):
         self._line_start = len(self.body)
+
     def depart_line(self, node):
         if self._line_start == len(self.body):
             # no output in this line -- add a nonbreaking space, else the
@@ -2638,6 +2585,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if self.context[-1]:
             # this is not the first option
             self.body.append(', ')
+
     def depart_option(self, node):
         # flag that the first option is done.
         self.context[-1] += 1
@@ -2645,6 +2593,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def visit_option_argument(self, node):
         """The delimiter betweeen an option and its argument."""
         self.body.append(node.get('delimiter', ' '))
+
     def depart_option_argument(self, node):
         pass
 
@@ -2652,12 +2601,14 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.body.append('\\item [')
         # flag for first option
         self.context.append(0)
+
     def depart_option_group(self, node):
         self.context.pop() # the flag
         self.body.append('] ')
 
     def visit_option_list(self, node):
         self.body.append('\\begin{optionlist}{3cm}\n')
+
     def depart_option_list(self, node):
         self.body.append('\\end{optionlist}\n')
 
@@ -2736,21 +2687,25 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_generated(self, node):
         pass
+
     def depart_generated(self, node):
         pass
 
     def visit_compound(self, node):
         pass
+
     def depart_compound(self, node):
         pass
 
     def visit_container(self, node):
         pass
+
     def depart_container(self, node):
         pass
 
     def visit_decoration(self, node):
         pass
+
     def depart_decoration(self, node):
         pass
 
@@ -2827,7 +2782,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
     def unknown_visit(self, node):
         raise NotImplementedError('Unknown node: ' + node.__class__.__name__)
 
-
     def visit_squeeze(self, node):
         self.body.append('SQQ')
         pass
@@ -2849,9 +2803,6 @@ class LaTeXTranslator(nodes.NodeVisitor):
             clauses = [text]
         else:
             clauses = [m.group(0) for m in re.finditer('(.*\s*::=((.|\n)(?!.*\s*::=))*)',text)]
-
-
-
 
         lhs = ''
         for x in re.finditer(r'^(.*)::=', text):
