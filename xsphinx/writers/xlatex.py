@@ -510,9 +510,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
             for sof in node.traverse(addnodes.start_of_file):
                 container = sof.parent.parent.parent
                 master_doc = self.builder.config.master_doc
-                if 'docname' in container and \
-                   container['docname'] == master_doc:
-                    sec = sof.traverse(nodes.section)[0]
+                if 'docname' in container and container['docname'] == master_doc:
+                    sections = sof.traverse(nodes.section)
+                    if not sections:
+                        continue
+
+                    sec = sections[0]
                     ids = [id for id in sec['ids'] if id != '']
                     id = sof['docname']+':'+ids[0]
                     if self.has_parts:
@@ -1186,6 +1189,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
                 if col.has_key('morerows'):
                     k = int(col['morerows'])
+                    assert colnum < self.table.colcount, "Table structure is invalid"
                     skipcols[colnum] += 1
 
 
