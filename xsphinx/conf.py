@@ -98,7 +98,7 @@ else:
 
 
 # General information about the project.
-project = os.environ['SPHINX_PROJECT_NAME']
+project = os.environ['SPHINX_PROJECT_NAME'].decode('ascii','ignore')
 copyright = u''
 
 # The version info for the project you're documenting, acts as replacement for
