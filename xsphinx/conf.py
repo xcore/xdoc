@@ -35,7 +35,7 @@ if __name__ == "__main__":
 if 'USE_AAFIG' in os.environ:
     use_aafig = (os.environ['USE_AAFIG'] != '0')
 else:
-    use_aafig = False
+    use_aafig = True
 
 
 
@@ -71,7 +71,7 @@ extensions = ['sphinx.ext.ifconfig','breathe']
 
 if use_aafig:
     print "Found and adding aafig extension"
-    extensions.append('sphinxcontrib.aafig')
+    extensions.append('aafig')
 
 aafig_default_options = dict(proportional=True,width="100%",textual=True)
 
