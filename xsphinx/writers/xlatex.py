@@ -2535,7 +2535,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         if not self.in_list_item:
             options += ',resetmargins=true'
 
-        hlcode = '\\begin{lstlisting}[%s]\n'%options + code
+        hlcode = '\\vspace{-5pt}\\begin{minipage}{\\linewidth}\n\\begin{lstlisting}[%s]\n'%options + code
 
         # workaround for Unicode issue
         hlcode = hlcode.replace(u'€', u'@texteuro[]')
@@ -2551,9 +2551,9 @@ class LaTeXTranslator(nodes.NodeVisitor):
             #                         '\\begin{SaveVerbatim}[commandchars=@\\[\\]]{savedenv}')
 
             hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=\\\\\\{\\}]',
-                                    '\\begin{lstlisting}')
+                                    '\\begin{minipage}{\\linewidth}\n\\begin{lstlisting}')
             hlcode = hlcode.replace('\\begin{Verbatim}[commandchars=@\\[\\]]',
-                                    '\\begin{lstlisting}}')
+                                    '\\begin{minipage}{\\linewidth}\n\\begin{lstlisting}}')
 #                                    '\begin{Verbatim}[frame=lines,')
 #                                    '\\begin{shaded}\n\\topsep=0ex\\relax\n\\begin{Verbatim}[frame=lines,')
                            
@@ -2572,7 +2572,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
             else:
                 tinyv = '\\small'
 
-            self.body.append('\n' + hlcode + '\\end{lstlisting}\n\n')
+            self.body.append('\n' + hlcode + '\\end{lstlisting}\n\\end{minipage}\n\n')
 #            self.body.append('\n\\vspace{0.25\\baselineskip}\n' + hlcode + '\\end{SaveVerbatim}\n\\colorbox{lightgrey}{\\parbox{0.98\\textwidth}{%s \\BUseVerbatim{savedenv} \\normalsize }}\n\n\\vspace{0.25\\baselineskip}\n' % tinyv)
         self.verbatim = None
     visit_doctest_block = visit_literal_block
