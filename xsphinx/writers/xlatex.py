@@ -1260,7 +1260,12 @@ class LaTeXTranslator(nodes.NodeVisitor):
         else:
             self.table.linesep = ''
 
-        if self.table.vertical_borders:
+        if 'pdf-no-border' in node['classes'] or 'no-border' in node['classes']:
+            self.table.toprule = ''
+            self.table.midrule = ''
+            self.table.bottomrule = ''
+            self.table.crule = ''
+        elif self.table.vertical_borders:
             self.table.toprule = '\\Hline'
             self.table.midrule = '\\hline'
             self.table.bottomrule = '\\hline'
