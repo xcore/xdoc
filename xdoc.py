@@ -620,7 +620,7 @@ To build xmos style documentation run:
 from the directory containing the rst.
 """
 
-all_targets = ['swlinks','update_sw','issue','draft','xref','xref_all','justlatex'
+all_targets = ['swlinks','update_sw','issue','draft','xref','xref_all','justlatex',
                'pubdraft','pubissue','html','pdf','xmospdf','xdehtml','xdetutorial','text','xmoshtml','xmostext']
 
 if __name__ == "__main__":
