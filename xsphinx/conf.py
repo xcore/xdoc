@@ -343,7 +343,7 @@ class Configurator(object):
 
     def set(self):
         for key, val in self._settings.items():                        
-            if isinstance(val,str):
+            if isinstance(val,str) or isinstance(val,unicode):
                 if val[0:5] == "eval:":
                     cmd = "global %s;%s = %s" % (key, key, val[5:])
                 else:
@@ -400,6 +400,7 @@ def setup(app):
     app.add_builder(XLaTeXBuilder)
     if current_builder in ['xlatex']:
         app.connect('doctree-resolved',xlatex_rearrange_tocs)
+
     app.add_directive('literalinclude', xsphinx.code.LiteralInclude)
     app.add_directive('figure', xsphinx.images.Figure)
     app.add_directive('image', xsphinx.images.Image)
