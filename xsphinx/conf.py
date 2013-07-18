@@ -35,7 +35,7 @@ if __name__ == "__main__":
 if 'USE_AAFIG' in os.environ:
     use_aafig = (os.environ['USE_AAFIG'] != '0')
 else:
-    use_aafig = True
+    use_aafig = False
 
 
 
