@@ -343,6 +343,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.in_options = False
         self.in_cmd = False
         self.in_list_item = False
+        self.desc_level = 0
 
     def astext(self):
         text = HEADER0 % self.elements
@@ -929,7 +930,13 @@ class LaTeXTranslator(nodes.NodeVisitor):
             node['long_params'] = long_params
             for x in node.traverse(addnodes.desc_parameter):
                 x['long_params'] = long_params
-            if long_params:
+                #print node.parent.parent
+                #print node.parent
+            first_in_section = \
+               isinstance(node.parent.parent, nodes.section) and \
+               node.parent.parent.children[1] == node.parent
+            #print node.parent.parent.children[1]
+            if long_params and not first_in_section:
                 self.body.append('\n\\vspace{-1.5\\baselineskip}')
             self.body.append('\n\n\\texttt{')
             if long_params:
@@ -958,11 +965,11 @@ class LaTeXTranslator(nodes.NodeVisitor):
         self.in_sig = False
 
     def visit_desc_addname(self, node):
-        self.body.append(r'\optemph{')
+        #self.body.append(r'\optemph{')
         self.literal_whitespace += 1
 
     def depart_desc_addname(self, node):
-        self.body.append('}')
+        #self.body.append('}')
         self.literal_whitespace -= 1
 
     def visit_desc_type(self, node):
@@ -1020,15 +1027,19 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def visit_desc_content(self, node):
        if node.parent['desctype'] in toplevel_desc:
+           self.desc_level += 1
            if node.parent['long_params']:
                self.body.append('\n\\end{tabbing}')
                if len(node.children) == 0:
                    self.body.append('\\vspace{-3mm}\n')
 
-           if self.fullwidth:
+           if self.desc_level > 1:
+               indent ='0.5\\blockindentlen'
+           elif self.fullwidth:
                indent = '\\blockindentlen'
            else:
                indent = '\\blockindentlen'
+
            self.body.append('}\n\n')
 
            self.body.append('\\vspace{-2mm}\n')
@@ -1049,6 +1060,7 @@ class LaTeXTranslator(nodes.NodeVisitor):
 
     def depart_desc_content(self, node):
        if node.parent['desctype'] in toplevel_desc:
+           self.desc_level -= 1
            if len(node.children) != 0:
                self.body.append('\n\\end{indentation*}\n')
                #self.body.append('\\vspace{u3mm}\n')

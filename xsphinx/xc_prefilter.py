@@ -1,7 +1,9 @@
 import sys, re
 
 # A list of regex substitutions to make
-substs =  [ ('port:(\d+)','___port___port___\\1')]
+substs =  [ ('port:(\d+)','___port___port___\\1') ,
+            ('interface', 'class'),
+            ('\[\[(.*)\]\]', '__attribute__\\1') ]
 
 
 mult_ret_subs = [ ('\{','obrace'),

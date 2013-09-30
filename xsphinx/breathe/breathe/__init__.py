@@ -266,6 +266,7 @@ class DoxygenDirectiveFactory(object):
             "doxygenfunction" : DoxygenFunctionDirective,
             "doxygenstruct" : DoxygenStructDirective,
             "doxygenclass" : DoxygenClassDirective,
+            "doxygeninterface" : DoxygenClassDirective,
             "doxygenenum" : DoxygenEnumDirective,
             "doxygentypedef" : DoxygenTypedefDirective,
             "doxygendefine" : DoxygenDefineDirective,
@@ -384,6 +385,11 @@ def setup(app):
 
     app.add_directive(
             "doxygenclass",
+            directive_factory.create_class_directive_container(),
+            )
+
+    app.add_directive(
+            "doxygeninterface",
             directive_factory.create_class_directive_container(),
             )
 

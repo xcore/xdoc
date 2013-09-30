@@ -131,7 +131,13 @@ def render_content(data_object, tab):
                                "?",
                                args)
 
-            s = ".. c:function:: " + data_object.definition + args + "\n" + add_indent(s)
+            args = re.sub("class",
+                          "interface",
+                          args)
+
+            fname = data_object.definition
+            fname = re.sub("[^ ]*::","",fname)
+            s = ".. c:function:: " + fname + args + "\n" + add_indent(s)
             print "Rendering Doxygen function " + data_object.definition
         elif data_object.kind == "typedef":
             s = ".. c:type:: " + data_object.name + "\n" + add_indent(s)
@@ -159,6 +165,7 @@ def render_content(data_object, tab):
         
 
     s = s.replace("___port___port___","port:")
+    s = re.sub(r'__attribute__(\w*)','[[\\1]]', s)
 
     if s.find('__multret__') != -1:
         mult_ret_subs = [ ('{','obrace'),
@@ -178,7 +185,14 @@ def render_content(data_object, tab):
 
 def render_compoundtype(type_data_object, data_object, state, content, content_offset):
 
-    s = ".. c:type:: %s\n" % (type_data_object.name)
+    is_interface = (type_data_object.get_kind() == 'class')
+
+    if is_interface:
+        name = "interface " + type_data_object.name
+    else:
+        name = type_data_object.name
+
+    s = ".. c:type:: %s\n" % name
 
     print "Rendering Doxygen struct " + type_data_object.name
 
@@ -193,12 +207,12 @@ def render_compoundtype(type_data_object, data_object, state, content, content_o
         if sectiondef.kind == "public-attrib":
             s += add_indent("**Structure Members:**\n\n")
             s += add_indent(render_content(sectiondef,''))
-
+        if sectiondef.kind == "private-func":
+            s += add_indent(render_content(sectiondef,''))
 
     content.data = s.split("\n")
 
-#    print str.join("\n",content.data)
-
+    #print str.join("\n",content.data)
 
     term = nodes.Element()
     state.nested_parse(content, content_offset,term)
